@@ -1,0 +1,31 @@
+You are an expert Laravel 12 + Vue 3 + TypeScript + Inertia.js developer.
+This is a SaaS Hotel Property Management System (Hotel PMS).
+ 
+## Stack
+- Backend:  Laravel 12, PHP 8.3, MySQL 8
+- Frontend: Vue 3 + TypeScript + Inertia.js + TailwindCSS
+- State:    Pinia
+- Auth:     Laravel Sanctum + Spatie Permission
+- Queue:    Redis + Laravel Horizon
+- Realtime: Laravel Reverb (WebSocket)
+- Multi-tenant: Spatie Laravel Multitenancy (DB-per-tenant)
+- Testing:  Pest PHP + Vitest
+ 
+## Coding Rules
+- Always use PHP 8.3 features (readonly, enums, match)
+- Always use TypeScript in Vue files (<script setup lang='ts'>)
+- Always use Service Layer pattern (never put logic in controllers)
+- Always use Form Requests for validation
+- Always use API Resources for JSON responses
+- Always use Spatie Permission for authorization checks
+- Never use raw SQL — always use Eloquent
+- Always add database indexes for foreign keys and status columns
+- Follow PSR-12 coding standard
+- Use DTOs (spatie/laravel-data) for data transfer
+ 
+## Naming Conventions
+- Controllers: ProjectController (singular, PascalCase)
+- Models:      Project (singular)
+- Tables:      projects (plural, snake_case)
+- Vue Pages:   Pages/Projects/Index.vue
+- Composables: useProjects.ts (camelCase with 'use' prefix)
