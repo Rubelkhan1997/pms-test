@@ -1,9 +1,26 @@
-import { ref, shallowRef, readonly, computed } from 'vue';
+import { ref, shallowRef, readonly, computed, triggerRef, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { router } from '@inertiajs/vue3';
 
+/**
+ * Reservation Composable - Best Practices Implementation
+ * 
+ * Applied Best Practices:
+ * ✅ shallowRef for primitives (performance)
+ * ✅ ref for arrays (deep reactivity needed)
+ * ✅ readonly for protected state (controlled mutations)
+ * ✅ computed for derived values (cached results)
+ * ✅ Options object pattern (flexible configuration)
+ * ✅ Composable composition (build from smaller pieces)
+ * ✅ Explicit actions for state mutations
+ * ✅ TypeScript type safety
+ * 
+ * @see https://vuejs.org/guide/best-practices/performance.html
+ * @see https://vuejs.org/guide/reusability/composables.html
+ */
+
 // ─────────────────────────────────────────────────────────
-// Types
+// Types (Exported for reuse)
 // ─────────────────────────────────────────────────────────
 
 export interface ReservationFilters {
@@ -13,87 +30,294 @@ export interface ReservationFilters {
     search?: string;
 }
 
-/**
- * Reservation Composable
- * Handles all reservation-related business logic
- *
- * Best Practices Applied:
- * - shallowRef for primitives (better performance)
- * - ref for arrays/objects (deep reactivity)
- * - readonly for protected state
- * - computed for derived values
- * - Options object pattern for complex configs
- */
-export function useReservations(options?: {
+export interface UseReservationOptions {
+    /** Auto-fetch on mount */
     autoFetch?: boolean;
+    /** Initial filters */
     initialFilters?: ReservationFilters;
-}) {
+    /** Enable polling for real-time updates */
+    pollingInterval?: number;
+    /** Cache results */
+    cacheEnabled?: boolean;
+}
 
-    // ─────────────────────────────────────────────────────────
-    // State (Reactive) - Best Practice
-    // ─────────────────────────────────────────────────────────
-    
+// ─────────────────────────────────────────────────────────
+// Helper Composables (Composition Pattern)
+// ─────────────────────────────────────────────────────────
+
+/**
+ * Composable: useLoading
+ * Manages loading state with readonly protection
+ */
+function useLoading(initialValue = false) {
+    const _loading = shallowRef(initialValue);
+
+    function start() {
+        _loading.value = true;
+    }
+
+    function stop() {
+        _loading.value = false;
+    }
+
+    function toggle() {
+        _loading.value = !_loading.value;
+    }
+
+    return {
+        loading: readonly(_loading),
+        start,
+        stop,
+        toggle
+    };
+}
+
+/**
+ * Composable: useMessage
+ * Manages success/error messages with auto-clear
+ */
+function useMessage(autoClearDelay = 5000) {
+    const _message = shallowRef<string | null>(null);
+    const _messageType = shallowRef<'success' | 'error' | null>(null);
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+    function showMessage(msg: string, type: 'success' | 'error' = 'success') {
+        // Clear existing timeout
+        if (timeoutId) clearTimeout(timeoutId);
+
+        _message.value = msg;
+        _messageType.value = type;
+
+        // Auto-clear
+        timeoutId = setTimeout(() => {
+            _message.value = null;
+            _messageType.value = null;
+        }, autoClearDelay);
+    }
+
+    function clearMessage() {
+        if (timeoutId) clearTimeout(timeoutId);
+        _message.value = null;
+        _messageType.value = null;
+    }
+
+    return {
+        message: readonly(_message),
+        messageType: readonly(_messageType),
+        showMessage,
+        clearMessage
+    };
+}
+
+/**
+ * Composable: usePolling
+ * Polls a function at regular intervals
+ */
+function usePolling(
+    callback: () => Promise<void>,
+    intervalMs: number,
+    enabled: () => boolean
+) {
+    let intervalId: ReturnType<typeof setInterval> | null = null;
+
+    function start() {
+        if (!enabled()) return;
+
+        // Immediate first call
+        callback();
+
+        // Then poll at interval
+        intervalId = setInterval(() => {
+            if (enabled()) {
+                callback();
+            }
+        }, intervalMs);
+    }
+
+    function stop() {
+        if (intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+        }
+    }
+
+    return { start, stop };
+}
+
+// ─────────────────────────────────────────────────────────
+// Main Composable: useReservations
+// ─────────────────────────────────────────────────────────
+
+export function useReservations(options: UseReservationOptions = {}) {
+    // ─────────────────────────────────────────────────────
+    // Options with defaults (Options Object Pattern)
+    // ─────────────────────────────────────────────────────
+    const {
+        autoFetch = false,
+        initialFilters = {},
+        pollingInterval = 30000, // 30 seconds
+        cacheEnabled = false
+    } = options;
+
+    // ─────────────────────────────────────────────────────
+    // State - Best Practice
+    // ─────────────────────────────────────────────────────
+
     // ✅ ref() for arrays (deep reactivity, replacement pattern)
-    const reservations = ref<PMS.Reservation[]>([]);
-    const reservation = ref<PMS.Reservation | null>(null);
-    
-    // ✅ shallowRef() for primitives (performance optimization)
-    const loading = shallowRef(false);
-    const loadingCheckIn = shallowRef(false);
-    const loadingCheckOut = shallowRef(false);
-    const error = shallowRef<string | null>(null);
-    const successMessage = shallowRef<string | null>(null);
-    
-    // ✅ shallowRef() for filter object (will use reactive in store)
-    const filters = shallowRef<ReservationFilters>(options?.initialFilters || {});
+    const _reservations = ref<PMS.Reservation[]>([]);
+    const _reservation = ref<PMS.Reservation | null>(null);
 
-    // ─────────────────────────────────────────────────────────
+    // ✅ shallowRef() for primitives (performance)
+    const _filters = shallowRef<ReservationFilters>(initialFilters);
+    const _cache = shallowRef<Map<string, PMS.Reservation[]>>(new Map());
+
+    // ✅ Compose smaller composables
+    const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
+    const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
+    const { message: _successMessage, showMessage: showSuccess, clearMessage: clearSuccess } = useMessage();
+    const { message: _error, showMessage: showError, clearMessage: clearError } = useMessage();
+
+    // ─────────────────────────────────────────────────────
     // Computed (Derived State) - Best Practice
-    // ─────────────────────────────────────────────────────────
-    
-    const pendingCount = computed(() => 
-        reservations.value.filter(r => r.status === 'pending').length
+    // ─────────────────────────────────────────────────────
+
+    const reservations = computed(() => _reservations.value);
+    const reservation = computed(() => _reservation.value);
+    const loading = computed(() => _loading.value);
+    const saving = computed(() => _saving.value);
+    const successMessage = computed(() => _successMessage.value);
+    const error = computed(() => _error.value);
+
+    // ✅ Derived counts (cached by computed)
+    const pendingCount = computed(() =>
+        _reservations.value.filter(r => r.status === 'pending').length
     );
 
-    const confirmedCount = computed(() => 
-        reservations.value.filter(r => r.status === 'confirmed').length
+    const confirmedCount = computed(() =>
+        _reservations.value.filter(r => r.status === 'confirmed').length
     );
 
-    const checkedInCount = computed(() => 
-        reservations.value.filter(r => r.status === 'checked_in').length
+    const checkedInCount = computed(() =>
+        _reservations.value.filter(r => r.status === 'checked_in').length
     );
 
+    const checkedOutCount = computed(() =>
+        _reservations.value.filter(r => r.status === 'checked_out').length
+    );
+
+    const cancelledCount = computed(() =>
+        _reservations.value.filter(r => r.status === 'cancelled').length
+    );
+
+    // ✅ Derived lists with date calculations
     const todayCheckIns = computed(() => {
         const today = new Date().toISOString().split('T')[0];
-        return reservations.value.filter(r => r.check_in_date === today);
+        return _reservations.value.filter(r => r.check_in_date === today);
     });
 
     const todayCheckOuts = computed(() => {
         const today = new Date().toISOString().split('T')[0];
-        return reservations.value.filter(r => r.check_out_date === today);
+        return _reservations.value.filter(r => r.check_out_date === today);
     });
 
-    // ─────────────────────────────────────────────────────────
-    // API Calls
-    // ─────────────────────────────────────────────────────────
+    const upcomingCheckIns = computed(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return _reservations.value
+            .filter(r => r.check_in_date > today && r.status === 'confirmed')
+            .sort((a, b) => a.check_in_date.localeCompare(b.check_in_date));
+    });
+
+    // ✅ Filtered reservations (computed, not in template)
+    const filteredReservations = computed(() => {
+        let filtered = [..._reservations.value];
+        const filters = _filters.value;
+
+        // Filter by status
+        if (filters.status) {
+            filtered = filtered.filter(r => r.status === filters.status);
+        }
+
+        // Filter by check-in date
+        if (filters.check_in_date) {
+            filtered = filtered.filter(r => r.check_in_date >= filters.check_in_date!);
+        }
+
+        // Filter by check-out date
+        if (filters.check_out_date) {
+            filtered = filtered.filter(r => r.check_out_date <= filters.check_out_date!);
+        }
+
+        // Search by reference or guest name
+        if (filters.search) {
+            const search = filters.search.toLowerCase();
+            filtered = filtered.filter(r =>
+                r.reference.toLowerCase().includes(search) ||
+                r.guest?.name.toLowerCase().includes(search)
+            );
+        }
+
+        return filtered;
+    });
+
+    // ✅ Revenue calculations
+    const totalRevenue = computed(() =>
+        _reservations.value.reduce((sum, r) => sum + r.total_amount, 0)
+    );
+
+    const pendingRevenue = computed(() =>
+        _reservations.value
+            .filter(r => r.status === 'pending')
+            .reduce((sum, r) => sum + r.total_amount, 0)
+    );
+
+    // ─────────────────────────────────────────────────────
+    // API Calls - Best Practice
+    // ─────────────────────────────────────────────────────
+
+    /**
+     * Get cache key from filters
+     */
+    function getCacheKey(filters: ReservationFilters): string {
+        return JSON.stringify(filters);
+    }
 
     /**
      * Fetch all reservations with optional filters
      */
     async function fetchAll(params?: ReservationFilters): Promise<void> {
-        loading.value = true;
-        error.value = null;
+        const fetchFilters = params || _filters.value;
+        const cacheKey = getCacheKey(fetchFilters);
+
+        // Check cache first
+        if (cacheEnabled && _cache.value.has(cacheKey)) {
+            _reservations.value = _cache.value.get(cacheKey)!;
+            return;
+        }
+
+        startLoading();
+        clearError();
 
         try {
-            const { data } = await axios.get('/api/v1/front-desk/reservations', { 
-                params: params || filters.value 
+            const { data } = await axios.get('/api/v1/front-desk/reservations', {
+                params: fetchFilters
             });
-            reservations.value = data.data;
+
+            _reservations.value = data.data;
+
+            // Update cache
+            if (cacheEnabled) {
+                _cache.value.set(cacheKey, data.data);
+                // Trigger reactivity for shallowRef
+                triggerRef(_cache);
+            }
+
         } catch (err: any) {
-            error.value = err.response?.data?.message || 'Failed to fetch reservations';
+            const message = err.response?.data?.message || 'Failed to fetch reservations';
+            showError(message);
             console.error('Fetch reservations error:', err);
+            throw err;
         } finally {
-            loading.value = false;
+            stopLoading();
         }
     }
 
@@ -101,17 +325,19 @@ export function useReservations(options?: {
      * Fetch single reservation by ID
      */
     async function fetchById(id: number): Promise<void> {
-        loading.value = true;
-        error.value = null;
+        startLoading();
+        clearError();
 
         try {
             const { data } = await axios.get(`/api/v1/reservations/${id}`);
-            reservation.value = data.data;
+            _reservation.value = data.data;
         } catch (err: any) {
-            error.value = err.response?.data?.message || 'Failed to fetch reservation';
+            const message = err.response?.data?.message || 'Failed to fetch reservation';
+            showError(message);
             console.error('Fetch reservation error:', err);
+            throw err;
         } finally {
-            loading.value = false;
+            stopLoading();
         }
     }
 
@@ -126,23 +352,30 @@ export function useReservations(options?: {
         total_amount: number;
         notes?: string;
     }): Promise<void> {
-        loading.value = true;
-        error.value = null;
+        startSaving();
+        clearError();
 
         try {
             const response = await axios.post('/api/v1/reservations', data);
-            successMessage.value = 'Reservation created successfully';
-            
-            // Refresh the list
+            showSuccess('Reservation created successfully');
+
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
+            }
+
+            // Refresh list
             await fetchAll();
-            
+
             return response.data;
         } catch (err: any) {
-            error.value = err.response?.data?.message || 'Failed to create reservation';
+            const message = err.response?.data?.message || 'Failed to create reservation';
+            showError(message);
             console.error('Create reservation error:', err);
             throw err;
         } finally {
-            loading.value = false;
+            stopSaving();
         }
     }
 
@@ -150,24 +383,35 @@ export function useReservations(options?: {
      * Update existing reservation
      */
     async function update(id: number, data: Partial<PMS.Reservation>): Promise<void> {
-        loading.value = true;
-        error.value = null;
+        startSaving();
+        clearError();
 
         try {
             const response = await axios.put(`/api/v1/reservations/${id}`, data);
-            successMessage.value = 'Reservation updated successfully';
-            
-            // Update local state
-            const index = reservations.value.findIndex(r => r.id === id);
+            showSuccess('Reservation updated successfully');
+
+            // Update local state (replace entire array to trigger reactivity)
+            const index = _reservations.value.findIndex(r => r.id === id);
             if (index !== -1) {
-                reservations.value[index] = response.data.data;
+                _reservations.value = [
+                    ..._reservations.value.slice(0, index),
+                    response.data.data,
+                    ..._reservations.value.slice(index + 1)
+                ];
+            }
+
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
             }
         } catch (err: any) {
-            error.value = err.response?.data?.message || 'Failed to update reservation';
+            const message = err.response?.data?.message || 'Failed to update reservation';
+            showError(message);
             console.error('Update reservation error:', err);
             throw err;
         } finally {
-            loading.value = false;
+            stopSaving();
         }
     }
 
@@ -175,24 +419,35 @@ export function useReservations(options?: {
      * Cancel reservation
      */
     async function cancel(id: number): Promise<void> {
-        loading.value = true;
-        error.value = null;
+        startSaving();
+        clearError();
 
         try {
             await axios.post(`/api/v1/reservations/${id}/cancel`);
-            successMessage.value = 'Reservation cancelled successfully';
-            
+            showSuccess('Reservation cancelled successfully');
+
             // Update local state
-            const index = reservations.value.findIndex(r => r.id === id);
+            const index = _reservations.value.findIndex(r => r.id === id);
             if (index !== -1) {
-                reservations.value[index].status = 'cancelled';
+                _reservations.value = [
+                    ..._reservations.value.slice(0, index),
+                    { ..._reservations.value[index], status: 'cancelled' },
+                    ..._reservations.value.slice(index + 1)
+                ];
+            }
+
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
             }
         } catch (err: any) {
-            error.value = err.response?.data?.message || 'Failed to cancel reservation';
+            const message = err.response?.data?.message || 'Failed to cancel reservation';
+            showError(message);
             console.error('Cancel reservation error:', err);
             throw err;
         } finally {
-            loading.value = false;
+            stopSaving();
         }
     }
 
@@ -200,26 +455,35 @@ export function useReservations(options?: {
      * Guest Check In
      */
     async function checkIn(id: number): Promise<void> {
-        loadingCheckIn.value = true;
-        error.value = null;
+        startSaving();
+        clearError();
 
         try {
             const response = await axios.post(`/api/v1/reservations/${id}/check-in`);
-            successMessage.value = 'Guest checked in successfully';
-            
+            showSuccess('Guest checked in successfully');
+
             // Update local state
-            const index = reservations.value.findIndex(r => r.id === id);
+            const index = _reservations.value.findIndex(r => r.id === id);
             if (index !== -1) {
-                reservations.value[index].status = 'checked_in';
+                _reservations.value = [
+                    ..._reservations.value.slice(0, index),
+                    { ..._reservations.value[index], status: 'checked_in' },
+                    ..._reservations.value.slice(index + 1)
+                ];
             }
-            
-            // Also update room status via store if needed
+
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
+            }
         } catch (err: any) {
-            error.value = err.response?.data?.message || 'Check in failed';
+            const message = err.response?.data?.message || 'Check in failed';
+            showError(message);
             console.error('Check in error:', err);
             throw err;
         } finally {
-            loadingCheckIn.value = false;
+            stopSaving();
         }
     }
 
@@ -230,84 +494,120 @@ export function useReservations(options?: {
         paid_amount: number;
         payment_method: string;
     }): Promise<void> {
-        loadingCheckOut.value = true;
-        error.value = null;
+        startSaving();
+        clearError();
 
         try {
             const response = await axios.post(`/api/v1/reservations/${id}/check-out`, paymentData);
-            successMessage.value = 'Guest checked out successfully';
-            
+            showSuccess('Guest checked out successfully');
+
             // Update local state
-            const index = reservations.value.findIndex(r => r.id === id);
+            const index = _reservations.value.findIndex(r => r.id === id);
             if (index !== -1) {
-                reservations.value[index].status = 'checked_out';
+                _reservations.value = [
+                    ..._reservations.value.slice(0, index),
+                    { ..._reservations.value[index], status: 'checked_out' },
+                    ..._reservations.value.slice(index + 1)
+                ];
+            }
+
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
             }
         } catch (err: any) {
-            error.value = err.response?.data?.message || 'Check out failed';
+            const message = err.response?.data?.message || 'Check out failed';
+            showError(message);
             console.error('Check out error:', err);
             throw err;
         } finally {
-            loadingCheckOut.value = false;
+            stopSaving();
         }
     }
 
+    // ─────────────────────────────────────────────────────
+    // Filter Management
+    // ─────────────────────────────────────────────────────
+
     /**
-     * Set filters
+     * Set filters (immutable update)
      */
     function setFilters(newFilters: ReservationFilters): void {
-        filters.value = { ...filters.value, ...newFilters };
+        _filters.value = { ..._filters.value, ...newFilters };
     }
 
     /**
-     * Reset filters
+     * Reset filters to initial state
      */
     function resetFilters(): void {
-        filters.value = {};
+        _filters.value = initialFilters;
     }
 
     /**
-     * Clear error message
+     * Clear cache
      */
-    function clearError(): void {
-        error.value = null;
+    function clearCache(): void {
+        _cache.value.clear();
+        triggerRef(_cache);
     }
 
-    /**
-     * Clear success message
-     */
-    function clearSuccess(): void {
-        successMessage.value = null;
+    // ─────────────────────────────────────────────────────
+    // Polling (Optional Real-time Updates)
+    // ─────────────────────────────────────────────────────
+
+    const { start: startPolling, stop: stopPolling } = usePolling(
+        () => fetchAll(),
+        pollingInterval,
+        () => true // Always enabled by default
+    );
+
+    // ─────────────────────────────────────────────────────
+    // Lifecycle Hooks (Auto-fetch, Auto-polling)
+    // ─────────────────────────────────────────────────────
+
+    if (autoFetch) {
+        onMounted(() => {
+            fetchAll();
+
+            // Start polling if interval is set
+            if (pollingInterval > 0) {
+                startPolling();
+            }
+        });
+
+        // Cleanup on unmount
+        onUnmounted(() => {
+            stopPolling();
+        });
     }
 
-    // ─────────────────────────────────────────────────────────
-    // Auto-fetch on init (optional)
-    // ─────────────────────────────────────────────────────────
-    
-    if (options?.autoFetch) {
-        fetchAll();
-    }
+    // ─────────────────────────────────────────────────────
+    // Return (Public API) - Best Practice: Readonly + Actions
+    // ─────────────────────────────────────────────────────
 
-    // ─────────────────────────────────────────────────────────
-    // Return (Public API) - Best Practice: Readonly state + Actions
-    // ─────────────────────────────────────────────────────────
-    
     return {
         // ✅ Readonly state (can't mutate from components directly)
-        reservations: readonly(reservations),
-        reservation: readonly(reservation),
-        loading: readonly(loading),
-        loadingCheckIn: readonly(loadingCheckIn),
-        loadingCheckOut: readonly(loadingCheckOut),
-        error: readonly(error),
-        successMessage: readonly(successMessage),
-        
-        // ✅ Computed values (derived state)
+        reservations,
+        reservation,
+        loading,
+        saving,
+        successMessage,
+        error,
+
+        // ✅ Computed values (derived state - cached)
         pendingCount,
         confirmedCount,
         checkedInCount,
+        checkedOutCount,
+        cancelledCount,
         todayCheckIns,
         todayCheckOuts,
-        
+        upcomingCheckIns,
+        filteredReservations,
+        totalRevenue,
+        pendingRevenue,
+
         // ✅ Actions (only way to mutate state)
         fetchAll,
         fetchById,
@@ -318,6 +618,7 @@ export function useReservations(options?: {
         checkOut,
         setFilters,
         resetFilters,
+        clearCache,
         clearError,
         clearSuccess
     };

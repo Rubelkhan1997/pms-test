@@ -1,10 +1,25 @@
 {
   "version": 1,
   "skills": {
+    "vue": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "f72b54618560c53d65740515ded5bb833750c4574dbe961fd21f022bd2b31a74"
+    },
     "vue-best-practices": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "b61d50aeced30790f4e8e08d15da4b7148443e312bd3c6fedc38b500baa75f17"
+    },
+    "vue-debug-guides": {
       "source": "hyf0/vue-skills",
       "sourceType": "github",
-      "computedHash": "21132f6c11c765bd11d0d6ad081122dd858630073e2123b651e58f17b399b131"
+      "computedHash": "58bb2ad9e92dce0c15b42acc65aeec1dd93bc36f9db96ab248e52b1d22945472"
+    },
+    "vueuse-functions": {
+      "source": "antfu/skills",
+      "sourceType": "github",
+      "computedHash": "66643d68bd9da4887e87a0bcb35af9ff4c9c35115ac57f3dd89cd65320046d80"
     }
   }
 }
