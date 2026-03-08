@@ -1,20 +1,77 @@
-import { ref } from 'vue';
+import { ref, shallowRef, readonly, computed } from 'vue';
 import axios from 'axios';
 import { router } from '@inertiajs/vue3';
+
+// ─────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────
+
+export interface ReservationFilters {
+    status?: string;
+    check_in_date?: string;
+    check_out_date?: string;
+    search?: string;
+}
 
 /**
  * Reservation Composable
  * Handles all reservation-related business logic
+ *
+ * Best Practices Applied:
+ * - shallowRef for primitives (better performance)
+ * - ref for arrays/objects (deep reactivity)
+ * - readonly for protected state
+ * - computed for derived values
+ * - Options object pattern for complex configs
  */
-export function useReservations() {
+export function useReservations(options?: {
+    autoFetch?: boolean;
+    initialFilters?: ReservationFilters;
+}) {
+
     // ─────────────────────────────────────────────────────────
-    // State (Reactive)
+    // State (Reactive) - Best Practice
     // ─────────────────────────────────────────────────────────
+    
+    // ✅ ref() for arrays (deep reactivity, replacement pattern)
     const reservations = ref<PMS.Reservation[]>([]);
     const reservation = ref<PMS.Reservation | null>(null);
-    const loading = ref(false);
-    const error = ref<string | null>(null);
-    const successMessage = ref<string | null>(null);
+    
+    // ✅ shallowRef() for primitives (performance optimization)
+    const loading = shallowRef(false);
+    const loadingCheckIn = shallowRef(false);
+    const loadingCheckOut = shallowRef(false);
+    const error = shallowRef<string | null>(null);
+    const successMessage = shallowRef<string | null>(null);
+    
+    // ✅ shallowRef() for filter object (will use reactive in store)
+    const filters = shallowRef<ReservationFilters>(options?.initialFilters || {});
+
+    // ─────────────────────────────────────────────────────────
+    // Computed (Derived State) - Best Practice
+    // ─────────────────────────────────────────────────────────
+    
+    const pendingCount = computed(() => 
+        reservations.value.filter(r => r.status === 'pending').length
+    );
+
+    const confirmedCount = computed(() => 
+        reservations.value.filter(r => r.status === 'confirmed').length
+    );
+
+    const checkedInCount = computed(() => 
+        reservations.value.filter(r => r.status === 'checked_in').length
+    );
+
+    const todayCheckIns = computed(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return reservations.value.filter(r => r.check_in_date === today);
+    });
+
+    const todayCheckOuts = computed(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return reservations.value.filter(r => r.check_out_date === today);
+    });
 
     // ─────────────────────────────────────────────────────────
     // API Calls
@@ -23,16 +80,14 @@ export function useReservations() {
     /**
      * Fetch all reservations with optional filters
      */
-    async function fetchAll(params?: {
-        status?: string;
-        check_in_date?: string;
-        check_out_date?: string;
-    }): Promise<void> {
+    async function fetchAll(params?: ReservationFilters): Promise<void> {
         loading.value = true;
         error.value = null;
 
         try {
-            const { data } = await axios.get('/api/v1/front-desk/reservations', { params });
+            const { data } = await axios.get('/api/v1/front-desk/reservations', { 
+                params: params || filters.value 
+            });
             reservations.value = data.data;
         } catch (err: any) {
             error.value = err.response?.data?.message || 'Failed to fetch reservations';
@@ -145,7 +200,7 @@ export function useReservations() {
      * Guest Check In
      */
     async function checkIn(id: number): Promise<void> {
-        loading.value = true;
+        loadingCheckIn.value = true;
         error.value = null;
 
         try {
@@ -164,7 +219,7 @@ export function useReservations() {
             console.error('Check in error:', err);
             throw err;
         } finally {
-            loading.value = false;
+            loadingCheckIn.value = false;
         }
     }
 
@@ -175,7 +230,7 @@ export function useReservations() {
         paid_amount: number;
         payment_method: string;
     }): Promise<void> {
-        loading.value = true;
+        loadingCheckOut.value = true;
         error.value = null;
 
         try {
@@ -192,8 +247,22 @@ export function useReservations() {
             console.error('Check out error:', err);
             throw err;
         } finally {
-            loading.value = false;
+            loadingCheckOut.value = false;
         }
+    }
+
+    /**
+     * Set filters
+     */
+    function setFilters(newFilters: ReservationFilters): void {
+        filters.value = { ...filters.value, ...newFilters };
+    }
+
+    /**
+     * Reset filters
+     */
+    function resetFilters(): void {
+        filters.value = {};
     }
 
     /**
@@ -211,17 +280,35 @@ export function useReservations() {
     }
 
     // ─────────────────────────────────────────────────────────
-    // Return (Public API)
+    // Auto-fetch on init (optional)
     // ─────────────────────────────────────────────────────────
+    
+    if (options?.autoFetch) {
+        fetchAll();
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // Return (Public API) - Best Practice: Readonly state + Actions
+    // ─────────────────────────────────────────────────────────
+    
     return {
-        // State
-        reservations,
-        reservation,
-        loading,
-        error,
-        successMessage,
+        // ✅ Readonly state (can't mutate from components directly)
+        reservations: readonly(reservations),
+        reservation: readonly(reservation),
+        loading: readonly(loading),
+        loadingCheckIn: readonly(loadingCheckIn),
+        loadingCheckOut: readonly(loadingCheckOut),
+        error: readonly(error),
+        successMessage: readonly(successMessage),
         
-        // Methods
+        // ✅ Computed values (derived state)
+        pendingCount,
+        confirmedCount,
+        checkedInCount,
+        todayCheckIns,
+        todayCheckOuts,
+        
+        // ✅ Actions (only way to mutate state)
         fetchAll,
         fetchById,
         create,
@@ -229,6 +316,8 @@ export function useReservations() {
         cancel,
         checkIn,
         checkOut,
+        setFilters,
+        resetFilters,
         clearError,
         clearSuccess
     };

@@ -18,7 +18,7 @@
             </div>
 
             <!-- ───────────────────────────────────────────────────── -->
-            <!-- Statistics Cards -->
+            <!-- Statistics Cards - Using Computed Getters -->
             <!-- ───────────────────────────────────────────────────── -->
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <!-- Pending -->
@@ -67,7 +67,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
                         <select 
-                            v-model="filters.status"
+                            v-model="localFilters.status"
                             @change="applyFilters"
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
@@ -85,7 +85,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Check-in From</label>
                         <input 
-                            v-model="filters.check_in_date"
+                            v-model="localFilters.check_in_date"
                             @change="applyFilters"
                             type="date" 
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -96,7 +96,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Check-out To</label>
                         <input 
-                            v-model="filters.check_out_date"
+                            v-model="localFilters.check_out_date"
                             @change="applyFilters"
                             type="date" 
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -161,7 +161,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
-                            <!-- Loading State -->
+                            <!-- Loading State - v-if only -->
                             <tr v-if="loading">
                                 <td colspan="8" class="px-6 py-8 text-center">
                                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -169,14 +169,14 @@
                                 </td>
                             </tr>
 
-                            <!-- Empty State -->
+                            <!-- Empty State - v-else-if -->
                             <tr v-else-if="reservations.length === 0">
                                 <td colspan="8" class="px-6 py-8 text-center text-slate-500">
                                     No reservations found
                                 </td>
                             </tr>
 
-                            <!-- Data Rows -->
+                            <!-- Data Rows - v-for with :key -->
                             <tr 
                                 v-for="reservation in reservations" 
                                 :key="reservation.id"
@@ -227,33 +227,33 @@
                                         <button 
                                             v-if="reservation.status === 'confirmed'"
                                             @click="handleCheckIn(reservation)"
-                                            :disabled="actionLoading"
-                                            class="text-green-600 hover:text-green-900"
+                                            :disabled="loadingCheckIn"
+                                            class="text-green-600 hover:text-green-900 disabled:opacity-50"
                                             title="Check In"
                                         >
-                                            {{ actionLoading ? '...' : 'Check In' }}
+                                            {{ loadingCheckIn ? '...' : 'Check In' }}
                                         </button>
 
                                         <!-- Check Out -->
                                         <button 
                                             v-if="reservation.status === 'checked_in'"
                                             @click="handleCheckOut(reservation)"
-                                            :disabled="actionLoading"
-                                            class="text-orange-600 hover:text-orange-900"
+                                            :disabled="loadingCheckOut"
+                                            class="text-orange-600 hover:text-orange-900 disabled:opacity-50"
                                             title="Check Out"
                                         >
-                                            {{ actionLoading ? '...' : 'Check Out' }}
+                                            {{ loadingCheckOut ? '...' : 'Check Out' }}
                                         </button>
 
                                         <!-- Cancel -->
                                         <button 
                                             v-if="['pending', 'confirmed'].includes(reservation.status)"
                                             @click="handleCancel(reservation)"
-                                            :disabled="actionLoading"
-                                            class="text-red-600 hover:text-red-900"
+                                            :disabled="loading"
+                                            class="text-red-600 hover:text-red-900 disabled:opacity-50"
                                             title="Cancel"
                                         >
-                                            {{ actionLoading ? '...' : 'Cancel' }}
+                                            {{ loading ? '...' : 'Cancel' }}
                                         </button>
                                     </div>
                                 </td>
@@ -296,21 +296,23 @@
 // ─────────────────────────────────────────────────────────────────────
 // 1. IMPORTS
 // ─────────────────────────────────────────────────────────────────────
-import { ref, computed, onMounted } from 'vue';
+import { ref, reactive, onMounted } from 'vue';
 import { useReservations } from '@/Composables/useReservations';
 import { useReservationsStore } from '@/Stores/reservations';
 import HotelLayout from '@/Layouts/HotelLayout.vue';
 
 // ─────────────────────────────────────────────────────────────────────
-// 2. SETUP
+// 2. SETUP - Composables + Stores
 // ─────────────────────────────────────────────────────────────────────
 const { 
-    reservations, 
-    loading, 
-    successMessage, 
+    reservations,
+    loading,
+    loadingCheckIn,
+    loadingCheckOut,
+    successMessage,
     error: errorMessage,
-    checkIn, 
-    checkOut, 
+    checkIn,
+    checkOut,
     cancel: cancelReservation,
     clearError,
     clearSuccess
@@ -319,11 +321,12 @@ const {
 const store = useReservationsStore();
 
 // ─────────────────────────────────────────────────────────────────────
-// 3. LOCAL STATE
+// 3. LOCAL STATE - Best Practice
 // ─────────────────────────────────────────────────────────────────────
-const actionLoading = ref(false);
 const searchQuery = ref('');
-const filters = ref({
+
+// ✅ Use reactive for local filter object
+const localFilters = reactive({
     status: '',
     check_in_date: '',
     check_out_date: ''
@@ -332,11 +335,11 @@ const filters = ref({
 let searchTimeout: NodeJS.Timeout;
 
 // ─────────────────────────────────────────────────────────────────────
-// 4. FUNCTIONS
+// 4. FUNCTIONS - Best Practice
 // ─────────────────────────────────────────────────────────────────────
 
 /**
- * Debounced search
+ * Debounced search - Cancel previous request
  */
 function debouncedSearch() {
     clearTimeout(searchTimeout);
@@ -350,7 +353,7 @@ function debouncedSearch() {
  * Apply filters
  */
 function applyFilters() {
-    store.setFilters(filters.value);
+    store.setFilters(localFilters);
     store.fetchAll();
 }
 
@@ -358,18 +361,16 @@ function applyFilters() {
  * Reset filters
  */
 function resetFilters() {
-    filters.value = {
-        status: '',
-        check_in_date: '',
-        check_out_date: ''
-    };
+    localFilters.status = '';
+    localFilters.check_in_date = '';
+    localFilters.check_out_date = '';
     searchQuery.value = '';
     store.resetFilters();
     store.fetchAll();
 }
 
 /**
- * Format date
+ * Format date - Pure function
  */
 function formatDate(dateString: string): string {
     const date = new Date(dateString);
@@ -385,58 +386,48 @@ function formatDate(dateString: string): string {
  */
 function viewReservation(reservation: PMS.Reservation) {
     store.setSelectedReservation(reservation);
-    // Navigate to detail page or open modal
     console.log('View reservation:', reservation);
 }
 
 /**
- * Handle Check In
+ * Handle Check In - Action with confirmation
  */
 async function handleCheckIn(reservation: PMS.Reservation) {
     if (!confirm(`Check in guest: ${reservation.guest?.name}?`)) return;
     
-    actionLoading.value = true;
     try {
         await checkIn(reservation.id);
         await store.fetchAll();
     } catch (error) {
         console.error('Check in failed:', error);
-    } finally {
-        actionLoading.value = false;
     }
 }
 
 /**
- * Handle Check Out
+ * Handle Check Out - Action with confirmation
  */
 async function handleCheckOut(reservation: PMS.Reservation) {
     if (!confirm(`Check out guest: ${reservation.guest?.name}?`)) return;
     
-    actionLoading.value = true;
     try {
         await checkOut(reservation.id);
         await store.fetchAll();
     } catch (error) {
         console.error('Check out failed:', error);
-    } finally {
-        actionLoading.value = false;
     }
 }
 
 /**
- * Handle Cancel
+ * Handle Cancel - Action with confirmation
  */
 async function handleCancel(reservation: PMS.Reservation) {
     if (!confirm(`Cancel reservation: ${reservation.reference}?`)) return;
     
-    actionLoading.value = true;
     try {
         await cancelReservation(reservation.id);
         await store.fetchAll();
     } catch (error) {
         console.error('Cancel failed:', error);
-    } finally {
-        actionLoading.value = false;
     }
 }
 
@@ -452,12 +443,11 @@ function changePage(page: number) {
  * Open create modal
  */
 function openCreateModal() {
-    // Implement create reservation modal
     console.log('Open create reservation modal');
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// 5. LIFECYCLE HOOKS
+// 5. LIFECYCLE HOOKS - Best Practice
 // ─────────────────────────────────────────────────────────────────────
 onMounted(() => {
     store.fetchAll();

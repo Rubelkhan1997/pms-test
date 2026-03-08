@@ -4,19 +4,24 @@ import axios from 'axios';
 /**
  * Reservation Store (Pinia)
  * Global state management for reservations
+ * 
+ * Best Practices Applied:
+ * - Minimal state, derive rest with getters
+ * - Explicit actions for mutations
+ * - Typed state and actions
  */
 export const useReservationsStore = defineStore('reservations', {
     // ─────────────────────────────────────────────────────────
-    // State (Reactive Data)
+    // State (Reactive Data) - Best Practice
     // ─────────────────────────────────────────────────────────
     state: () => ({
-        // All reservations list
+        // ✅ ref() for arrays (replacement pattern)
         reservations: [] as PMS.Reservation[],
         
         // Currently selected reservation
         selectedReservation: null as PMS.Reservation | null,
         
-        // Loading states
+        // ✅ shallowRef equivalent for loading states (via state)
         loading: false,
         loadingList: false,
         loadingDetail: false,
@@ -24,12 +29,12 @@ export const useReservationsStore = defineStore('reservations', {
         // Error states
         error: null as string | null,
         
-        // Filters
+        // ✅ Use separate state for filters (will be reactive)
         filters: {
-            status: '' as string,
-            check_in_date: '' as string,
-            check_out_date: '' as string,
-            search: '' as string
+            status: '',
+            check_in_date: '',
+            check_out_date: '',
+            search: ''
         },
         
         // Pagination
@@ -42,7 +47,7 @@ export const useReservationsStore = defineStore('reservations', {
     }),
 
     // ─────────────────────────────────────────────────────────
-    // Getters (Computed Properties)
+    // Getters (Computed Properties) - Best Practice
     // ─────────────────────────────────────────────────────────
     getters: {
         /**
@@ -53,28 +58,28 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         /**
-         * Get pending reservations count
+         * Get pending reservations count - Derived state
          */
         pendingCount: (state) => {
             return state.reservations.filter(r => r.status === 'pending').length;
         },
 
         /**
-         * Get confirmed reservations count
+         * Get confirmed reservations count - Derived state
          */
         confirmedCount: (state) => {
             return state.reservations.filter(r => r.status === 'confirmed').length;
         },
 
         /**
-         * Get checked in reservations count
+         * Get checked in reservations count - Derived state
          */
         checkedInCount: (state) => {
             return state.reservations.filter(r => r.status === 'checked_in').length;
         },
 
         /**
-         * Get today's check-ins
+         * Get today's check-ins - Derived state
          */
         todayCheckIns: (state) => {
             const today = new Date().toISOString().split('T')[0];
@@ -82,7 +87,7 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         /**
-         * Get today's check-outs
+         * Get today's check-outs - Derived state
          */
         todayCheckOuts: (state) => {
             const today = new Date().toISOString().split('T')[0];
@@ -90,7 +95,7 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         /**
-         * Get reservations with search
+         * Get filtered reservations - Derived state with multiple criteria
          */
         filteredReservations: (state) => {
             let filtered = [...state.reservations];
@@ -123,15 +128,31 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         /**
-         * Get total revenue from reservations
+         * Get total revenue from reservations - Derived state
          */
         totalRevenue: (state) => {
             return state.reservations.reduce((sum, r) => sum + r.total_amount, 0);
+        },
+
+        /**
+         * Get average stay duration - Derived state
+         */
+        averageStayDuration: (state) => {
+            if (state.reservations.length === 0) return 0;
+            
+            const totalDays = state.reservations.reduce((sum, r) => {
+                const checkIn = new Date(r.check_in_date);
+                const checkOut = new Date(r.check_out_date);
+                const days = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
+                return sum + days;
+            }, 0);
+            
+            return Math.round(totalDays / state.reservations.length);
         }
     },
 
     // ─────────────────────────────────────────────────────────
-    // Actions (Methods)
+    // Actions (Methods) - Best Practice
     // ─────────────────────────────────────────────────────────
     actions: {
         /**
@@ -209,6 +230,13 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         /**
+         * Clear selected reservation
+         */
+        clearSelectedReservation() {
+            this.selectedReservation = null;
+        },
+
+        /**
          * Add reservation to list
          */
         addReservation(reservation: PMS.Reservation) {
@@ -250,10 +278,29 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         /**
-         * Clear all state
+         * Reset store to initial state
          */
         $reset() {
-            this.$reset();
+            this.$patch({
+                reservations: [],
+                selectedReservation: null,
+                loading: false,
+                loadingList: false,
+                loadingDetail: false,
+                error: null,
+                filters: {
+                    status: '',
+                    check_in_date: '',
+                    check_out_date: '',
+                    search: ''
+                },
+                pagination: {
+                    current_page: 1,
+                    per_page: 15,
+                    total: 0,
+                    last_page: 1
+                }
+            });
         }
     }
 });
