@@ -421,3 +421,62 @@ export function useReservations() {
 - **Version:** 1.0.0
 - **Last Updated:** 2026-03-17
 - **Author:** Development Team
+
+
+resources/js/
+│
+├── Components/                    # ✅ PascalCase
+│   ├── Common/
+│   │   ├── AppButton.vue
+│   │   ├── AppInput.vue
+│   │   └── AppModal.vue
+│   ├── Forms/
+│   │   ├── DatePicker.vue
+│   │   └── TimePicker.vue
+│   └── Table/
+│       └── Table.vue
+│
+├── Composables/                   # ✅ PascalCase folder, camelCase file + use prefix
+│   ├── useReservations.ts
+│   └── useHousekeeping.ts
+│
+├── Helpers/                       # ✅ PascalCase folder, camelCase file + use prefix
+│   ├── index.ts
+│   ├── useLoading.ts
+│   ├── useMessage.ts
+│   └── usePolling.ts
+│
+├── Layouts/                       # ✅ PascalCase
+│   ├── AppLayout.vue
+│   ├── HotelLayout.vue
+│   └── MobileLayout.vue
+│
+├── Pages/                         # ✅ PascalCase folder & files
+│   ├── Dashboard/
+│   │   └── Index.vue
+│   └── Reservations/
+│       ├── Index.vue
+│       └── Show.vue
+│
+├── Stores/                        # ✅ PascalCase folder
+│   ├── FrontDesk/                 # Module folder
+│   │   ├── reservationStore.ts    # ✅ camelCase + Store suffix
+│   │   └── index.ts               # ✅ lowercase
+│   ├── Housekeeping/
+│   │   ├── housekeepingStore.ts
+│   │   └── index.ts
+│   └── index.ts                   # ✅ Root barrel export
+│
+├── Types/                         # ✅ PascalCase folder
+│   ├── FrontDesk/
+│   │   ├── reservation.ts         # ✅ camelCase
+│   │   ├── room.ts
+│   │   ├── guest.ts
+│   │   └── index.ts
+│   ├── Housekeeping/
+│   │   ├── task.ts
+│   │   └── index.ts
+│   └── index.ts                   # ✅ Root barrel export
+│
+├── app.ts                         # ✅ Entry point
+└── env.d.ts                       # ✅ TypeScript declarations
