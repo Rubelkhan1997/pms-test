@@ -11,12 +11,68 @@ use App\Modules\Mobile\Controllers\Web\MobileTaskController as MobileController;
 use App\Modules\Pos\Controllers\Web\PosOrderController as PosController;
 use App\Modules\Reports\Controllers\Web\ReportSnapshotController as ReportsController;
 use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
-Route::prefix('front-desk')->name('front-desk.')->group(function (): void {
-    Route::get('/reservations', [FrontDeskController::class, 'index'])->name('reservations.index');
-    Route::post('/reservations', [FrontDeskController::class, 'store'])->name('reservations.store');
+// ─────────────────────────────────────────────────────────
+// Dashboard & Home Routes
+// ─────────────────────────────────────────────────────────
+Route::get('/', function () {
+    return redirect()->route('dashboard');
+})->name('home');
+
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard/Index');
+})->name('dashboard');
+
+// ─────────────────────────────────────────────────────────
+// Reservations Routes (FrontDesk)
+// ─────────────────────────────────────────────────────────
+Route::prefix('reservations')->name('reservations.')->group(function (): void {
+    // List all reservations
+    Route::get('/', [FrontDeskController::class, 'index'])->name('index');
+    
+    // View single reservation
+    Route::get('/{reservation}', [FrontDeskController::class, 'show'])->name('show');
+    
+    // Create reservation (form)
+    Route::get('/create', [FrontDeskController::class, 'create'])->name('create');
+    
+    // Store reservation
+    Route::post('/', [FrontDeskController::class, 'store'])->name('store');
+    
+    // Edit reservation (form)
+    Route::get('/{reservation}/edit', [FrontDeskController::class, 'edit'])->name('edit');
+    
+    // Update reservation
+    Route::put('/{reservation}', [FrontDeskController::class, 'update'])->name('update');
+    
+    // Delete reservation
+    Route::delete('/{reservation}', [FrontDeskController::class, 'destroy'])->name('destroy');
+    
+    // Actions
+    Route::post('/{reservation}/check-in', [FrontDeskController::class, 'checkIn'])->name('check-in');
+    Route::post('/{reservation}/check-out', [FrontDeskController::class, 'checkOut'])->name('check-out');
+    Route::post('/{reservation}/cancel', [FrontDeskController::class, 'cancel'])->name('cancel');
 });
 
+// ─────────────────────────────────────────────────────────
+// API Routes for Frontend (Composables/Services)
+// ─────────────────────────────────────────────────────────
+Route::prefix('api/v1')->name('api.v1.')->group(function (): void {
+    // Reservations API
+    Route::get('/front-desk/reservations', [FrontDeskController::class, 'index']);
+    Route::get('/reservations/{reservation}', [FrontDeskController::class, 'show']);
+    Route::post('/reservations', [FrontDeskController::class, 'store']);
+    Route::put('/reservations/{reservation}', [FrontDeskController::class, 'update']);
+    Route::delete('/reservations/{reservation}', [FrontDeskController::class, 'destroy']);
+    Route::post('/reservations/{reservation}/check-in', [FrontDeskController::class, 'checkIn']);
+    Route::post('/reservations/{reservation}/check-out', [FrontDeskController::class, 'checkOut']);
+    Route::post('/reservations/{reservation}/cancel', [FrontDeskController::class, 'cancel']);
+});
+
+// ─────────────────────────────────────────────────────────
+// Other Module Routes (Keep existing)
+// ─────────────────────────────────────────────────────────
 Route::middleware(['web', 'auth'])->prefix('booking')->name('booking.')->group(function (): void {
     Route::get('/ota-syncs', [BookingController::class, 'index'])->name('ota-syncs.index');
     Route::post('/ota-syncs', [BookingController::class, 'store'])->name('ota-syncs.store');

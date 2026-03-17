@@ -1,4 +1,5 @@
 <template>
+    <Head title="Reservations" />
     <HotelLayout>
         <section class="space-y-6">
             <!-- ───────────────────────────────────────────────────── -->
@@ -297,8 +298,9 @@
 // 1. IMPORTS
 // ─────────────────────────────────────────────────────────────────────
 import { ref, reactive, onMounted } from 'vue';
-import { useReservations } from '@/Composables/useReservations';
-import { useReservationsStore } from '@/Stores/reservations';
+import { Head } from '@inertiajs/vue3';
+import { useReservations } from '@/Composables/FrontDesk/useReservations';
+import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
 import HotelLayout from '@/Layouts/HotelLayout.vue';
 
 // ─────────────────────────────────────────────────────────────────────

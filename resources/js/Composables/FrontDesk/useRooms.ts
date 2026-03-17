@@ -1,12 +1,10 @@
-import { ref, shallowRef, computed, onMounted, onUnmounted } from 'vue';
-import axios from 'axios';
-import { useLoading, useMessage, usePolling } from '@/Helpers';
+import { ref, shallowRef, computed } from 'vue';
+import { useLoading, useMessage } from '@/Helpers';
 
 /**
  * Room Composable - Business Logic for Room Management
- *
- * @see https://vuejs.org/guide/best-practices/performance.html
- * @see https://vuejs.org/guide/reusability/composables.html
+ * 
+ * Note: This is a base template. Update API endpoints as needed.
  */
 
 // ─────────────────────────────────────────────────────────
@@ -23,8 +21,6 @@ export interface RoomFilters {
 export interface UseRoomOptions {
     autoFetch?: boolean;
     initialFilters?: RoomFilters;
-    pollingInterval?: number;
-    cacheEnabled?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -37,18 +33,15 @@ export function useRooms(options: UseRoomOptions = {}) {
     // ─────────────────────────────────────────────────────
     const {
         autoFetch = false,
-        initialFilters = {},
-        pollingInterval = 30000,
-        cacheEnabled = false
+        initialFilters = {}
     } = options;
 
     // ─────────────────────────────────────────────────────
     // State
     // ─────────────────────────────────────────────────────
-    const _rooms = ref<PMS.Room[]>([]);
-    const _room = ref<PMS.Room | null>(null);
+    const _rooms = ref<any[]>([]);
+    const _room = ref<any | null>(null);
     const _filters = shallowRef<RoomFilters>(initialFilters);
-    const _cache = shallowRef<Map<string, PMS.Room[]>>(new Map());
 
     // Compose smaller composables
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
@@ -68,19 +61,19 @@ export function useRooms(options: UseRoomOptions = {}) {
 
     // Room counts by status
     const availableCount = computed(() =>
-        _rooms.value.filter(r => r.status === 'available').length
+        _rooms.value.filter((r: any) => r.status === 'available').length
     );
 
     const occupiedCount = computed(() =>
-        _rooms.value.filter(r => r.status === 'occupied').length
+        _rooms.value.filter((r: any) => r.status === 'occupied').length
     );
 
     const maintenanceCount = computed(() =>
-        _rooms.value.filter(r => r.status === 'maintenance').length
+        _rooms.value.filter((r: any) => r.status === 'maintenance').length
     );
 
     const dirtyCount = computed(() =>
-        _rooms.value.filter(r => r.status === 'dirty').length
+        _rooms.value.filter((r: any) => r.status === 'dirty').length
     );
 
     // Filtered rooms
@@ -89,65 +82,52 @@ export function useRooms(options: UseRoomOptions = {}) {
         const filters = _filters.value;
 
         if (filters.status) {
-            filtered = filtered.filter(r => r.status === filters.status);
+            filtered = filtered.filter((r: any) => r.status === filters.status);
         }
 
         if (filters.floor) {
-            filtered = filtered.filter(r => r.floor === filters.floor);
+            filtered = filtered.filter((r: any) => r.floor === filters.floor);
         }
 
         if (filters.type) {
-            filtered = filtered.filter(r => r.type === filters.type);
+            filtered = filtered.filter((r: any) => r.type === filters.type);
         }
 
         if (filters.search) {
             const search = filters.search.toLowerCase();
-            filtered = filtered.filter(r =>
-                r.number.toLowerCase().includes(search) ||
-                r.type.toLowerCase().includes(search)
+            filtered = filtered.filter((r: any) =>
+                r.number?.toLowerCase().includes(search) ||
+                r.type?.toLowerCase().includes(search)
             );
         }
 
         return filtered;
     });
 
-    // Total revenue potential
-    const totalRevenuePotential = computed(() =>
-        _rooms.value.reduce((sum, r) => sum + r.price, 0)
-    );
-
     // ─────────────────────────────────────────────────────
-    // API Calls
+    // Actions (Update with your API endpoints)
     // ─────────────────────────────────────────────────────
 
     async function fetchAll(params?: RoomFilters): Promise<void> {
         const fetchFilters = params || _filters.value;
-        const cacheKey = JSON.stringify(fetchFilters);
-
-        if (cacheEnabled && _cache.value.has(cacheKey)) {
-            _rooms.value = _cache.value.get(cacheKey)!;
-            return;
-        }
 
         startLoading();
         clearError();
 
         try {
-            const { data } = await axios.get('/api/v1/rooms', {
-                params: fetchFilters
-            });
+            // TODO: Update with your actual API endpoint
+            // const { data } = await axios.get('/api/v1/rooms', {
+            //     params: fetchFilters
+            // });
+            // _rooms.value = data.data;
 
-            _rooms.value = data.data;
-
-            if (cacheEnabled) {
-                _cache.value.set(cacheKey, data.data);
-            }
+            // Mock data for base project
+            _rooms.value = [];
 
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch rooms';
             showError(message);
             console.error('Fetch rooms error:', err);
-            throw err;
         } finally {
             stopLoading();
         }
@@ -158,27 +138,31 @@ export function useRooms(options: UseRoomOptions = {}) {
         clearError();
 
         try {
-            const { data } = await axios.get(`/api/v1/rooms/${id}`);
-            _room.value = data.data;
+            // TODO: Update with your actual API endpoint
+            // const { data } = await axios.get(`/api/v1/rooms/${id}`);
+            // _room.value = data.data;
+
+            _room.value = null;
+
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch room';
             showError(message);
             console.error('Fetch room error:', err);
-            throw err;
         } finally {
             stopLoading();
         }
     }
 
-    async function updateStatus(id: number, status: PMS.Room['status']): Promise<void> {
+    async function updateStatus(id: number, status: string): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            const response = await axios.patch(`/api/v1/rooms/${id}/status`, { status });
-            showSuccess(`Room ${response.data.data.number} status updated to ${status}`);
+            // TODO: Update with your actual API endpoint
+            // await axios.patch(`/api/v1/rooms/${id}/status`, { status });
+            showSuccess(`Room status updated to ${status}`);
 
-            const index = _rooms.value.findIndex(r => r.id === id);
+            const index = _rooms.value.findIndex((r: any) => r.id === id);
             if (index !== -1) {
                 _rooms.value = [
                     ..._rooms.value.slice(0, index),
@@ -187,14 +171,10 @@ export function useRooms(options: UseRoomOptions = {}) {
                 ];
             }
 
-            if (cacheEnabled) {
-                _cache.value.clear();
-            }
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to update room status';
             showError(message);
             console.error('Update room status error:', err);
-            throw err;
         } finally {
             stopSaving();
         }
@@ -210,37 +190,6 @@ export function useRooms(options: UseRoomOptions = {}) {
 
     function resetFilters(): void {
         _filters.value = initialFilters;
-    }
-
-    function clearCache(): void {
-        _cache.value.clear();
-    }
-
-    // ─────────────────────────────────────────────────────
-    // Polling
-    // ─────────────────────────────────────────────────────
-
-    const { start: startPolling, stop: stopPolling } = usePolling(
-        () => fetchAll(),
-        pollingInterval,
-        () => true
-    );
-
-    // ─────────────────────────────────────────────────────
-    // Lifecycle Hooks
-    // ─────────────────────────────────────────────────────
-
-    if (autoFetch) {
-        onMounted(() => {
-            fetchAll();
-            if (pollingInterval > 0) {
-                startPolling();
-            }
-        });
-
-        onUnmounted(() => {
-            stopPolling();
-        });
     }
 
     // ─────────────────────────────────────────────────────
@@ -262,7 +211,6 @@ export function useRooms(options: UseRoomOptions = {}) {
         maintenanceCount,
         dirtyCount,
         filteredRooms,
-        totalRevenuePotential,
 
         // Actions
         fetchAll,
@@ -270,7 +218,6 @@ export function useRooms(options: UseRoomOptions = {}) {
         updateStatus,
         setFilters,
         resetFilters,
-        clearCache,
         clearError,
         clearSuccess
     };
