@@ -3,49 +3,49 @@ import axios from 'axios';
 import { useLoading, useMessage, usePolling } from '@/Helpers';
 
 /**
- * Housekeeping Composable - Business Logic for Housekeeping Management
+ * Guest Composable - Business Logic for Guest Management
  */
 
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────
 
-export interface TaskFilters {
-    status?: string;
-    priority?: string;
-    assigned_to?: number;
-    room_id?: number;
+export interface GuestFilters {
+    search?: string;
+    email?: string;
+    phone?: string;
+    loyalty_member?: boolean;
 }
 
-export interface UseHousekeepingOptions {
+export interface UseGuestOptions {
     autoFetch?: boolean;
-    initialFilters?: TaskFilters;
+    initialFilters?: GuestFilters;
     pollingInterval?: number;
     cacheEnabled?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────
-// Main Composable: useHousekeeping
+// Main Composable: useGuests
 // ─────────────────────────────────────────────────────────
 
-export function useHousekeeping(options: UseHousekeepingOptions = {}) {
+export function useGuests(options: UseGuestOptions = {}) {
     // ─────────────────────────────────────────────────────
     // Options with defaults
     // ─────────────────────────────────────────────────────
     const {
         autoFetch = false,
         initialFilters = {},
-        pollingInterval = 60000, // 1 minute for housekeeping
+        pollingInterval = 30000,
         cacheEnabled = false
     } = options;
 
     // ─────────────────────────────────────────────────────
     // State
     // ─────────────────────────────────────────────────────
-    const _tasks = ref<PMS.HousekeepingTask[]>([]);
-    const _task = ref<PMS.HousekeepingTask | null>(null);
-    const _filters = shallowRef<TaskFilters>(initialFilters);
-    const _cache = shallowRef<Map<string, PMS.HousekeepingTask[]>>(new Map());
+    const _guests = ref<PMS.Guest[]>([]);
+    const _guest = ref<PMS.Guest | null>(null);
+    const _filters = shallowRef<GuestFilters>(initialFilters);
+    const _cache = shallowRef<Map<string, PMS.Guest[]>>(new Map());
 
     // Compose smaller composables
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
@@ -56,58 +56,40 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
     // ─────────────────────────────────────────────────────
     // Computed (Derived State)
     // ─────────────────────────────────────────────────────
-    const tasks = computed(() => _tasks.value);
-    const task = computed(() => _task.value);
+    const guests = computed(() => _guests.value);
+    const guest = computed(() => _guest.value);
     const loading = computed(() => _loading.value);
     const saving = computed(() => _saving.value);
     const successMessage = computed(() => _successMessage.value);
     const error = computed(() => _error.value);
 
-    // Task counts by status
-    const pendingCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'pending').length
+    // Guest counts
+    const totalGuests = computed(() => _guests.value.length);
+
+    const loyaltyMembersCount = computed(() =>
+        _guests.value.filter(g => (g.loyalty_points ?? 0) > 0).length
     );
 
-    const inProgressCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'in_progress').length
-    );
-
-    const completedCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'completed').length
-    );
-
-    const overdueCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'overdue').length
-    );
-
-    // Task counts by priority
-    const urgentCount = computed(() =>
-        _tasks.value.filter(t => t.priority === 'urgent').length
-    );
-
-    const highPriorityCount = computed(() =>
-        _tasks.value.filter(t => t.priority === 'high').length
-    );
-
-    // Filtered tasks
-    const filteredTasks = computed(() => {
-        let filtered = [..._tasks.value];
+    // Filtered guests
+    const filteredGuests = computed(() => {
+        let filtered = [..._guests.value];
         const filters = _filters.value;
 
-        if (filters.status) {
-            filtered = filtered.filter(t => t.status === filters.status);
+        if (filters.search) {
+            const search = filters.search.toLowerCase();
+            filtered = filtered.filter(g =>
+                g.name.toLowerCase().includes(search) ||
+                g.email.toLowerCase().includes(search) ||
+                (g.nid && g.nid.toLowerCase().includes(search))
+            );
         }
 
-        if (filters.priority) {
-            filtered = filtered.filter(t => t.priority === filters.priority);
+        if (filters.email) {
+            filtered = filtered.filter(g => g.email === filters.email);
         }
 
-        if (filters.assigned_to) {
-            filtered = filtered.filter(t => t.assigned_to === filters.assigned_to);
-        }
-
-        if (filters.room_id) {
-            filtered = filtered.filter(t => t.room_id === filters.room_id);
+        if (filters.phone) {
+            filtered = filtered.filter(g => g.phone === filters.phone);
         }
 
         return filtered;
@@ -117,12 +99,12 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
     // API Calls
     // ─────────────────────────────────────────────────────
 
-    async function fetchAll(params?: TaskFilters): Promise<void> {
+    async function fetchAll(params?: GuestFilters): Promise<void> {
         const fetchFilters = params || _filters.value;
         const cacheKey = JSON.stringify(fetchFilters);
 
         if (cacheEnabled && _cache.value.has(cacheKey)) {
-            _tasks.value = _cache.value.get(cacheKey)!;
+            _guests.value = _cache.value.get(cacheKey)!;
             return;
         }
 
@@ -130,20 +112,20 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
         clearError();
 
         try {
-            const { data } = await axios.get('/api/v1/housekeeping/tasks', {
+            const { data } = await axios.get('/api/v1/guests', {
                 params: fetchFilters
             });
 
-            _tasks.value = data.data;
+            _guests.value = data.data;
 
             if (cacheEnabled) {
                 _cache.value.set(cacheKey, data.data);
             }
 
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to fetch tasks';
+            const message = err.response?.data?.message || 'Failed to fetch guests';
             showError(message);
-            console.error('Fetch tasks error:', err);
+            console.error('Fetch guests error:', err);
             throw err;
         } finally {
             stopLoading();
@@ -155,64 +137,62 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
         clearError();
 
         try {
-            const { data } = await axios.get(`/api/v1/housekeeping/tasks/${id}`);
-            _task.value = data.data;
+            const { data } = await axios.get(`/api/v1/guests/${id}`);
+            _guest.value = data.data;
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to fetch task';
+            const message = err.response?.data?.message || 'Failed to fetch guest';
             showError(message);
-            console.error('Fetch task error:', err);
+            console.error('Fetch guest error:', err);
             throw err;
         } finally {
             stopLoading();
         }
     }
 
-    async function updateStatus(id: number, status: string): Promise<void> {
+    async function create(data: {
+        name: string;
+        email: string;
+        phone: string;
+        nid?: string;
+        address?: string;
+        notes?: string;
+    }): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            await axios.patch(`/api/v1/housekeeping/tasks/${id}/status`, { status });
-            showSuccess('Task status updated successfully');
+            const response = await axios.post('/api/v1/guests', data);
+            showSuccess('Guest created successfully');
 
-            const index = _tasks.value.findIndex(t => t.id === id);
-            if (index !== -1) {
-                _tasks.value = [
-                    ..._tasks.value.slice(0, index),
-                    { ..._tasks.value[index], status },
-                    ..._tasks.value.slice(index + 1)
-                ];
-            }
+            _guests.value.unshift(response.data.data);
 
             if (cacheEnabled) {
                 _cache.value.clear();
             }
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to update task status';
+            const message = err.response?.data?.message || 'Failed to create guest';
             showError(message);
-            console.error('Update task status error:', err);
+            console.error('Create guest error:', err);
             throw err;
         } finally {
             stopSaving();
         }
     }
 
-    async function assignTask(id: number, assignedTo: number): Promise<void> {
+    async function update(id: number, data: Partial<PMS.Guest>): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            await axios.patch(`/api/v1/housekeeping/tasks/${id}/assign`, {
-                assigned_to: assignedTo
-            });
-            showSuccess('Task assigned successfully');
+            const response = await axios.put(`/api/v1/guests/${id}`, data);
+            showSuccess('Guest updated successfully');
 
-            const index = _tasks.value.findIndex(t => t.id === id);
+            const index = _guests.value.findIndex(g => g.id === id);
             if (index !== -1) {
-                _tasks.value = [
-                    ..._tasks.value.slice(0, index),
-                    { ..._tasks.value[index], assigned_to: assignedTo },
-                    ..._tasks.value.slice(index + 1)
+                _guests.value = [
+                    ..._guests.value.slice(0, index),
+                    response.data.data,
+                    ..._guests.value.slice(index + 1)
                 ];
             }
 
@@ -220,9 +200,9 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
                 _cache.value.clear();
             }
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to assign task';
+            const message = err.response?.data?.message || 'Failed to update guest';
             showError(message);
-            console.error('Assign task error:', err);
+            console.error('Update guest error:', err);
             throw err;
         } finally {
             stopSaving();
@@ -233,7 +213,7 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
     // Filter Management
     // ─────────────────────────────────────────────────────
 
-    function setFilters(newFilters: TaskFilters): void {
+    function setFilters(newFilters: GuestFilters): void {
         _filters.value = { ..._filters.value, ...newFilters };
     }
 
@@ -278,27 +258,23 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
 
     return {
         // Readonly state
-        tasks,
-        task,
+        guests,
+        guest,
         loading,
         saving,
         successMessage,
         error,
 
         // Computed values
-        pendingCount,
-        inProgressCount,
-        completedCount,
-        overdueCount,
-        urgentCount,
-        highPriorityCount,
-        filteredTasks,
+        totalGuests,
+        loyaltyMembersCount,
+        filteredGuests,
 
         // Actions
         fetchAll,
         fetchById,
-        updateStatus,
-        assignTask,
+        create,
+        update,
         setFilters,
         resetFilters,
         clearCache,

@@ -3,49 +3,52 @@ import axios from 'axios';
 import { useLoading, useMessage, usePolling } from '@/Helpers';
 
 /**
- * Housekeeping Composable - Business Logic for Housekeeping Management
+ * Room Composable - Business Logic for Room Management
+ *
+ * @see https://vuejs.org/guide/best-practices/performance.html
+ * @see https://vuejs.org/guide/reusability/composables.html
  */
 
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────
 
-export interface TaskFilters {
+export interface RoomFilters {
     status?: string;
-    priority?: string;
-    assigned_to?: number;
-    room_id?: number;
+    floor?: number;
+    type?: string;
+    search?: string;
 }
 
-export interface UseHousekeepingOptions {
+export interface UseRoomOptions {
     autoFetch?: boolean;
-    initialFilters?: TaskFilters;
+    initialFilters?: RoomFilters;
     pollingInterval?: number;
     cacheEnabled?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────
-// Main Composable: useHousekeeping
+// Main Composable: useRooms
 // ─────────────────────────────────────────────────────────
 
-export function useHousekeeping(options: UseHousekeepingOptions = {}) {
+export function useRooms(options: UseRoomOptions = {}) {
     // ─────────────────────────────────────────────────────
     // Options with defaults
     // ─────────────────────────────────────────────────────
     const {
         autoFetch = false,
         initialFilters = {},
-        pollingInterval = 60000, // 1 minute for housekeeping
+        pollingInterval = 30000,
         cacheEnabled = false
     } = options;
 
     // ─────────────────────────────────────────────────────
     // State
     // ─────────────────────────────────────────────────────
-    const _tasks = ref<PMS.HousekeepingTask[]>([]);
-    const _task = ref<PMS.HousekeepingTask | null>(null);
-    const _filters = shallowRef<TaskFilters>(initialFilters);
-    const _cache = shallowRef<Map<string, PMS.HousekeepingTask[]>>(new Map());
+    const _rooms = ref<PMS.Room[]>([]);
+    const _room = ref<PMS.Room | null>(null);
+    const _filters = shallowRef<RoomFilters>(initialFilters);
+    const _cache = shallowRef<Map<string, PMS.Room[]>>(new Map());
 
     // Compose smaller composables
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
@@ -56,73 +59,73 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
     // ─────────────────────────────────────────────────────
     // Computed (Derived State)
     // ─────────────────────────────────────────────────────
-    const tasks = computed(() => _tasks.value);
-    const task = computed(() => _task.value);
+    const rooms = computed(() => _rooms.value);
+    const room = computed(() => _room.value);
     const loading = computed(() => _loading.value);
     const saving = computed(() => _saving.value);
     const successMessage = computed(() => _successMessage.value);
     const error = computed(() => _error.value);
 
-    // Task counts by status
-    const pendingCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'pending').length
+    // Room counts by status
+    const availableCount = computed(() =>
+        _rooms.value.filter(r => r.status === 'available').length
     );
 
-    const inProgressCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'in_progress').length
+    const occupiedCount = computed(() =>
+        _rooms.value.filter(r => r.status === 'occupied').length
     );
 
-    const completedCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'completed').length
+    const maintenanceCount = computed(() =>
+        _rooms.value.filter(r => r.status === 'maintenance').length
     );
 
-    const overdueCount = computed(() =>
-        _tasks.value.filter(t => t.status === 'overdue').length
+    const dirtyCount = computed(() =>
+        _rooms.value.filter(r => r.status === 'dirty').length
     );
 
-    // Task counts by priority
-    const urgentCount = computed(() =>
-        _tasks.value.filter(t => t.priority === 'urgent').length
-    );
-
-    const highPriorityCount = computed(() =>
-        _tasks.value.filter(t => t.priority === 'high').length
-    );
-
-    // Filtered tasks
-    const filteredTasks = computed(() => {
-        let filtered = [..._tasks.value];
+    // Filtered rooms
+    const filteredRooms = computed(() => {
+        let filtered = [..._rooms.value];
         const filters = _filters.value;
 
         if (filters.status) {
-            filtered = filtered.filter(t => t.status === filters.status);
+            filtered = filtered.filter(r => r.status === filters.status);
         }
 
-        if (filters.priority) {
-            filtered = filtered.filter(t => t.priority === filters.priority);
+        if (filters.floor) {
+            filtered = filtered.filter(r => r.floor === filters.floor);
         }
 
-        if (filters.assigned_to) {
-            filtered = filtered.filter(t => t.assigned_to === filters.assigned_to);
+        if (filters.type) {
+            filtered = filtered.filter(r => r.type === filters.type);
         }
 
-        if (filters.room_id) {
-            filtered = filtered.filter(t => t.room_id === filters.room_id);
+        if (filters.search) {
+            const search = filters.search.toLowerCase();
+            filtered = filtered.filter(r =>
+                r.number.toLowerCase().includes(search) ||
+                r.type.toLowerCase().includes(search)
+            );
         }
 
         return filtered;
     });
 
+    // Total revenue potential
+    const totalRevenuePotential = computed(() =>
+        _rooms.value.reduce((sum, r) => sum + r.price, 0)
+    );
+
     // ─────────────────────────────────────────────────────
     // API Calls
     // ─────────────────────────────────────────────────────
 
-    async function fetchAll(params?: TaskFilters): Promise<void> {
+    async function fetchAll(params?: RoomFilters): Promise<void> {
         const fetchFilters = params || _filters.value;
         const cacheKey = JSON.stringify(fetchFilters);
 
         if (cacheEnabled && _cache.value.has(cacheKey)) {
-            _tasks.value = _cache.value.get(cacheKey)!;
+            _rooms.value = _cache.value.get(cacheKey)!;
             return;
         }
 
@@ -130,20 +133,20 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
         clearError();
 
         try {
-            const { data } = await axios.get('/api/v1/housekeeping/tasks', {
+            const { data } = await axios.get('/api/v1/rooms', {
                 params: fetchFilters
             });
 
-            _tasks.value = data.data;
+            _rooms.value = data.data;
 
             if (cacheEnabled) {
                 _cache.value.set(cacheKey, data.data);
             }
 
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to fetch tasks';
+            const message = err.response?.data?.message || 'Failed to fetch rooms';
             showError(message);
-            console.error('Fetch tasks error:', err);
+            console.error('Fetch rooms error:', err);
             throw err;
         } finally {
             stopLoading();
@@ -155,32 +158,32 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
         clearError();
 
         try {
-            const { data } = await axios.get(`/api/v1/housekeeping/tasks/${id}`);
-            _task.value = data.data;
+            const { data } = await axios.get(`/api/v1/rooms/${id}`);
+            _room.value = data.data;
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to fetch task';
+            const message = err.response?.data?.message || 'Failed to fetch room';
             showError(message);
-            console.error('Fetch task error:', err);
+            console.error('Fetch room error:', err);
             throw err;
         } finally {
             stopLoading();
         }
     }
 
-    async function updateStatus(id: number, status: string): Promise<void> {
+    async function updateStatus(id: number, status: PMS.Room['status']): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            await axios.patch(`/api/v1/housekeeping/tasks/${id}/status`, { status });
-            showSuccess('Task status updated successfully');
+            const response = await axios.patch(`/api/v1/rooms/${id}/status`, { status });
+            showSuccess(`Room ${response.data.data.number} status updated to ${status}`);
 
-            const index = _tasks.value.findIndex(t => t.id === id);
+            const index = _rooms.value.findIndex(r => r.id === id);
             if (index !== -1) {
-                _tasks.value = [
-                    ..._tasks.value.slice(0, index),
-                    { ..._tasks.value[index], status },
-                    ..._tasks.value.slice(index + 1)
+                _rooms.value = [
+                    ..._rooms.value.slice(0, index),
+                    { ..._rooms.value[index], status },
+                    ..._rooms.value.slice(index + 1)
                 ];
             }
 
@@ -188,41 +191,9 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
                 _cache.value.clear();
             }
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to update task status';
+            const message = err.response?.data?.message || 'Failed to update room status';
             showError(message);
-            console.error('Update task status error:', err);
-            throw err;
-        } finally {
-            stopSaving();
-        }
-    }
-
-    async function assignTask(id: number, assignedTo: number): Promise<void> {
-        startSaving();
-        clearError();
-
-        try {
-            await axios.patch(`/api/v1/housekeeping/tasks/${id}/assign`, {
-                assigned_to: assignedTo
-            });
-            showSuccess('Task assigned successfully');
-
-            const index = _tasks.value.findIndex(t => t.id === id);
-            if (index !== -1) {
-                _tasks.value = [
-                    ..._tasks.value.slice(0, index),
-                    { ..._tasks.value[index], assigned_to: assignedTo },
-                    ..._tasks.value.slice(index + 1)
-                ];
-            }
-
-            if (cacheEnabled) {
-                _cache.value.clear();
-            }
-        } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to assign task';
-            showError(message);
-            console.error('Assign task error:', err);
+            console.error('Update room status error:', err);
             throw err;
         } finally {
             stopSaving();
@@ -233,7 +204,7 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
     // Filter Management
     // ─────────────────────────────────────────────────────
 
-    function setFilters(newFilters: TaskFilters): void {
+    function setFilters(newFilters: RoomFilters): void {
         _filters.value = { ..._filters.value, ...newFilters };
     }
 
@@ -278,27 +249,25 @@ export function useHousekeeping(options: UseHousekeepingOptions = {}) {
 
     return {
         // Readonly state
-        tasks,
-        task,
+        rooms,
+        room,
         loading,
         saving,
         successMessage,
         error,
 
         // Computed values
-        pendingCount,
-        inProgressCount,
-        completedCount,
-        overdueCount,
-        urgentCount,
-        highPriorityCount,
-        filteredTasks,
+        availableCount,
+        occupiedCount,
+        maintenanceCount,
+        dirtyCount,
+        filteredRooms,
+        totalRevenuePotential,
 
         // Actions
         fetchAll,
         fetchById,
         updateStatus,
-        assignTask,
         setFilters,
         resetFilters,
         clearCache,

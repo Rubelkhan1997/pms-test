@@ -1,56 +1,58 @@
-declare namespace PMS {
-    interface Hotel {
-        id: number;
-        name: string;
-        code: string;
-    }
+/**
+ * Types Barrel Export
+ * Central export file for all TypeScript types
+ */
 
-    interface Guest {
-        id: number;
-        name: string;
-        email: string;
-        phone: string;
-        nid?: string;
-    }
+// Common types
+export * from './common';
 
-    interface Room {
-        id: number;
-        number: string;
-        status: 'available' | 'occupied' | 'maintenance' | 'dirty';
-        type: string;
-        price: number;
-        floor?: number;
-    }
+// API types
+export * from './api';
 
-    interface Reservation {
-        id: number;
-        reference: string;
-        status: ReservationStatus;
-        check_in_date: string;
-        check_out_date: string;
-        guest_id: number;
-        guest?: Guest;
-        room_id: number;
-        room?: Room;
-        total_amount: number;
-        paid_amount: number;
-        notes?: string;
-        created_at: string;
-    }
+// Payment types
+export * from './payment';
 
-    type ReservationStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
+// FrontDesk module types
+export {
+    Reservation,
+    ReservationStatus,
+    Guest,
+    Room
+} from './FrontDesk/reservation';
 
-    interface PosOrder {
-        id: number;
-        reference: string;
-        status: string;
-        outlet: string;
-    }
+export type { RoomStatus } from './FrontDesk/room';
+export type { Room as RoomDetail, RoomType } from './FrontDesk/room';
+export type { Guest as GuestDetail, GuestProfile } from './FrontDesk/guest';
 
-    interface Employee {
-        id: number;
-        reference: string;
-        department: string;
-        status: string;
+// Housekeeping module types
+export type { HousekeepingTask, TaskStatus, TaskPriority } from './Housekeeping/task';
+
+// Global namespace for backward compatibility
+declare global {
+    namespace PMS {
+        // Common
+        export type { User, UserRole } from './common';
+        export type { ApiResponse, PaginatedResponse } from './common';
+
+        // FrontDesk
+        export type { Reservation, ReservationStatus } from './FrontDesk/reservation';
+        export type { Guest } from './FrontDesk/reservation';
+        export type { Room } from './FrontDesk/reservation';
+
+        // POS
+        export interface PosOrder {
+            id: number;
+            reference: string;
+            status: string;
+            outlet: string;
+        }
+
+        // HR
+        export interface Employee {
+            id: number;
+            reference: string;
+            department: string;
+            status: string;
+        }
     }
 }
