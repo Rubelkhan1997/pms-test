@@ -8,6 +8,7 @@ use App\Enums\ReservationStatus;
 use App\Models\Hotel;
 use App\Models\User;
 use App\Modules\Guest\Models\GuestProfile;
+use App\Traits\HasHotel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,23 +17,30 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Reservation extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, HasHotel, SoftDeletes;
 
     protected $table = 'reservations';
 
     protected $fillable = [
         'hotel_id',
         'room_id',
+        'room_type_id',
         'guest_profile_id',
+        'rate_plan_id',
         'created_by',
         'reference',
+        'channel',
+        'market_segment',
+        'source',
         'status',
         'check_in_date',
         'check_out_date',
+        'actual_check_in',
+        'actual_check_out',
         'adults',
         'children',
         'total_amount',
+        'paid_amount',
         'meta',
     ];
 
@@ -47,17 +55,12 @@ class Reservation extends Model
             'status' => ReservationStatus::class,
             'check_in_date' => 'date',
             'check_out_date' => 'date',
+            'actual_check_in' => 'datetime',
+            'actual_check_out' => 'datetime',
             'total_amount' => 'decimal:2',
+            'paid_amount' => 'decimal:2',
             'meta' => 'array',
         ];
-    }
-
-    /**
-     * Get the hotel.
-     */
-    public function hotel(): BelongsTo
-    {
-        return $this->belongsTo(Hotel::class);
     }
 
     /**

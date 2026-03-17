@@ -24,12 +24,12 @@ class StoreEmployeeRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hotel_id' => ['required', 'integer'],
-            'reference' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'max:50'],
+            'hotel_id' => ['required', 'exists:hotels,id'],
+            'user_id' => ['nullable', 'exists:users,id'],
+            'department' => ['required', 'string', 'max:100'],
+            'status' => ['sometimes', 'in:active,inactive,terminated'],
             'scheduled_at' => ['nullable', 'date'],
             'meta' => ['nullable', 'array'],
         ];
     }
 }
-

@@ -16,8 +16,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class HousekeepingTask extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'housekeeping_tasks';
 
@@ -25,9 +24,15 @@ class HousekeepingTask extends Model
         'hotel_id',
         'room_id',
         'created_by',
+        'assigned_to',
         'reference',
+        'task_type',
         'status',
+        'priority',
+        'description',
         'scheduled_at',
+        'started_at',
+        'completed_at',
         'meta',
     ];
 
@@ -41,6 +46,8 @@ class HousekeepingTask extends Model
         return [
             'status' => HousekeepingStatus::class,
             'scheduled_at' => 'datetime',
+            'started_at' => 'datetime',
+            'completed_at' => 'datetime',
             'meta' => 'array',
         ];
     }
@@ -70,13 +77,34 @@ class HousekeepingTask extends Model
     }
 
     /**
-     * Scope open tasks.
+     * Get assigned user.
      */
-    public function scopeOpen(Builder $query): Builder
+    public function assignedTo(): BelongsTo
     {
-        return $query->whereIn('status', [
-            HousekeepingStatus::Pending->value,
-            HousekeepingStatus::InProgress->value,
-        ]);
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    /**
+     * Scope pending tasks.
+     */
+    public function scopePending(Builder $query): Builder
+    {
+        return $query->where('status', HousekeepingStatus::Pending->value);
+    }
+
+    /**
+     * Scope today's tasks.
+     */
+    public function scopeToday(Builder $query): Builder
+    {
+        return $query->whereDate('scheduled_at', today());
+    }
+
+    /**
+     * Scope by task type.
+     */
+    public function scopeByType(Builder $query, string $type): Builder
+    {
+        return $query->where('task_type', $type);
     }
 }

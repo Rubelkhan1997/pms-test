@@ -4,142 +4,165 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Enums\HousekeepingStatus;
-use App\Enums\POSOrderStatus;
-use App\Enums\ReservationStatus;
-use App\Enums\RoomStatus;
-use App\Models\Hotel;
+use App\Models\SubscriptionPlan;
 use App\Models\User;
-use App\Modules\Booking\Models\OtaSync;
-use App\Modules\FrontDesk\Models\Reservation;
-use App\Modules\FrontDesk\Models\Room;
-use App\Modules\Guest\Models\GuestProfile;
-use App\Modules\Housekeeping\Models\HousekeepingTask;
-use App\Modules\Hr\Models\Employee;
-use App\Modules\Mobile\Models\MobileTask;
-use App\Modules\Pos\Models\PosOrder;
-use App\Modules\Reports\Models\ReportSnapshot;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
+/**
+ * Central Database Seeder
+ * 
+ * Seeds the CENTRAL database with subscription plans and super admin.
+ * This runs once on the central database that manages all tenants.
+ */
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the central database.
      */
     public function run(): void
     {
-        $this->call(RolePermissionSeeder::class);
-
-        $hotel = Hotel::query()->create([
-            'name' => 'Demo Grand Hotel',
-            'code' => 'DGH001',
-            'timezone' => 'Asia/Dhaka',
-            'currency' => 'USD',
-            'email' => 'info@demogrand.test',
-            'phone' => '+8801700000000',
-            'address' => 'Dhaka, Bangladesh',
-        ]);
-
-        $superAdmin = User::query()->create([
+        // Create subscription plans
+        $this->createSubscriptionPlans();
+        
+        // Create super admin user
+        $superAdmin = User::create([
             'name' => 'Super Admin',
             'email' => 'superadmin@pms.test',
             'password' => Hash::make('password'),
+            'email_verified_at' => now(),
         ]);
-        $superAdmin->assignRole('super_admin');
-
-        $employeeUser = User::query()->create([
-            'name' => 'Front Desk Agent',
-            'email' => 'frontdesk@pms.test',
-            'password' => Hash::make('password'),
+        
+        // Create system settings
+        $this->seedSystemSettings();
+    }
+    
+    /**
+     * Create subscription plans.
+     */
+    protected function createSubscriptionPlans(): void
+    {
+        // Starter Plan
+        SubscriptionPlan::create([
+            'name' => 'Starter',
+            'code' => 'starter',
+            'description' => 'Perfect for small hotels and B&Bs',
+            'price_monthly' => 49.00,
+            'price_yearly' => 490.00,
+            'trial_days' => 14,
+            'max_properties' => 1,
+            'max_rooms' => 20,
+            'max_users' => 5,
+            'features' => [
+                'reservations',
+                'guest_management',
+                'basic_reports',
+                'email_support',
+            ],
+            'limits' => [
+                'properties' => 1,
+                'rooms' => 20,
+                'users' => 5,
+                'api_calls_per_month' => 10000,
+                'storage_gb' => 5,
+            ],
+            'is_active' => true,
+            'sort_order' => 1,
         ]);
-        $employeeUser->assignRole('front_desk');
-
-        $room = Room::query()->create([
-            'hotel_id' => $hotel->id,
-            'number' => '101',
-            'floor' => '1',
-            'type' => 'Deluxe',
-            'status' => RoomStatus::Available,
-            'base_rate' => 120,
+        
+        // Professional Plan
+        SubscriptionPlan::create([
+            'name' => 'Professional',
+            'code' => 'professional',
+            'description' => 'For growing hotels and small chains',
+            'price_monthly' => 99.00,
+            'price_yearly' => 990.00,
+            'trial_days' => 14,
+            'max_properties' => 5,
+            'max_rooms' => 100,
+            'max_users' => 20,
+            'features' => [
+                'reservations',
+                'guest_management',
+                'room_management',
+                'accounting',
+                'advanced_reports',
+                'ota_integration',
+                'email_support',
+                'phone_support',
+            ],
+            'limits' => [
+                'properties' => 5,
+                'rooms' => 100,
+                'users' => 20,
+                'api_calls_per_month' => 50000,
+                'storage_gb' => 25,
+            ],
+            'is_active' => true,
+            'sort_order' => 2,
         ]);
-
-        $guest = GuestProfile::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $superAdmin->id,
-            'reference' => 'GST-1001',
-            'status' => 'active',
-            'first_name' => 'John',
-            'last_name' => 'Doe',
-            'email' => 'john@example.test',
-            'phone' => '+8801711111111',
+        
+        // Enterprise Plan
+        SubscriptionPlan::create([
+            'name' => 'Enterprise',
+            'code' => 'enterprise',
+            'description' => 'For large hotels and chains',
+            'price_monthly' => 249.00,
+            'price_yearly' => 2490.00,
+            'trial_days' => 30,
+            'max_properties' => -1, // Unlimited
+            'max_rooms' => -1, // Unlimited
+            'max_users' => -1, // Unlimited
+            'features' => [
+                'reservations',
+                'guest_management',
+                'room_management',
+                'accounting',
+                'advanced_reports',
+                'ota_integration',
+                'channel_manager',
+                'pos_system',
+                'housekeeping',
+                'hr_management',
+                'api_access',
+                'custom_integrations',
+                'priority_support',
+                'dedicated_account_manager',
+            ],
+            'limits' => [
+                'properties' => -1,
+                'rooms' => -1,
+                'users' => -1,
+                'api_calls_per_month' => -1,
+                'storage_gb' => 100,
+            ],
+            'is_active' => true,
+            'sort_order' => 3,
         ]);
-
-        Reservation::query()->create([
-            'hotel_id' => $hotel->id,
-            'room_id' => $room->id,
-            'guest_profile_id' => $guest->id,
-            'created_by' => $employeeUser->id,
-            'reference' => 'RES-1001',
-            'status' => ReservationStatus::Confirmed,
-            'check_in_date' => now()->toDateString(),
-            'check_out_date' => now()->addDay()->toDateString(),
-            'adults' => 2,
-            'children' => 0,
-            'total_amount' => 150,
-        ]);
-
-        OtaSync::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $superAdmin->id,
-            'reference' => 'OTA-1001',
-            'provider' => 'Booking.com',
-            'status' => \App\Enums\PaymentStatus::Pending,
-        ]);
-
-        HousekeepingTask::query()->create([
-            'hotel_id' => $hotel->id,
-            'room_id' => $room->id,
-            'created_by' => $superAdmin->id,
-            'reference' => 'HK-1001',
-            'status' => HousekeepingStatus::Pending,
-            'scheduled_at' => now()->addHour(),
-        ]);
-
-        PosOrder::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $superAdmin->id,
-            'reference' => 'POS-1001',
-            'outlet' => 'Restaurant',
-            'status' => POSOrderStatus::Submitted,
-            'scheduled_at' => now(),
-        ]);
-
-        ReportSnapshot::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $superAdmin->id,
-            'reference' => 'RPT-1001',
-            'status' => 'ready',
-            'report_type' => 'occupancy',
-            'report_date' => now()->toDateString(),
-        ]);
-
-        MobileTask::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $superAdmin->id,
-            'reference' => 'MBL-1001',
-            'status' => 'pending',
-            'scheduled_at' => now()->addMinutes(30),
-        ]);
-
-        Employee::query()->create([
-            'hotel_id' => $hotel->id,
-            'user_id' => $employeeUser->id,
-            'created_by' => $superAdmin->id,
-            'reference' => 'EMP-1001',
-            'status' => 'active',
-            'department' => 'Front Desk',
-            'scheduled_at' => now(),
-        ]);
+    }
+    
+    /**
+     * Seed system settings.
+     */
+    protected function seedSystemSettings(): void
+    {
+        $settings = [
+            // Billing settings
+            ['key' => 'billing.currency', 'value' => 'USD', 'type' => 'string', 'group' => 'billing'],
+            ['key' => 'billing.tax_rate', 'value' => '0', 'type' => 'decimal', 'group' => 'billing'],
+            ['key' => 'billing.invoice_prefix', 'value' => 'INV', 'type' => 'string', 'group' => 'billing'],
+            
+            // Email settings
+            ['key' => 'email.from_address', 'value' => 'noreply@pms.test', 'type' => 'string', 'group' => 'email'],
+            ['key' => 'email.from_name', 'value' => 'Hotel PMS', 'type' => 'string', 'group' => 'email'],
+            
+            // General settings
+            ['key' => 'general.site_name', 'value' => 'Hotel PMS', 'type' => 'string', 'group' => 'general'],
+            ['key' => 'general.timezone', 'value' => 'UTC', 'type' => 'string', 'group' => 'general'],
+        ];
+        
+        foreach ($settings as $setting) {
+            \App\Models\SystemSetting::create($setting);
+        }
     }
 }

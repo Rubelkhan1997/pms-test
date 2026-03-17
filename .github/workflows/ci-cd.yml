@@ -1,0 +1,172 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  lint:
+    name: Code Quality (Lint & Static Analysis)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, curl, intl, pdo_sqlite
+          tools: composer:v2
+          coverage: none
+          
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        
+      - name: Run Pint (Linter)
+        run: composer lint:test
+        
+      - name: Run PHPStan (Static Analysis)
+        run: composer analyse -- --error-format=github
+        
+      - name: Run Rector (Dry Run)
+        run: composer refactor:dry-run
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: pms_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: secret
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, curl, intl, pdo_pgsql, pgsql
+          tools: composer:v2
+          coverage: xdebug
+          
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+        
+      - name: Copy environment file
+        run: cp .env.example .env
+        
+      - name: Generate application key
+        run: php artisan key:generate
+        
+      - name: Run migrations
+        run: php artisan migrate --force
+        
+      - name: Run tests with coverage
+        run: composer test:coverage
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: pms_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: secret
+          
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage/clover.xml
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  build:
+    name: Build Frontend Assets
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Build assets
+        run: npm run build
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: public/build
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    environment:
+      name: production
+      url: https://pms.yourhotel.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, curl, intl, pdo_pgsql, pgsql
+          tools: composer:v2
+          
+      - name: Install dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+        
+      - name: Clear and cache config
+        run: php artisan config:cache && php artisan route:cache && php artisan view:cache
+        
+      - name: Run migrations
+        run: php artisan migrate --force
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: public/build
+          
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USERNAME }}
+          key: ${{ secrets.DEPLOY_KEY }}
+          script: |
+            cd /var/www/pms
+            php artisan queue:restart
+            php artisan cache:clear
+            php artisan optimize:clear

@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Modules\FrontDesk\Requests;
 
+use App\Modules\FrontDesk\Enums\ReservationStatus;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreReservationRequest extends FormRequest
 {
@@ -24,12 +26,29 @@ class StoreReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hotel_id' => ['required', 'integer'],
-            'reference' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'max:50'],
-            'scheduled_at' => ['nullable', 'date'],
+            'room_id' => ['required', 'exists:rooms,id'],
+            'guest_profile_id' => ['required', 'exists:guest_profiles,id'],
+            'check_in_date' => ['required', 'date', 'after_or_equal:today'],
+            'check_out_date' => ['required', 'date', 'after:check_in_date'],
+            'adults' => ['required', 'integer', 'min:1', 'max:10'],
+            'children' => ['nullable', 'integer', 'min:0'],
+            'total_amount' => ['required', 'numeric', 'min:0'],
+            'status' => ['sometimes', Rule::in(array_column(ReservationStatus::cases(), 'value'))],
             'meta' => ['nullable', 'array'],
         ];
     }
-}
 
+    /**
+     * Get custom messages for validator errors.
+     *
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'check_out_date.after' => 'Check-out date must be after check-in date',
+            'adults.max' => 'Maximum 10 adults allowed per reservation',
+            'children.min' => 'Number of children cannot be negative',
+        ];
+    }
+}

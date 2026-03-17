@@ -6,7 +6,11 @@ namespace App\Providers;
 
 use App\Modules\Booking\Events\OtaSyncCompleted;
 use App\Modules\Booking\Listeners\LogOtaSyncCompleted;
+use App\Modules\FrontDesk\Events\ReservationCheckedIn;
+use App\Modules\FrontDesk\Events\ReservationCheckedOut;
 use App\Modules\FrontDesk\Events\ReservationCreated;
+use App\Modules\FrontDesk\Listeners\SendReservationCheckedInNotification;
+use App\Modules\FrontDesk\Listeners\SendReservationCheckedOutNotification;
 use App\Modules\FrontDesk\Listeners\SendReservationCreatedNotification;
 use App\Modules\Guest\Events\GuestProfileCreated;
 use App\Modules\Guest\Listeners\SendGuestWelcomeNotification;
@@ -31,6 +35,8 @@ class EventServiceProvider extends ServiceProvider
      */
     protected $listen = [
         ReservationCreated::class => [SendReservationCreatedNotification::class],
+        ReservationCheckedIn::class => [SendReservationCheckedInNotification::class],
+        ReservationCheckedOut::class => [SendReservationCheckedOutNotification::class],
         OtaSyncCompleted::class => [LogOtaSyncCompleted::class],
         GuestProfileCreated::class => [SendGuestWelcomeNotification::class],
         HousekeepingTaskCreated::class => [DispatchHousekeepingStaffAlert::class],

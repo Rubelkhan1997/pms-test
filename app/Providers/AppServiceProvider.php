@@ -37,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Register observers
         Reservation::observe(ReservationObserver::class);
         OtaSync::observe(OtaSyncObserver::class);
         GuestProfile::observe(GuestProfileObserver::class);

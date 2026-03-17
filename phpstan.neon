@@ -1,0 +1,24 @@
+parameters:
+    level: 8
+    paths:
+        - app/
+        - database/
+    excludePaths:
+        - app/Modules/*/Data/*
+        - app/Modules/*/Requests/*
+        - app/Modules/*/Resources/*
+    checkGenericClassInNonGenericPositions: false
+    checkMissingIterableValueType: false
+    reportMaybes: true
+    reportStaticMethodSignatures: true
+    strictRules:
+        - level: 4
+          rules:
+            - disallowImplicitIntegerConversion
+            - disallowImplicitFloatConversion
+            - disallowImplicitBoolConversion
+            - disallowImplicitArrayConversion
+            - disallowImplicitStringConversion
+    tipsOfTheDay: false
+    tmpDir: .phpstan/cache
+    resultCachePath: .phpstan/resultCache.php

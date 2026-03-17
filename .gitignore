@@ -1,24 +1,88 @@
-*.log
-.DS_Store
+# Application
 .env
 .env.backup
 .env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
+.env.local
+*.log
+storage/logs/*
+!storage/logs/.gitignore
+public/storage
+public/hot
+public/build
+npm-debug.log
+yarn-error.log
+
+# Dependencies
+/vendor/
+/node_modules/
+
+# IDE
 /.idea
-/.nova
-/.phpunit.cache
 /.vscode
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+/.nova
 /.zed
-/auth.json
-/node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
+/.fleet
+*.swp
+*.swo
+*~
+
+# Testing
+.phpunit.result.cache
+.phpunit.cache/
+coverage/
+.phpstan/
+cache/
+
+# Build artifacts
+*.css.map
+*.js.map
+mix-manifest.json
+hot
+auth.json
+npm-debug.log
+yarn-error.log
+
+# Database
+*.sqlite
+*.sqlite-journal
 Homestead.json
 Homestead.yaml
+
+# OS
+.DS_Store
 Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.cache
+*.bak
+
+# Backup files
+*.backup
+*.orig
+
+# Composer
+composer.lock
+skills-lock.json
+
+# NPM
+package-lock.json
+
+# Debug tools
+ray.log
+xdebug.log
+
+# Local configuration
+.phpactor.json
+localOverrides.php
+
+# Docker
+docker-compose.override.yml
+
+# Documentation build
+docs/_build/

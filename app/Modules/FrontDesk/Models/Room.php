@@ -6,6 +6,7 @@ namespace App\Modules\FrontDesk\Models;
 
 use App\Enums\RoomStatus;
 use App\Models\Hotel;
+use App\Traits\HasHotel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,18 +16,21 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Room extends Model
 {
-    use HasFactory;
-    use SoftDeletes;
+    use HasFactory, HasHotel, SoftDeletes;
 
     protected $table = 'rooms';
 
     protected $fillable = [
         'hotel_id',
+        'room_type_id',
         'number',
         'floor',
         'type',
+        'view_type',
+        'smoking',
         'status',
         'base_rate',
+        'notes',
     ];
 
     /**
@@ -39,6 +43,7 @@ class Room extends Model
         return [
             'status' => RoomStatus::class,
             'base_rate' => 'decimal:2',
+            'smoking' => 'boolean',
         ];
     }
 
@@ -64,6 +69,17 @@ class Room extends Model
     public function scopeAvailable(Builder $query): Builder
     {
         return $query->where('status', RoomStatus::Available->value);
+    }
+
+    /**
+     * Get current reservation (if occupied).
+     */
+    public function currentReservation(): ?Reservation
+    {
+        return $this->reservations()
+            ->whereIn('status', ['confirmed', 'checked_in'])
+            ->latest('check_in_date')
+            ->first();
     }
 }
 

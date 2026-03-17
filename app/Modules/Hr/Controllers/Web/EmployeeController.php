@@ -6,8 +6,10 @@ namespace App\Modules\Hr\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Modules\Hr\Requests\StoreEmployeeRequest;
+use App\Modules\Hr\Requests\UpdateEmployeeRequest;
 use App\Modules\Hr\Services\EmployeeService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,10 +25,30 @@ class EmployeeController extends Controller
     /**
      * Display a listing page.
      */
-    public function index(): Response
+    public function index(Request $request): Response
     {
-        return Inertia::render('Hr/Index', [
-            'items' => $this->service->paginate(),
+        $filters = $request->only(['department', 'status']);
+        $employees = $this->service->paginate($filters);
+        $departments = $this->service->getDepartments(currentHotel()->id);
+        $statistics = $this->service->getStatistics(currentHotel()->id);
+        
+        return Inertia::render('Hr/Employees/Index', [
+            'employees' => $employees,
+            'departments' => $departments,
+            'statistics' => $statistics,
+            'filters' => $filters,
+        ]);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(int $id): Response
+    {
+        $employee = $this->service->findOrFail($id);
+        
+        return Inertia::render('Hr/Employees/Show', [
+            'employee' => $employee,
         ]);
     }
 
@@ -35,10 +57,34 @@ class EmployeeController extends Controller
      */
     public function store(StoreEmployeeRequest $request): RedirectResponse
     {
-        $this->service->create($request->validated());
+        $employee = $this->service->create($request->validated());
 
-        return back();
+        return redirect()
+            ->route('hr.employees.show', $employee->id)
+            ->with('success', 'Employee created successfully.');
+    }
+
+    /**
+     * Update the specified resource.
+     */
+    public function update(UpdateEmployeeRequest $request, int $id): RedirectResponse
+    {
+        $employee = $this->service->update($id, $request->validated());
+
+        return redirect()
+            ->route('hr.employees.show', $employee->id)
+            ->with('success', 'Employee updated successfully.');
+    }
+
+    /**
+     * Remove the specified resource.
+     */
+    public function destroy(int $id): RedirectResponse
+    {
+        $this->service->delete($id);
+
+        return redirect()
+            ->route('hr.employees.index')
+            ->with('success', 'Employee deleted successfully.');
     }
 }
-
-
