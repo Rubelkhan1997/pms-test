@@ -19,14 +19,59 @@
 2) 📁 Complete Project Structure (Reservation Feature)
 ────────────────────────────────────────────────────────────────────────────
 resources/js/
-├── types/index.d.ts                    ✅ TypeScript definitions
-├── Composables/useReservations.ts      ✅ Business logic
-├── Stores/reservations.ts              ✅ Global state
-├── Pages/Booking/Index.vue             ✅ Reservation list page
-├── Components/Shared/StatusBadge.vue   ✅ Status badge component
-├── Layouts/HotelLayout.vue             ✅ Layout wrapper
-├── app.ts                              ✅ Entry point
-└── bootstrap.ts                        ✅ Axios setup
+├── Components/              # Reusable UI components
+│   ├── common/             # Global components (Button, Modal, Input)
+│   ├── layout/             # Layout components (Header, Sidebar, Footer)
+│   ├── reservations/       # Reservation specific components
+│   ├── rooms/              # Room specific components
+│   └── ...
+│
+├── Pages/                  # Page components (Inertia pages)
+│   ├── Reservations/
+│   │   ├── Index.vue
+│   │   ├── Show.vue
+│   │   ├── Create.vue
+│   │   └── Edit.vue
+│   ├── Rooms/
+│   │   └── ...
+│   └── ...
+│
+├── Composables/            # Business logic (domain-based)
+│   ├── useReservations.ts
+│   ├── useRooms.ts
+│   ├── usePOS.ts
+│   └── ...
+│
+├── Helpers/                # Shared helpers (Laravel style)
+│   ├── useLoading.ts
+│   ├── useMessage.ts
+│   ├── usePolling.ts
+│   └── index.ts
+│
+├── Stores/                 # Pinia stores (domain-based)
+│   ├── reservationStore.ts
+│   ├── roomStore.ts
+│   ├── authStore.ts
+│   └── index.ts
+│
+├── Types/                  # TypeScript types (domain-based)
+│   ├── reservation.ts
+│   ├── room.ts
+│   ├── guest.ts
+│   ├── common.ts
+│   └── index.ts
+│
+├── Services/               # API services (optional)
+│   ├── reservationService.ts
+│   ├── roomService.ts
+│   └── ...
+│
+├── Utils/                  # Pure utility functions
+│   ├── date.ts
+│   ├── format.ts
+│   └── validation.ts
+│
+└── app.ts                  # Entry point                   ✅ Axios setup
 
 
 3) 🚀 Complete Request Lifecycle

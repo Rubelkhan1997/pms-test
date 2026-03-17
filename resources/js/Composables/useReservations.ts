@@ -1,10 +1,11 @@
 import { ref, shallowRef, readonly, computed, triggerRef, onMounted, onUnmounted } from 'vue';
 import axios from 'axios';
 import { router } from '@inertiajs/vue3';
+import { useLoading, useMessage, usePolling } from '@/Helpers';
 
 /**
  * Reservation Composable - Best Practices Implementation
- * 
+ *
  * Applied Best Practices:
  * ✅ shallowRef for primitives (performance)
  * ✅ ref for arrays (deep reactivity needed)
@@ -14,7 +15,7 @@ import { router } from '@inertiajs/vue3';
  * ✅ Composable composition (build from smaller pieces)
  * ✅ Explicit actions for state mutations
  * ✅ TypeScript type safety
- * 
+ *
  * @see https://vuejs.org/guide/best-practices/performance.html
  * @see https://vuejs.org/guide/reusability/composables.html
  */
@@ -39,109 +40,6 @@ export interface UseReservationOptions {
     pollingInterval?: number;
     /** Cache results */
     cacheEnabled?: boolean;
-}
-
-// ─────────────────────────────────────────────────────────
-// Helper Composables (Composition Pattern)
-// ─────────────────────────────────────────────────────────
-
-/**
- * Composable: useLoading
- * Manages loading state with readonly protection
- */
-function useLoading(initialValue = false) {
-    const _loading = shallowRef(initialValue);
-
-    function start() {
-        _loading.value = true;
-    }
-
-    function stop() {
-        _loading.value = false;
-    }
-
-    function toggle() {
-        _loading.value = !_loading.value;
-    }
-
-    return {
-        loading: readonly(_loading),
-        start,
-        stop,
-        toggle
-    };
-}
-
-/**
- * Composable: useMessage
- * Manages success/error messages with auto-clear
- */
-function useMessage(autoClearDelay = 5000) {
-    const _message = shallowRef<string | null>(null);
-    const _messageType = shallowRef<'success' | 'error' | null>(null);
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-
-    function showMessage(msg: string, type: 'success' | 'error' = 'success') {
-        // Clear existing timeout
-        if (timeoutId) clearTimeout(timeoutId);
-
-        _message.value = msg;
-        _messageType.value = type;
-
-        // Auto-clear
-        timeoutId = setTimeout(() => {
-            _message.value = null;
-            _messageType.value = null;
-        }, autoClearDelay);
-    }
-
-    function clearMessage() {
-        if (timeoutId) clearTimeout(timeoutId);
-        _message.value = null;
-        _messageType.value = null;
-    }
-
-    return {
-        message: readonly(_message),
-        messageType: readonly(_messageType),
-        showMessage,
-        clearMessage
-    };
-}
-
-/**
- * Composable: usePolling
- * Polls a function at regular intervals
- */
-function usePolling(
-    callback: () => Promise<void>,
-    intervalMs: number,
-    enabled: () => boolean
-) {
-    let intervalId: ReturnType<typeof setInterval> | null = null;
-
-    function start() {
-        if (!enabled()) return;
-
-        // Immediate first call
-        callback();
-
-        // Then poll at interval
-        intervalId = setInterval(() => {
-            if (enabled()) {
-                callback();
-            }
-        }, intervalMs);
-    }
-
-    function stop() {
-        if (intervalId) {
-            clearInterval(intervalId);
-            intervalId = null;
-        }
-    }
-
-    return { start, stop };
 }
 
 // ─────────────────────────────────────────────────────────
