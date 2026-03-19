@@ -1,18 +1,9 @@
 <template>
     <div class="tenants-list">
-        <div class="page-header">
-            <div class="header-left">
+        <div class="page-header-new">
+            <div class="page-title">
                 <h1>Tenant Management</h1>
-                <nav class="dashboard-nav">
-                    <Link :href="route('central.dashboard')" class="nav-link"
-                        >Dashboard</Link
-                    >
-                    <Link
-                        :href="route('central.tenants.index')"
-                        class="nav-link active"
-                        >Tenants</Link
-                    >
-                </nav>
+                <p>Manage all your property tenants, view their status, and approve new sign-ups.</p>
             </div>
             <div class="header-actions">
                 <Link
@@ -166,6 +157,9 @@
 import { ref, computed } from "vue";
 import { Link, router } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
+import CentralLayout from "../../../Layouts/CentralLayout.vue";
+
+defineOptions({ layout: CentralLayout });
 
 const props = defineProps({
     tenants: {
@@ -232,50 +226,45 @@ function reactivateTenant(tenant) {
     padding: 2rem;
 }
 
-.page-header {
+.page-header-new {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
+    align-items: center;
     margin-bottom: 2rem;
     gap: 2rem;
 }
 
-.page-header h1 {
-    font-size: 2rem;
-    font-weight: bold;
+.page-title h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
 }
 
-.header-left {
-    flex: 1;
-}
-
-.header-actions {
-    padding-top: 0.5rem;
-}
-
-.dashboard-nav {
-    display: flex;
-    gap: 1.5rem;
-    margin-top: 1rem;
-}
-
-.nav-link {
+.page-title p {
     color: #6b7280;
+    font-size: 0.95rem;
+    margin: 0;
+}
+
+.btn-primary {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background-color: #4f46e5;
+    color: white;
+    font-weight: 600;
+    border-radius: 8px;
     text-decoration: none;
-    font-weight: 500;
-    padding: 0.5rem 0;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
 }
 
-.nav-link:hover {
-    color: #667eea;
-}
-
-.nav-link.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
+.btn-primary:hover {
+    background-color: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3);
 }
 
 .stats {

@@ -1,47 +1,8 @@
 <template>
     <div class="central-dashboard">
-        <div class="dashboard-header">
-            <div class="header-left">
-                <h1>Central Admin Dashboard</h1>
-                <nav class="dashboard-nav">
-                    <Link
-                        :href="route('central.dashboard')"
-                        class="nav-link"
-                        :class="{
-                            active: $component.name === 'Central/Dashboard',
-                        }"
-                        >Dashboard</Link
-                    >
-                    <Link
-                        :href="route('central.tenants.index')"
-                        class="nav-link"
-                        :class="{
-                            active: $component.name === 'Central/Tenants/Index',
-                        }"
-                        >Tenants</Link
-                    >
-                </nav>
-            </div>
-            <div class="user-menu">
-                <span v-if="$page.props.auth?.user" class="user-name">{{
-                    $page.props.auth.user.name
-                }}</span>
-                <Link
-                    v-if="$page.props.auth?.user"
-                    :href="route('central.profile')"
-                    class="btn-sm"
-                    >Profile</Link
-                >
-                <Link
-                    v-if="$page.props.auth?.user"
-                    :href="route('central.logout')"
-                    method="post"
-                    as="button"
-                    class="btn-sm btn-outline"
-                >
-                    Logout
-                </Link>
-            </div>
+        <div class="page-title">
+            <h1>Dashboard Overview</h1>
+            <p>Welcome back, {{ $page.props.auth?.user?.name || 'Admin' }}. Here is what's happening with your tenants today.</p>
         </div>
 
         <!-- Stats Grid -->
@@ -188,6 +149,9 @@
 <script setup>
 import { Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
+import CentralLayout from "../../Layouts/CentralLayout.vue";
+
+defineOptions({ layout: CentralLayout });
 
 const props = defineProps({
     stats: {
@@ -218,48 +182,21 @@ function formatDate(dateString) {
     padding: 2rem;
 }
 
-.dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
+.page-title {
     margin-bottom: 2rem;
-    gap: 2rem;
 }
 
-.dashboard-header h1 {
-    font-size: 2rem;
-    font-weight: bold;
+.page-title h1 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
     margin-bottom: 0.5rem;
+    letter-spacing: -0.025em;
 }
 
-.user-menu {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.user-name {
-    font-weight: 600;
-    color: #374151;
-}
-
-.btn-sm {
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-size: 0.875rem;
-    font-weight: 500;
-    text-decoration: none;
-    transition: all 0.2s;
-}
-
-.btn-outline {
-    background: transparent;
-    color: #374151;
-    border: 1px solid #d1d5db;
-}
-
-.btn-outline:hover {
-    background: #f9fafb;
+.page-title p {
+    color: #6b7280;
+    font-size: 0.95rem;
 }
 
 .stats-grid {
@@ -451,31 +388,5 @@ code {
     font-size: 0.875rem;
 }
 
-.header-left {
-    flex: 1;
-}
 
-.dashboard-nav {
-    display: flex;
-    gap: 1.5rem;
-    margin-top: 1rem;
-}
-
-.nav-link {
-    color: #6b7280;
-    text-decoration: none;
-    font-weight: 500;
-    padding: 0.5rem 0;
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-}
-
-.nav-link:hover {
-    color: #667eea;
-}
-
-.nav-link.active {
-    color: #667eea;
-    border-bottom-color: #667eea;
-}
 </style>

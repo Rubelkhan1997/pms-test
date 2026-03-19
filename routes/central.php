@@ -13,18 +13,6 @@ use Inertia\Inertia;
 | Central Website Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::middleware('guest')->group(function () {
-    // Tenant Registration
-    Route::get('/register', [CentralTenantController::class, 'create'])
-        ->name('central.register');
-    Route::post('/register', [CentralTenantController::class, 'store']);
-});
-
-/*
-|--------------------------------------------------------------------------
-| Central Authentication Routes
-|--------------------------------------------------------------------------
-*/
 Route::prefix('central')->name('central.')->group(function () {
     // Public routes
     Route::get('/', function () {
@@ -32,6 +20,12 @@ Route::prefix('central')->name('central.')->group(function () {
     })->name('home');
 
     Route::middleware('guest')->group(function () {
+        // Tenant Registration
+        Route::get('register', [CentralTenantController::class, 'create'])
+            ->name('register');
+        Route::post('register', [CentralTenantController::class, 'store']);
+
+        // Login
         Route::get('login', [CentralAuthController::class, 'create'])
             ->name('login');
         Route::post('login', [CentralAuthController::class, 'store']);

@@ -56,16 +56,28 @@ class DatabaseProvisioningService
         $host = config("database.connections.{$connection}.host");
         $username = config("database.connections.{$connection}.username");
         $password = config("database.connections.{$connection}.password");
-        
-        // Connect to PostgreSQL server (not a specific database)
+        $port = config("database.connections.{$connection}.port", 5432);
+
+        // Connect to PostgreSQL server using 'postgres' database (required for creating databases)
         DB::purge('pgsql');
         
-        DB::statement("CREATE DATABASE \"{$databaseName}\" 
-            WITH 
-            ENCODING = 'UTF8' 
-            LC_COLLATE = 'en_US.UTF-8' 
-            LC_CTYPE = 'en_US.UTF-8' 
-            TEMPLATE = template0");
+        // Temporarily set database to 'postgres' for database creation
+        $originalDatabase = config("database.connections.{$connection}.database");
+        config(["database.connections.{$connection}.database" => 'postgres']);
+        
+        DB::purge('pgsql');
+
+        try {
+            DB::statement("CREATE DATABASE \"{$databaseName}\"
+                WITH
+                ENCODING = 'UTF8'
+                LC_COLLATE = 'en_US.UTF-8'
+                LC_CTYPE = 'en_US.UTF-8'
+                TEMPLATE = template0");
+        } finally {
+            // Restore original database configuration
+            config(["database.connections.{$connection}.database" => $originalDatabase]);
+        }
     }
     
     /**
@@ -136,10 +148,14 @@ class DatabaseProvisioningService
     public function runMigrations(Tenant $tenant): void
     {
         $databaseName = $tenant->database_name;
-        
+
+        // Store original connection config
+        $originalConnection = config('database.default');
+        $originalDatabase = config('database.connections.pgsql.database');
+
         // Set tenant database connection
         $this->setTenantConnection($tenant);
-        
+
         try {
             // Run tenant database migrations
             \Artisan::call('migrate', [
@@ -148,18 +164,26 @@ class DatabaseProvisioningService
                 '--force' => true,
             ]);
         } finally {
-            // Clear connection
+            // Restore original connection
+            config([
+                'database.default' => $originalConnection,
+                "database.connections.pgsql.database" => $originalDatabase,
+            ]);
             DB::purge('pgsql');
         }
     }
-    
+
     /**
      * Seed initial tenant data.
      */
     public function seedTenantData(Tenant $tenant): void
     {
+        // Store original connection config
+        $originalConnection = config('database.default');
+        $originalDatabase = config('database.connections.pgsql.database');
+
         $this->setTenantConnection($tenant);
-        
+
         try {
             // Seed tenant database with initial data
             \Artisan::call('db:seed', [
@@ -168,6 +192,11 @@ class DatabaseProvisioningService
                 '--force' => true,
             ]);
         } finally {
+            // Restore original connection
+            config([
+                'database.default' => $originalConnection,
+                "database.connections.pgsql.database" => $originalDatabase,
+            ]);
             DB::purge('pgsql');
         }
     }
@@ -201,14 +230,22 @@ class DatabaseProvisioningService
      */
     protected function deleteDatabase(string $databaseName): void
     {
+        // First, reconnect to 'postgres' database if we're connected to the one being dropped
+        $currentDb = config('database.connections.pgsql.database');
+        if ($currentDb === $databaseName) {
+            config(['database.connections.pgsql.database' => 'postgres']);
+            DB::purge('pgsql');
+            DB::reconnect('pgsql');
+        }
+
         // Terminate all connections to database
         DB::statement("
-            SELECT pg_terminate_backend(pid) 
-            FROM pg_stat_activity 
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
             WHERE datname = '{$databaseName}'
             AND pid <> pg_backend_pid()
         ");
-        
+
         // Drop database
         DB::statement("DROP DATABASE IF EXISTS \"{$databaseName}\"");
     }
