@@ -16,9 +16,9 @@
             required
             autofocus
             placeholder="John Doe"
-            :class="{ error: errors.name }"
+            :class="{ error: form.errors.name }"
           />
-          <span v-if="errors.name" class="error-message">{{ errors.name }}</span>
+          <span v-if="form.errors.name" class="error-message">{{ form.errors.name }}</span>
         </div>
 
         <div class="form-group">
@@ -29,9 +29,9 @@
             type="email"
             required
             placeholder="you@example.com"
-            :class="{ error: errors.email }"
+            :class="{ error: form.errors.email }"
           />
-          <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
+          <span v-if="form.errors.email" class="error-message">{{ form.errors.email }}</span>
         </div>
 
         <div class="form-group">
@@ -41,9 +41,9 @@
             v-model="form.company_name"
             type="text"
             placeholder="Grand Hotel"
-            :class="{ error: errors.company_name }"
+            :class="{ error: form.errors.company_name }"
           />
-          <span v-if="errors.company_name" class="error-message">{{ errors.company_name }}</span>
+          <span v-if="form.errors.company_name" class="error-message">{{ form.errors.company_name }}</span>
         </div>
 
         <div class="form-group">
@@ -54,9 +54,9 @@
             type="password"
             required
             placeholder="••••••••"
-            :class="{ error: errors.password }"
+            :class="{ error: form.errors.password }"
           />
-          <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
+          <span v-if="form.errors.password" class="error-message">{{ form.errors.password }}</span>
         </div>
 
         <div class="form-group">
@@ -77,8 +77,8 @@
           </label>
         </div>
 
-        <button type="submit" class="btn-primary" :disabled="processing">
-          <span v-if="!processing">Create Account</span>
+        <button type="submit" class="btn-primary" :disabled="form.processing">
+          <span v-if="!form.processing">Create Account</span>
           <span v-else>Creating account...</span>
         </button>
       </form>
@@ -108,15 +108,11 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+<script setup lang="ts">
+import { Link, useForm } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 
-const processing = ref(false);
-const errors = ref({});
-
-const form = ref({
+const form = useForm({
   name: '',
   email: '',
   company_name: '',
@@ -125,19 +121,10 @@ const form = ref({
   accept_terms: false,
 });
 
-async function submit() {
-  processing.value = true;
-  errors.value = {};
-
-  try {
-    await router.post(route('register'), form.value);
-  } catch (error) {
-    if (error.response?.data?.errors) {
-      errors.value = error.response.data.errors;
-    }
-  } finally {
-    processing.value = false;
-  }
+function submit() {
+  form.post(route('register'), {
+    preserveScroll: true,
+  });
 }
 </script>
 

@@ -26,10 +26,21 @@ require __DIR__.'/central.php';
 
 /*
 |--------------------------------------------------------------------------
+| Root Redirect
+|--------------------------------------------------------------------------
+*/
+Route::get('/', function () {
+    return auth()->check()
+        ? redirect()->route('dashboard')
+        : redirect()->route('login');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Tenant Authentication Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware('guest')->group(function () {
+Route::middleware(['guest', 'tenant.subdomain'])->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
     Route::post('login', [AuthenticatedSessionController::class, 'store']);

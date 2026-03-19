@@ -26,12 +26,20 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Hotel Admin',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'is_active' => true,
             ]
         );
 
         if (Schema::hasColumn('users', 'hotel_id')) {
             DB::table('users')->where('id', $user->id)->update([
                 'hotel_id' => $hotel->id,
+                'updated_at' => now(),
+            ]);
+        }
+
+        if (Schema::hasColumn('users', 'is_active')) {
+            DB::table('users')->where('id', $user->id)->update([
+                'is_active' => true,
                 'updated_at' => now(),
             ]);
         }

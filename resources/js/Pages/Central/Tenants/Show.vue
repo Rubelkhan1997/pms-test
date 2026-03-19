@@ -2,6 +2,12 @@
     <div class="space-y-6">
         <Head title="Tenant Details" />
         <Card>
+            <div v-if="$page.props.flash?.success" class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                {{ $page.props.flash.success }}
+            </div>
+            <div v-if="$page.props.flash?.error" class="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                {{ $page.props.flash.error }}
+            </div>
             <CardHeader class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div class="space-y-2">
                     <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
@@ -17,6 +23,12 @@
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <Badge :variant="statusVariant">{{ tenant.status }}</Badge>
+                    <Button
+                        variant="outline"
+                        @click="resetPassword"
+                    >
+                        Reset admin password
+                    </Button>
                     <Button :as="Link" :href="route('central.tenants.index')" variant="outline">
                         Back to tenants
                     </Button>
@@ -109,7 +121,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { Head, Link } from "@inertiajs/vue3";
+import { Head, Link, router } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import CentralLayout from "../../../Layouts/CentralLayout.vue";
 import { Badge } from "@/components/ui/badge";
@@ -151,6 +163,12 @@ const statusVariant = computed(() => {
     if (props.tenant.status === "pending") return "warning";
     return "danger";
 });
+
+function resetPassword() {
+    if (confirm("Reset the tenant admin password? A new temporary password will be shown.")) {
+        router.post(route("central.tenants.reset-admin-password", props.tenant.id));
+    }
+}
 
 function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString("en-US", {

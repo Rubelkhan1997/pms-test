@@ -70,6 +70,11 @@ class RegisteredUserController extends Controller
             // Provision tenant database
             $provisioningService = app(DatabaseProvisioningService::class);
             $provisioningService->createDatabaseForTenant($tenant);
+            $provisioningService->createTenantAdminUser($tenant, [
+                'name' => $user->name,
+                'email' => $user->email,
+                'password' => $request->password,
+            ]);
 
             // Activate tenant
             $tenant->activate();

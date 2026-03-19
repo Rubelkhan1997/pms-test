@@ -6,6 +6,8 @@ namespace App\Services;
 
 use App\Models\Tenant;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Exception;
 
@@ -197,6 +199,86 @@ class DatabaseProvisioningService
             ]);
         } finally {
             // Restore original connection
+            config([
+                'database.default' => $originalConnection,
+                "database.connections.{$originalConnection}.database" => $originalDatabase,
+            ]);
+            DB::setDefaultConnection($originalConnection);
+            DB::purge($originalConnection);
+        }
+    }
+
+    /**
+     * Create or update the tenant admin user inside the tenant database.
+     *
+     * @param array{name:string,email:string,password:string} $data
+     */
+    public function createTenantAdminUser(Tenant $tenant, array $data): void
+    {
+        $originalConnection = config('database.default');
+        $originalDatabase = config("database.connections.{$originalConnection}.database");
+
+        $this->setTenantConnection($tenant);
+
+        try {
+            $user = \App\Models\User::firstOrCreate(
+                ['email' => $data['email']],
+                [
+                    'name' => $data['name'],
+                    'password' => Hash::make($data['password']),
+                    'email_verified_at' => now(),
+                    'is_active' => true,
+                ]
+            );
+
+            $hotel = DB::table('hotels')->where('code', 'DEFAULT')->first();
+
+            if ($hotel && Schema::hasColumn('users', 'hotel_id')) {
+                DB::table('users')->where('id', $user->id)->update([
+                    'hotel_id' => $hotel->id,
+                    'updated_at' => now(),
+                ]);
+            }
+
+            if (Schema::hasColumn('users', 'is_active')) {
+                DB::table('users')->where('id', $user->id)->update([
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ]);
+            }
+
+            if (method_exists($user, 'assignRole')) {
+                $user->assignRole('hotel_admin');
+            }
+        } finally {
+            config([
+                'database.default' => $originalConnection,
+                "database.connections.{$originalConnection}.database" => $originalDatabase,
+            ]);
+            DB::setDefaultConnection($originalConnection);
+            DB::purge($originalConnection);
+        }
+    }
+
+    /**
+     * Reset tenant admin password inside the tenant database.
+     */
+    public function resetTenantAdminPassword(Tenant $tenant, string $email, string $password): void
+    {
+        $originalConnection = config('database.default');
+        $originalDatabase = config("database.connections.{$originalConnection}.database");
+
+        $this->setTenantConnection($tenant);
+
+        try {
+            $user = \App\Models\User::where('email', $email)->first();
+
+            if ($user) {
+                $user->update([
+                    'password' => Hash::make($password),
+                ]);
+            }
+        } finally {
             config([
                 'database.default' => $originalConnection,
                 "database.connections.{$originalConnection}.database" => $originalDatabase,

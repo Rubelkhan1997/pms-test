@@ -16,6 +16,7 @@ use Illuminate\Validation\Rules;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class CentralTenantController extends Controller
 {
@@ -189,6 +190,11 @@ class CentralTenantController extends Controller
             // Provision tenant database (includes seeding)
             $provisioningService = app(DatabaseProvisioningService::class);
             $provisioningService->createDatabaseForTenant($tenant);
+            $provisioningService->createTenantAdminUser($tenant, [
+                'name' => request('admin_name', 'Hotel Admin'),
+                'email' => request('admin_email', 'admin@tenant.local'),
+                'password' => request('admin_password', 'password'),
+            ]);
             \DB::setDefaultConnection($originalConnection);
             $tenant->setConnection($originalConnection);
 
@@ -223,6 +229,11 @@ class CentralTenantController extends Controller
 
             // Seed initial data
             $this->seedTenantData($tenant);
+            $provisioningService->createTenantAdminUser($tenant, [
+                'name' => $tenant->owners()->first()?->name ?? 'Hotel Admin',
+                'email' => $tenant->owners()->first()?->email ?? 'admin@tenant.local',
+                'password' => 'password',
+            ]);
             \DB::setDefaultConnection($originalConnection);
             $tenant->setConnection($originalConnection);
 
@@ -311,6 +322,40 @@ class CentralTenantController extends Controller
         $tenant->update(['status' => 'active']);
 
         return back()->with('success', 'Tenant reactivated successfully.');
+    }
+
+    /**
+     * Reset tenant admin password (central + tenant DB).
+     */
+    public function resetAdminPassword(Tenant $tenant): RedirectResponse
+    {
+        $centralConnection = $this->ensureCentralConnection();
+
+        $owner = $tenant->owners()->first();
+        $email = $owner?->email ?? $tenant->email;
+
+        if (!$email) {
+            return back()->with('error', 'No admin email found for this tenant.');
+        }
+
+        $newPassword = Str::random(12);
+
+        // Update central user password
+        $centralUser = \App\Models\User::on($centralConnection)
+            ->where('email', $email)
+            ->first();
+
+        if ($centralUser) {
+            $centralUser->update([
+                'password' => Hash::make($newPassword),
+            ]);
+        }
+
+        // Update tenant user password
+        $provisioningService = app(DatabaseProvisioningService::class);
+        $provisioningService->resetTenantAdminPassword($tenant, $email, $newPassword);
+
+        return back()->with('success', "Tenant admin password reset. Temporary password: {$newPassword}");
     }
 
     /**

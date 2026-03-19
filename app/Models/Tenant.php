@@ -7,7 +7,7 @@ namespace App\Models;
 use App\Models\TenantSubscription;
 use App\Models\TenantOwner;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Spatie\Multitenancy\Models\Tenant as BaseTenant;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -38,7 +38,7 @@ use Illuminate\Support\Str;
  * @property \Carbon\Carbon|null $suspended_at
  * @property \Carbon\Carbon|null $cancelled_at
  */
-class Tenant extends Model
+class Tenant extends BaseTenant
 {
     use HasFactory, SoftDeletes;
     

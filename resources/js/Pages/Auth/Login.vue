@@ -7,6 +7,9 @@
       </div>
 
       <form @submit.prevent="submit">
+        <div v-if="errorMessage" class="error-message" style="margin-bottom: 1rem;">
+          {{ errorMessage }}
+        </div>
         <div class="form-group">
           <label for="email">Email Address</label>
           <input
@@ -16,9 +19,9 @@
             required
             autofocus
             placeholder="you@example.com"
-            :class="{ error: errors.email }"
+            :class="{ error: form.errors.email }"
           />
-          <span v-if="errors.email" class="error-message">{{ errors.email }}</span>
+          <span v-if="form.errors.email" class="error-message">{{ form.errors.email }}</span>
         </div>
 
         <div class="form-group">
@@ -29,9 +32,9 @@
             type="password"
             required
             placeholder="••••••••"
-            :class="{ error: errors.password }"
+            :class="{ error: form.errors.password }"
           />
-          <span v-if="errors.password" class="error-message">{{ errors.password }}</span>
+          <span v-if="form.errors.password" class="error-message">{{ form.errors.password }}</span>
         </div>
 
         <div class="form-options">
@@ -42,8 +45,8 @@
           <a href="#" class="forgot-link">Forgot password?</a>
         </div>
 
-        <button type="submit" class="btn-primary" :disabled="processing">
-          <span v-if="!processing">Sign In</span>
+        <button type="submit" class="btn-primary" :disabled="form.processing">
+          <span v-if="!form.processing">Sign In</span>
           <span v-else>Signing in...</span>
         </button>
       </form>
@@ -64,34 +67,47 @@
   </div>
 </template>
 
-<script setup>
-import { ref } from 'vue';
-import { Link, router } from '@inertiajs/vue3';
+<script setup lang="ts">
+import { computed, ref, watchEffect } from 'vue';
+import { Link, useForm, usePage } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 
 const showDemo = ref(true);
-const processing = ref(false);
-const errors = ref({});
-
-const form = ref({
+const page = usePage();
+const form = useForm({
   email: '',
   password: '',
   remember: false,
 });
 
-async function submit() {
-  processing.value = true;
-  errors.value = {};
+const pageErrors = computed(() => {
+  return page.props.errors ?? {};
+});
 
-  try {
-    await router.post(route('login'), form.value);
-  } catch (error) {
-    if (error.response?.data?.errors) {
-      errors.value = error.response.data.errors;
-    }
-  } finally {
-    processing.value = false;
+watchEffect(() => {
+  const errors = pageErrors.value;
+  if (errors && Object.keys(errors).length > 0) {
+    form.setError(errors);
   }
+});
+
+const errorMessage = computed(() => {
+  return (
+    form.errors.email ||
+    form.errors.password ||
+    pageErrors.value.email ||
+    pageErrors.value.password ||
+    ''
+  );
+});
+
+function submit() {
+  form.post(route('login'), {
+    preserveScroll: true,
+    onError: () => {
+      // errors are populated by Inertia
+    },
+  });
 }
 </script>
 

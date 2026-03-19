@@ -54,6 +54,8 @@ Route::prefix('central')->name('central.')->middleware('central')->group(functio
             ->name('tenants.suspend');
         Route::post('tenants/{tenant}/reactivate', [CentralTenantController::class, 'reactivate'])
             ->name('tenants.reactivate');
+        Route::post('tenants/{tenant}/reset-admin-password', [CentralTenantController::class, 'resetAdminPassword'])
+            ->name('tenants.reset-admin-password');
 
         // Admin Profile
         Route::get('profile', [CentralAdminController::class, 'profile'])
