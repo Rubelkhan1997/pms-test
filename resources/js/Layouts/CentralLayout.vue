@@ -1,513 +1,156 @@
 <template>
-    <div class="central-layout">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <span class="logo-icon">🏢</span>
-                    <span class="logo-text">PMS Central</span>
+    <div class="min-h-screen bg-muted/30 font-sans text-foreground">
+        <div
+            class="fixed inset-0 z-40 bg-black/30 transition-opacity lg:hidden"
+            :class="isSidebarOpen ? 'opacity-100' : 'pointer-events-none opacity-0'"
+            @click="isSidebarOpen = false"
+        ></div>
+
+        <aside
+            class="fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-background px-4 py-6 shadow-sm transition-transform lg:translate-x-0"
+            :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+        >
+            <div class="flex items-center gap-3 px-2">
+                <span class="h-2 w-2 rounded-full bg-primary"></span>
+                <div>
+                    <div class="text-base font-semibold">PMS Central</div>
+                    <div class="text-[0.65rem] uppercase tracking-[0.35em] text-muted-foreground">
+                        Control Center
+                    </div>
                 </div>
             </div>
 
-            <nav class="sidebar-nav">
-                <div class="nav-section">MAIN</div>
+            <nav class="mt-8 flex flex-col gap-1 text-sm">
+                <div class="px-2 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+                    Main
+                </div>
                 <Link
                     :href="route('central.dashboard')"
-                    class="nav-item"
-                    :class="{ active: $page.component === 'Central/Dashboard' }"
+                    class="flex items-center gap-3 rounded-md px-3 py-2 font-medium transition"
+                    :class="
+                        $page.component === 'Central/Dashboard'
+                            ? 'bg-primary/10 text-foreground'
+                            : 'text-muted-foreground hover:bg-muted'
+                    "
                 >
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-label">Dashboard</span>
+                    <span class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-xs font-semibold">
+                        D
+                    </span>
+                    Dashboard
                 </Link>
 
                 <Link
                     :href="route('central.tenants.index')"
-                    class="nav-item"
-                    :class="{
-                        active: $page.component.startsWith('Central/Tenants'),
-                    }"
+                    class="flex items-center gap-3 rounded-md px-3 py-2 font-medium transition"
+                    :class="
+                        $page.component.startsWith('Central/Tenants')
+                            ? 'bg-primary/10 text-foreground'
+                            : 'text-muted-foreground hover:bg-muted'
+                    "
                 >
-                    <span class="nav-icon">🏢</span>
-                    <span class="nav-label">Tenants</span>
+                    <span class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-xs font-semibold">
+                        T
+                    </span>
+                    Tenants
                 </Link>
 
                 <Link
-                    :href="route('central.register')"
-                    class="nav-item"
-                    :class="{
-                        active: $page.component === 'Central/Tenants/Create',
-                    }"
+                    :href="route('central.tenants.create')"
+                    class="flex items-center gap-3 rounded-md px-3 py-2 font-medium transition"
+                    :class="
+                        $page.component === 'Central/Tenants/AdminCreate'
+                            ? 'bg-primary/10 text-foreground'
+                            : 'text-muted-foreground hover:bg-muted'
+                    "
                 >
-                    <span class="nav-icon">➕</span>
-                    <span class="nav-label">New Tenant</span>
+                    <span class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-xs font-semibold">
+                        +
+                    </span>
+                    New Tenant
                 </Link>
 
-                <div class="nav-section">REPORTS</div>
-                <Link
-                    :href="route('central.dashboard')"
-                    class="nav-item"
-                    :class="{
-                        active: $page.component === 'Central/Reports/Overview',
-                    }"
-                >
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-label">Overview</span>
-                </Link>
-
-                <Link
-                    :href="route('central.dashboard')"
-                    class="nav-item"
-                    :class="{
-                        active: $page.component === 'Central/Reports/Analytics',
-                    }"
-                >
-                    <span class="nav-icon">📉</span>
-                    <span class="nav-label">Analytics</span>
-                </Link>
-
-                <div class="nav-section">SYSTEM</div>
+                <div class="mt-6 px-2 text-[0.65rem] font-semibold uppercase tracking-[0.35em] text-muted-foreground">
+                    System
+                </div>
                 <Link
                     :href="route('central.profile')"
-                    class="nav-item"
-                    :class="{ active: $page.component === 'Central/Profile' }"
+                    class="flex items-center gap-3 rounded-md px-3 py-2 font-medium text-muted-foreground transition hover:bg-muted"
                 >
-                    <span class="nav-icon">👤</span>
-                    <span class="nav-label">Profile</span>
-                </Link>
-
-                <Link
-                    :href="route('central.dashboard')"
-                    class="nav-item"
-                    :class="{ active: $page.component === 'Central/Settings' }"
-                >
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-label">Settings</span>
+                    <span class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-xs font-semibold">
+                        P
+                    </span>
+                    Profile
                 </Link>
             </nav>
 
-            <div class="sidebar-footer">
-                <div class="user-card" v-if="$page.props.auth?.user">
-                    <div class="avatar">
+            <div class="mt-auto px-2 pt-6" v-if="$page.props.auth?.user">
+                <div class="flex items-center gap-3 rounded-md border border-border bg-muted/40 p-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
                         {{ $page.props.auth.user.name.charAt(0) }}
                     </div>
-                    <div class="user-info">
-                        <div class="user-name">
+                    <div class="min-w-0">
+                        <div class="truncate text-sm font-medium">
                             {{ $page.props.auth.user.name }}
                         </div>
-                        <div class="user-role">Super Admin</div>
+                        <div class="text-[0.65rem] uppercase tracking-[0.2em] text-muted-foreground">
+                            Super Admin
+                        </div>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <div class="main-wrapper">
-            <!-- Topbar -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <button class="menu-toggle">
-                        <span class="menu-icon">☰</span>
-                    </button>
-                    <div class="search-bar">
-                        <span class="search-icon">🔍</span>
-                        <input
-                            type="text"
-                            placeholder="Search tenants, users..."
-                        />
+        <div class="lg:ml-64">
+            <header class="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/95 px-6 backdrop-blur">
+                <div class="flex items-center gap-4">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="lg:hidden"
+                        @click="toggleSidebar"
+                    >
+                        Menu
+                    </Button>
+                    <div class="hidden w-64 lg:block">
+                        <Input placeholder="Search tenants, users" />
                     </div>
                 </div>
-
-                <div class="topbar-right">
-                    <button class="icon-button notification-btn">
-                        <span class="icon">🔔</span>
-                        <span class="badge">3</span>
-                    </button>
-
-                    <div class="divider"></div>
-
-                    <Link
+                <div class="flex items-center gap-3">
+                    <Badge variant="secondary">Central live</Badge>
+                    <Button variant="outline" size="icon">
+                        N
+                    </Button>
+                    <div class="h-6 w-px bg-border"></div>
+                    <Button
                         v-if="$page.props.auth?.user"
+                        :as="Link"
                         :href="route('central.logout')"
                         method="post"
-                        as="button"
-                        class="btn-logout"
+                        variant="default"
                     >
-                        <span class="icon">🚪</span> Logout
-                    </Link>
+                        Logout
+                    </Button>
                 </div>
             </header>
 
-            <!-- Page Content -->
-            <main class="page-content">
-                <div class="content-container">
-                    <slot />
-                </div>
+            <main class="px-6 py-8">
+                <slot />
             </main>
         </div>
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { ref } from "vue";
 import { Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+const isSidebarOpen = ref(false);
+
+function toggleSidebar() {
+    isSidebarOpen.value = !isSidebarOpen.value;
+}
 </script>
-
-<style scoped>
-/* Reset and Base Styles */
-* {
-    box-sizing: border-box;
-}
-
-.central-layout {
-    display: flex;
-    min-height: 100vh;
-    background-color: #f3f4f6;
-    font-family:
-        "Inter",
-        -apple-system,
-        BlinkMacSystemFont,
-        "Segoe UI",
-        Roboto,
-        Helvetica,
-        Arial,
-        sans-serif;
-}
-
-/* Sidebar Styling */
-.sidebar {
-    width: 260px;
-    background-color: #ffffff;
-    border-right: 1px solid #e5e7eb;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    z-index: 40;
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.02);
-}
-
-.sidebar-header {
-    height: 72px;
-    display: flex;
-    align-items: center;
-    padding: 0 1.5rem;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.logo {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.logo-icon {
-    font-size: 1.5rem;
-}
-
-.logo-text {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #111827;
-    letter-spacing: -0.025em;
-}
-
-.sidebar-nav {
-    flex: 1;
-    padding: 1.5rem 1rem;
-    overflow-y: auto;
-}
-
-.nav-section {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #9ca3af;
-    letter-spacing: 0.05em;
-    padding: 0 0.75rem;
-    margin-bottom: 0.5rem;
-    margin-top: 1.5rem;
-}
-
-.nav-section:first-child {
-    margin-top: 0;
-}
-
-.nav-item {
-    display: flex;
-    align-items: center;
-    padding: 0.75rem 1rem;
-    color: #4b5563;
-    text-decoration: none;
-    border-radius: 8px;
-    margin-bottom: 0.25rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
-}
-
-.nav-item:hover {
-    background-color: #f9fafb;
-    color: #111827;
-}
-
-.nav-item.active {
-    background-color: #eef2ff;
-    color: #4f46e5;
-}
-
-.nav-icon {
-    font-size: 1.25rem;
-    margin-right: 0.75rem;
-    opacity: 0.7;
-    transition: transform 0.2s ease;
-}
-
-.nav-item:hover .nav-icon {
-    transform: scale(1.1);
-}
-
-.nav-item.active .nav-icon {
-    opacity: 1;
-}
-
-.sidebar-footer {
-    padding: 1rem;
-    border-top: 1px solid #e5e7eb;
-}
-
-.user-card {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem;
-    background-color: #f9fafb;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
-}
-
-.avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.user-info {
-    flex: 1;
-    overflow: hidden;
-}
-
-.user-name {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #111827;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    overflow: hidden;
-}
-
-.user-role {
-    font-size: 0.75rem;
-    color: #6b7280;
-}
-
-/* Main Content Wrapper */
-.main-wrapper {
-    flex: 1;
-    margin-left: 260px; /* Same as sidebar width */
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-}
-
-/* Topbar Styling */
-.topbar {
-    height: 72px;
-    background-color: #ffffff;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 2rem;
-    position: sticky;
-    top: 0;
-    z-index: 30;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-.topbar-left {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.menu-toggle {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    color: #4b5563;
-    cursor: pointer;
-}
-
-.search-bar {
-    display: flex;
-    align-items: center;
-    background-color: #f3f4f6;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    width: 300px;
-    border: 1px solid transparent;
-    transition: all 0.2s ease;
-}
-
-.search-bar:focus-within {
-    background-color: #ffffff;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-.search-icon {
-    color: #9ca3af;
-    margin-right: 0.5rem;
-    font-size: 1.1rem;
-}
-
-.search-bar input {
-    background: transparent;
-    border: none;
-    outline: none;
-    width: 100%;
-    color: #111827;
-    font-size: 0.875rem;
-}
-
-.search-bar input::placeholder {
-    color: #9ca3af;
-}
-
-.topbar-right {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.icon-button {
-    background: none;
-    border: none;
-    position: relative;
-    cursor: pointer;
-    padding: 0.5rem;
-    color: #4b5563;
-    border-radius: 50%;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.icon-button:hover {
-    background-color: #f3f4f6;
-    color: #111827;
-}
-
-.icon-button .icon {
-    font-size: 1.25rem;
-}
-
-.notification-btn .badge {
-    position: absolute;
-    top: 2px;
-    right: 2px;
-    background-color: #ef4444;
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 700;
-    height: 16px;
-    min-width: 16px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #ffffff;
-}
-
-.divider {
-    height: 24px;
-    width: 1px;
-    background-color: #e5e7eb;
-}
-
-.btn-logout {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    background: none;
-    border: none;
-    color: #4b5563;
-    font-size: 0.875rem;
-    font-weight: 500;
-    cursor: pointer;
-    padding: 0.5rem 0.75rem;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-    text-decoration: none;
-}
-
-.btn-logout:hover {
-    background-color: #fee2e2;
-    color: #dc2626;
-}
-
-/* Page Content */
-.page-content {
-    flex: 1;
-    padding: 2rem;
-}
-
-.content-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-/* Responsive */
-@media (max-width: 1024px) {
-    .sidebar {
-        transform: translateX(-100%);
-        transition: transform 0.3s ease;
-    }
-
-    .sidebar.open {
-        transform: translateX(0);
-    }
-
-    .main-wrapper {
-        margin-left: 0;
-    }
-
-    .menu-toggle {
-        display: block;
-    }
-
-    .search-bar {
-        width: 200px;
-    }
-}
-
-@media (max-width: 640px) {
-    .search-bar {
-        display: none;
-    }
-
-    .page-content {
-        padding: 1rem;
-    }
-}
-</style>

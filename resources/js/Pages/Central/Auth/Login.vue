@@ -1,82 +1,96 @@
 <template>
-    <div class="central-auth">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1>Central Admin Login</h1>
-                <p>Sign in to manage tenants</p>
-            </div>
+    <div class="min-h-screen bg-muted/30 px-6 py-12">
+        <div class="mx-auto grid max-w-5xl items-center gap-8 lg:grid-cols-[1fr_1fr]">
+            <Card>
+                <CardHeader>
+                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                        Central access
+                    </div>
+                    <CardTitle>Central admin login</CardTitle>
+                    <CardDescription>Sign in to manage tenants across the platform.</CardDescription>
+                </CardHeader>
+                <CardContent class="space-y-4">
+                    <div v-if="$page.props.flash?.success" class="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                        {{ $page.props.flash.success }}
+                    </div>
 
-            <div v-if="$page.props.flash?.success" class="alert alert-success">
-                {{ $page.props.flash.success }}
-            </div>
+                    <form @submit.prevent="submit" class="space-y-4">
+                        <div class="space-y-2">
+                            <label for="email" class="text-sm font-medium">Email address</label>
+                            <Input
+                                id="email"
+                                v-model="form.email"
+                                type="email"
+                                placeholder="admin@pms.test"
+                                autofocus
+                            />
+                            <p v-if="form.errors.email" class="text-xs text-rose-600">
+                                {{ form.errors.email }}
+                            </p>
+                        </div>
 
-            <form @submit.prevent="submit">
-                <div class="form-group">
-                    <label for="email">Email Address</label>
-                    <input
-                        id="email"
-                        v-model="form.email"
-                        type="email"
-                        required
-                        autofocus
-                        placeholder="admin@pms.test"
-                        :class="{ error: form.errors.email }"
-                    />
-                    <span v-if="form.errors.email" class="error-message">{{
-                        form.errors.email
-                    }}</span>
-                </div>
+                        <div class="space-y-2">
+                            <label for="password" class="text-sm font-medium">Password</label>
+                            <Input
+                                id="password"
+                                v-model="form.password"
+                                type="password"
+                                placeholder="********"
+                            />
+                            <p v-if="form.errors.password" class="text-xs text-rose-600">
+                                {{ form.errors.password }}
+                            </p>
+                        </div>
 
-                <div class="form-group">
-                    <label for="password">Password</label>
-                    <input
-                        id="password"
-                        v-model="form.password"
-                        type="password"
-                        required
-                        placeholder="••••••••"
-                        :class="{ error: form.errors.password }"
-                    />
-                    <span v-if="form.errors.password" class="error-message">{{
-                        form.errors.password
-                    }}</span>
-                </div>
+                        <label class="flex items-center gap-2 text-sm text-muted-foreground">
+                            <input v-model="form.remember" type="checkbox" class="h-4 w-4" />
+                            Remember me
+                        </label>
 
-                <div class="form-options">
-                    <label class="checkbox-label">
-                        <input v-model="form.remember" type="checkbox" />
-                        <span>Remember me</span>
-                    </label>
-                </div>
+                        <Button type="submit" :disabled="form.processing" class="w-full">
+                            {{ form.processing ? 'Signing in...' : 'Sign in' }}
+                        </Button>
+                    </form>
 
-                <button
-                    type="submit"
-                    class="btn-primary"
-                    :disabled="form.processing"
-                >
-                    <span v-if="!form.processing">Sign In</span>
-                    <span v-else>Signing in...</span>
-                </button>
-            </form>
+                    <div class="text-sm text-muted-foreground">
+                        <Link :href="route('central.home')" class="font-medium text-primary">
+                            Back to home
+                        </Link>
+                    </div>
 
-            <div class="auth-footer">
-                <Link :href="route('central.home')" class="back-link">
-                    ← Back to Home
-                </Link>
-            </div>
+                    <div class="rounded-md border border-border bg-muted/40 p-4 text-xs text-muted-foreground">
+                        <div class="font-semibold text-foreground">Demo admin credentials</div>
+                        <div>Email: superadmin@pms.test</div>
+                        <div>Password: password</div>
+                    </div>
+                </CardContent>
+            </Card>
 
-            <div class="demo-credentials">
-                <p><strong>Demo Admin Credentials:</strong></p>
-                <p>Email: superadmin@pms.test</p>
-                <p>Password: password</p>
-            </div>
+            <Card class="hidden lg:block">
+                <CardHeader>
+                    <CardTitle>Operate with confidence</CardTitle>
+                    <CardDescription>
+                        Central SAAS gives you a single view of tenant health, approvals, and subscription readiness.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <ul class="space-y-3 text-sm text-muted-foreground">
+                        <li>Instant provisioning visibility</li>
+                        <li>Real time tenant status</li>
+                        <li>Secure admin workflows</li>
+                    </ul>
+                </CardContent>
+            </Card>
         </div>
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { Link, useForm } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const form = useForm({
     email: "",
@@ -90,157 +104,3 @@ function submit() {
     });
 }
 </script>
-
-<style scoped>
-.central-auth {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 2rem;
-}
-
-.auth-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    padding: 3rem;
-    width: 100%;
-    max-width: 450px;
-}
-
-.auth-header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.auth-header h1 {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #1a1a1a;
-    margin-bottom: 0.5rem;
-}
-
-.auth-header p {
-    color: #666;
-    font-size: 0.95rem;
-}
-
-.alert {
-    padding: 1rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
-}
-
-.alert-success {
-    background: #d1fae5;
-    color: #065f46;
-    border: 1px solid #10b981;
-}
-
-.form-group {
-    margin-bottom: 1.5rem;
-}
-
-.form-group label {
-    display: block;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.form-group input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 2px solid #e5e5e5;
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: all 0.2s;
-}
-
-.form-group input:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-group input.error {
-    border-color: #ef4444;
-}
-
-.error-message {
-    display: block;
-    color: #ef4444;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
-}
-
-.form-options {
-    margin-bottom: 1.5rem;
-}
-
-.checkbox-label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: #666;
-    cursor: pointer;
-}
-
-.btn-primary {
-    width: 100%;
-    padding: 0.875rem;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.btn-primary:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-primary:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.auth-footer {
-    text-align: center;
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid #e5e5e5;
-}
-
-.back-link {
-    color: #667eea;
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.back-link:hover {
-    text-decoration: underline;
-}
-
-.demo-credentials {
-    margin-top: 2rem;
-    padding: 1rem;
-    background: #f5f5f5;
-    border-radius: 8px;
-    text-align: center;
-    font-size: 0.85rem;
-    color: #666;
-}
-
-.demo-credentials p {
-    margin: 0.25rem 0;
-}
-</style>

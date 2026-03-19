@@ -20,6 +20,25 @@ use Spatie\Permission\Models\Role;
 class CentralTenantController extends Controller
 {
     /**
+     * Ensure we are using the central database connection.
+     */
+    protected function ensureCentralConnection(): string
+    {
+        $connection = env('DB_CONNECTION', config('database.default', 'pgsql'));
+        $database = env('DB_DATABASE', config("database.connections.{$connection}.database"));
+
+        config([
+            'database.default' => $connection,
+            "database.connections.{$connection}.database" => $database,
+        ]);
+
+        DB::purge($connection);
+        DB::setDefaultConnection($connection);
+
+        return $connection;
+    }
+
+    /**
      * Display tenant registration page.
      */
     public function create(): Response
@@ -35,6 +54,9 @@ class CentralTenantController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $centralConnection = $this->ensureCentralConnection();
+        $centralDb = DB::connection($centralConnection);
+
         $request->validate([
             'tenant_name' => ['required', 'string', 'max:255'],
             'tenant_email' => ['required', 'string', 'email', 'max:255', 'unique:tenants,email'],
@@ -44,11 +66,11 @@ class CentralTenantController extends Controller
             'admin_password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        DB::beginTransaction();
+        $centralDb->beginTransaction();
 
         try {
             // Create admin user
-            $adminUser = User::create([
+            $adminUser = User::on($centralConnection)->create([
                 'name' => $request->admin_name,
                 'email' => $request->admin_email,
                 'password' => Hash::make($request->admin_password),
@@ -56,7 +78,7 @@ class CentralTenantController extends Controller
             ]);
 
             // Create tenant (in pending state)
-            $tenant = Tenant::create([
+            $tenant = Tenant::on($centralConnection)->create([
                 'name' => $request->tenant_name,
                 'email' => $request->tenant_email,
                 'subdomain' => $request->tenant_subdomain,
@@ -68,18 +90,30 @@ class CentralTenantController extends Controller
             // Assign admin user as tenant owner
             $tenant->owners()->attach($adminUser, ['role' => 'owner']);
 
-            // Assign role to admin user (create role if it doesn't exist)
-            $role = Role::firstOrCreate(['name' => 'tenant_owner']);
-            $adminUser->assignRole($role);
+            // Avoid DB cache store dependency during role creation (cache table may not exist yet)
+            $originalCacheStore = config('cache.default');
+            $originalPermissionCacheStore = config('permission.cache.store');
+            config([
+                'cache.default' => 'array',
+                'permission.cache.store' => 'array',
+            ]);
 
-            // If created from admin panel, auto-approve and provision database
-            if (request()->routeIs('central.tenants.store')) {
-                $this->approveTenantImmediately($tenant);
+            try {
+                // Assign role to admin user (create role if it doesn't exist)
+                $role = Role::firstOrCreate(['name' => 'tenant_owner']);
+                $adminUser->assignRole($role);
+            } finally {
+                config([
+                    'cache.default' => $originalCacheStore,
+                    'permission.cache.store' => $originalPermissionCacheStore,
+                ]);
             }
 
-            DB::commit();
+            $centralDb->commit();
 
             if (request()->routeIs('central.tenants.store')) {
+                // If created from admin panel, auto-approve and provision database
+                $this->approveTenantImmediately($tenant);
                 return redirect()->route('central.tenants.index')
                     ->with('success', 'Tenant created and activated successfully!');
             }
@@ -88,7 +122,7 @@ class CentralTenantController extends Controller
                 ->with('success', 'Tenant registration successful! Please wait for admin approval. You will receive an email once your account is activated.');
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            $centralDb->rollBack();
 
             // Force reconnect to central 'postgres' database
             $currentDb = config('database.connections.pgsql.database');
@@ -136,7 +170,9 @@ class CentralTenantController extends Controller
      */
     public function index(): Response
     {
-        $tenants = Tenant::with('owners')
+        $centralConnection = $this->ensureCentralConnection();
+
+        $tenants = Tenant::on($centralConnection)->with('owners')
             ->latest()
             ->paginate(20);
 
@@ -151,15 +187,21 @@ class CentralTenantController extends Controller
     protected function approveTenantImmediately(Tenant $tenant): void
     {
         try {
+            $originalConnection = $this->ensureCentralConnection();
             // Provision tenant database (includes seeding)
             $provisioningService = app(DatabaseProvisioningService::class);
             $provisioningService->createDatabaseForTenant($tenant);
+            \DB::setDefaultConnection($originalConnection);
+            $tenant->setConnection($originalConnection);
 
             // Activate tenant
-            $tenant->update([
-                'status' => 'active',
-                'activated_at' => now(),
-            ]);
+            Tenant::on($originalConnection)
+                ->where('id', $tenant->id)
+                ->update([
+                    'status' => 'active',
+                    'activated_at' => now(),
+                    'updated_at' => now(),
+                ]);
         } catch (\Exception $e) {
             \Log::error('Failed to auto-approve tenant: ' . $e->getMessage());
             throw $e;
@@ -176,25 +218,37 @@ class CentralTenantController extends Controller
         }
 
         try {
+            $originalConnection = $this->ensureCentralConnection();
             // Provision tenant database
             $provisioningService = app(DatabaseProvisioningService::class);
             $provisioningService->createDatabaseForTenant($tenant);
 
             // Seed initial data
             $this->seedTenantData($tenant);
+            \DB::setDefaultConnection($originalConnection);
+            $tenant->setConnection($originalConnection);
 
             // Activate tenant
-            $tenant->update([
-                'status' => 'active',
-                'activated_at' => now(),
-            ]);
+            Tenant::on($originalConnection)
+                ->where('id', $tenant->id)
+                ->update([
+                    'status' => 'active',
+                    'activated_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
             // Notify admin user (email would be sent here)
 
             return back()->with('success', 'Tenant approved and activated successfully!');
 
         } catch (\Exception $e) {
-            $tenant->update(['status' => 'suspended']);
+            $originalConnection = config('database.default');
+            Tenant::on($originalConnection)
+                ->where('id', $tenant->id)
+                ->update([
+                    'status' => 'suspended',
+                    'updated_at' => now(),
+                ]);
 
             return back()->with('error', 'Failed to approve tenant: ' . $e->getMessage());
         }
@@ -266,8 +320,9 @@ class CentralTenantController extends Controller
      */
     protected function seedTenantData(Tenant $tenant): void
     {
-        // This will be called after database provisioning
-        // The TenantDatabaseSeeder will run automatically
-        // Additional custom seeding can be done here
+        $originalConnection = config('database.default');
+        $provisioningService = app(DatabaseProvisioningService::class);
+        $provisioningService->seedTenantData($tenant);
+        \DB::setDefaultConnection($originalConnection);
     }
 }

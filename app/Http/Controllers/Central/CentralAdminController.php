@@ -16,19 +16,40 @@ use Inertia\Response;
 class CentralAdminController extends Controller
 {
     /**
+     * Ensure we are using the central database connection.
+     */
+    protected function ensureCentralConnection(): string
+    {
+        $connection = env('DB_CONNECTION', config('database.default', 'pgsql'));
+        $database = env('DB_DATABASE', config("database.connections.{$connection}.database"));
+
+        config([
+            'database.default' => $connection,
+            "database.connections.{$connection}.database" => $database,
+        ]);
+
+        \DB::purge($connection);
+        \DB::setDefaultConnection($connection);
+
+        return $connection;
+    }
+
+    /**
      * Display central admin dashboard.
      */
     public function dashboard(): Response
     {
+        $centralConnection = $this->ensureCentralConnection();
+
         $stats = [
-            'total_tenants' => Tenant::count(),
-            'pending_tenants' => Tenant::where('status', 'pending')->count(),
-            'active_tenants' => Tenant::where('status', 'active')->count(),
-            'suspended_tenants' => Tenant::where('status', 'suspended')->count(),
-            'total_users' => User::count(),
+            'total_tenants' => Tenant::on($centralConnection)->count(),
+            'pending_tenants' => Tenant::on($centralConnection)->where('status', 'pending')->count(),
+            'active_tenants' => Tenant::on($centralConnection)->where('status', 'active')->count(),
+            'suspended_tenants' => Tenant::on($centralConnection)->where('status', 'suspended')->count(),
+            'total_users' => User::on($centralConnection)->count(),
         ];
 
-        $recentTenants = Tenant::with('owners')
+        $recentTenants = Tenant::on($centralConnection)->with('owners')
             ->latest()
             ->take(10)
             ->get();
@@ -44,6 +65,7 @@ class CentralAdminController extends Controller
      */
     public function showTenant(Tenant $tenant): Response
     {
+        $this->ensureCentralConnection();
         $tenant->load(['owners', 'subscriptions']);
 
         $stats = [

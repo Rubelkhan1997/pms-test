@@ -119,6 +119,7 @@ class DatabaseProvisioningService
     {
         // Connect to tenant database
         $originalConnection = config('database.default');
+        $originalDatabase = config('database.connections.pgsql.database');
         
         config([
             'database.default' => 'pgsql',
@@ -137,7 +138,9 @@ class DatabaseProvisioningService
             // Restore original connection
             config([
                 'database.default' => $originalConnection,
+                "database.connections.pgsql.database" => $originalDatabase,
             ]);
+            DB::setDefaultConnection($originalConnection);
             DB::purge('pgsql');
         }
     }
@@ -147,11 +150,10 @@ class DatabaseProvisioningService
      */
     public function runMigrations(Tenant $tenant): void
     {
-        $databaseName = $tenant->database_name;
-
         // Store original connection config
         $originalConnection = config('database.default');
         $originalDatabase = config('database.connections.pgsql.database');
+        $connectionName = $this->getConnectionName($tenant);
 
         // Set tenant database connection
         $this->setTenantConnection($tenant);
@@ -159,7 +161,7 @@ class DatabaseProvisioningService
         try {
             // Run tenant database migrations
             \Artisan::call('migrate', [
-                '--database' => 'pgsql',
+                '--database' => $connectionName,
                 '--path' => 'database/migrations/tenant',
                 '--force' => true,
             ]);
@@ -169,6 +171,7 @@ class DatabaseProvisioningService
                 'database.default' => $originalConnection,
                 "database.connections.pgsql.database" => $originalDatabase,
             ]);
+            DB::setDefaultConnection($originalConnection);
             DB::purge('pgsql');
         }
     }
@@ -181,14 +184,15 @@ class DatabaseProvisioningService
         // Store original connection config
         $originalConnection = config('database.default');
         $originalDatabase = config('database.connections.pgsql.database');
+        $connectionName = $this->getConnectionName($tenant);
 
         $this->setTenantConnection($tenant);
 
         try {
             // Seed tenant database with initial data
             \Artisan::call('db:seed', [
-                '--class' => 'TenantDatabaseSeeder',
-                '--database' => 'pgsql',
+                '--class' => \Database\Seeders\TenantDatabaseSeeder::class,
+                '--database' => $connectionName,
                 '--force' => true,
             ]);
         } finally {
@@ -197,6 +201,7 @@ class DatabaseProvisioningService
                 'database.default' => $originalConnection,
                 "database.connections.pgsql.database" => $originalDatabase,
             ]);
+            DB::setDefaultConnection($originalConnection);
             DB::purge('pgsql');
         }
     }

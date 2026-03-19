@@ -13,7 +13,7 @@ use Inertia\Inertia;
 | Central Website Routes (Public)
 |--------------------------------------------------------------------------
 */
-Route::prefix('central')->name('central.')->group(function () {
+Route::prefix('central')->name('central.')->middleware('central')->group(function () {
     // Public routes
     Route::get('/', function () {
         return Inertia::render('Central/Home');
