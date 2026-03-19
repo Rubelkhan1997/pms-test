@@ -52,7 +52,7 @@ Route::middleware('auth')->group(function () {
 | Dashboard Route
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->get('/dashboard', function () {
+Route::middleware(['auth', 'tenant'])->get('/dashboard', function () {
     return inertia('Dashboard/Index');
 })->name('dashboard');
 
@@ -61,7 +61,7 @@ Route::middleware(['auth'])->get('/dashboard', function () {
 | Front Desk Routes
 |--------------------------------------------------------------------------
 */
-Route::prefix('front-desk')->name('front-desk.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('front-desk')->name('front-desk.')->group(function (): void {
     // Reservations
     Route::get('/reservations', [FrontDeskController::class, 'index'])->name('reservations.index');
     Route::get('/reservations/{id}', [FrontDeskController::class, 'show'])->name('reservations.show');
@@ -89,7 +89,7 @@ Route::prefix('front-desk')->name('front-desk.')->group(function (): void {
 | Booking Routes (OTA)
 |--------------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->prefix('booking')->name('booking.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('booking')->name('booking.')->group(function (): void {
     Route::get('/ota-syncs', [BookingController::class, 'index'])->name('ota-syncs.index');
     Route::post('/ota-syncs', [BookingController::class, 'store'])->name('ota-syncs.store');
 });
@@ -99,7 +99,7 @@ Route::middleware(['web', 'auth'])->prefix('booking')->name('booking.')->group(f
 | Guest Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->prefix('guests')->name('guests.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('guests')->name('guests.')->group(function (): void {
     Route::get('/profiles', [GuestController::class, 'index'])->name('profiles.index');
     Route::get('/profiles/search', [GuestController::class, 'search'])->name('profiles.search');
     Route::get('/profiles/vip', [GuestController::class, 'vip'])->name('profiles.vip');
@@ -114,7 +114,7 @@ Route::middleware(['web', 'auth'])->prefix('guests')->name('guests.')->group(fun
 | Housekeeping Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->prefix('housekeeping')->name('housekeeping.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('housekeeping')->name('housekeeping.')->group(function (): void {
     Route::get('/tasks', [HousekeepingController::class, 'index'])->name('tasks.index');
     Route::get('/tasks/today', [HousekeepingController::class, 'today'])->name('tasks.today');
     Route::get('/tasks/{id}', [HousekeepingController::class, 'show'])->name('tasks.show');
@@ -129,7 +129,7 @@ Route::middleware(['web', 'auth'])->prefix('housekeeping')->name('housekeeping.'
 | POS Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->prefix('pos')->name('pos.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('pos')->name('pos.')->group(function (): void {
     Route::get('/orders', [PosOrderController::class, 'index'])->name('orders.index');
     Route::get('/orders/today', [PosOrderController::class, 'today'])->name('orders.today');
     Route::get('/orders/{id}', [PosOrderController::class, 'show'])->name('orders.show');
@@ -152,7 +152,7 @@ Route::middleware(['web', 'auth'])->prefix('pos')->name('pos.')->group(function 
 | Reports Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->prefix('reports')->name('reports.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('reports')->name('reports.')->group(function (): void {
     Route::get('/snapshots', [ReportsController::class, 'index'])->name('snapshots.index');
     Route::post('/snapshots', [ReportsController::class, 'store'])->name('snapshots.store');
 });
@@ -162,7 +162,7 @@ Route::middleware(['web', 'auth'])->prefix('reports')->name('reports.')->group(f
 | Mobile Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->prefix('mobile')->name('mobile.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('mobile')->name('mobile.')->group(function (): void {
     Route::get('/tasks', [MobileController::class, 'index'])->name('tasks.index');
     Route::post('/tasks', [MobileController::class, 'store'])->name('tasks.store');
 });
@@ -172,7 +172,7 @@ Route::middleware(['web', 'auth'])->prefix('mobile')->name('mobile.')->group(fun
 | HR Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['web', 'auth'])->prefix('hr')->name('hr.')->group(function (): void {
+Route::middleware(['web', 'auth', 'tenant'])->prefix('hr')->name('hr.')->group(function (): void {
     Route::get('/employees', [HrController::class, 'index'])->name('employees.index');
     Route::get('/employees/{id}', [HrController::class, 'show'])->name('employees.show');
     Route::post('/employees', [HrController::class, 'store'])->name('employees.store');

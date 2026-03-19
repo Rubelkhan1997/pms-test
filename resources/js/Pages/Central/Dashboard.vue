@@ -1,10 +1,14 @@
 <template>
     <div class="space-y-6">
+        <Head title="Central Dashboard" />
         <div class="grid gap-4 lg:grid-cols-[2fr_1fr]">
             <Card>
-                <CardHeader>
-                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                        Central overview
+                <CardHeader class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                            Central overview
+                        </div>
+                        <Building2 class="h-5 w-5 text-muted-foreground" />
                     </div>
                     <CardTitle>Central overview for consistent SAAS control.</CardTitle>
                     <CardDescription>
@@ -30,9 +34,12 @@
                 </CardContent>
             </Card>
             <Card class="bg-muted/40">
-                <CardHeader>
-                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                        Tenants onboarded
+                <CardHeader class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                            Tenants onboarded
+                        </div>
+                        <Users class="h-5 w-5 text-muted-foreground" />
                     </div>
                     <div class="text-3xl font-semibold">{{ stats.total_tenants }}</div>
                 </CardHeader>
@@ -46,9 +53,10 @@
 
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <Card>
-                <CardHeader>
-                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                        Tenants
+                <CardHeader class="space-y-2">
+                    <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                        <span>Tenants</span>
+                        <Building2 class="h-4 w-4" />
                     </div>
                     <div class="text-2xl font-semibold">{{ stats.total_tenants }}</div>
                 </CardHeader>
@@ -57,9 +65,10 @@
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader>
-                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                        Pending
+                <CardHeader class="space-y-2">
+                    <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                        <span>Pending</span>
+                        <Clock class="h-4 w-4" />
                     </div>
                     <div class="text-2xl font-semibold">{{ stats.pending_tenants }}</div>
                 </CardHeader>
@@ -68,9 +77,10 @@
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader>
-                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                        Active
+                <CardHeader class="space-y-2">
+                    <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                        <span>Active</span>
+                        <CheckCircle2 class="h-4 w-4" />
                     </div>
                     <div class="text-2xl font-semibold">{{ stats.active_tenants }}</div>
                 </CardHeader>
@@ -79,9 +89,10 @@
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader>
-                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                        Suspended
+                <CardHeader class="space-y-2">
+                    <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                        <span>Suspended</span>
+                        <ShieldAlert class="h-4 w-4" />
                     </div>
                     <div class="text-2xl font-semibold">{{ stats.suspended_tenants }}</div>
                 </CardHeader>
@@ -90,9 +101,10 @@
                 </CardContent>
             </Card>
             <Card>
-                <CardHeader>
-                    <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
-                        Users
+                <CardHeader class="space-y-2">
+                    <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
+                        <span>Users</span>
+                        <UserCircle2 class="h-4 w-4" />
                     </div>
                     <div class="text-2xl font-semibold">{{ stats.total_users }}</div>
                 </CardHeader>
@@ -104,9 +116,14 @@
 
         <Card>
             <CardHeader class="flex flex-row items-start justify-between">
-                <div>
-                    <CardTitle>Recent tenants</CardTitle>
-                    <CardDescription>Newest properties across your network.</CardDescription>
+                <div class="flex items-start gap-3">
+                    <div class="mt-1 flex h-9 w-9 items-center justify-center rounded-full bg-muted">
+                        <ClipboardList class="h-4 w-4 text-muted-foreground" />
+                    </div>
+                    <div>
+                        <CardTitle>Recent tenants</CardTitle>
+                        <CardDescription>Newest properties across your network.</CardDescription>
+                    </div>
                 </div>
                 <Button :as="Link" :href="route('central.tenants.index')" variant="outline">
                     View all tenants
@@ -172,15 +189,19 @@
             <CardContent>
                 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     <Button :as="Link" :href="route('central.tenants.index')" variant="outline" class="justify-start">
+                        <Building2 class="mr-2 h-4 w-4" />
                         Manage tenants
                     </Button>
                     <Button :as="Link" :href="route('central.profile')" variant="outline" class="justify-start">
+                        <UserCircle2 class="mr-2 h-4 w-4" />
                         Profile settings
                     </Button>
                     <Button as="a" href="/central/tenants?status=pending" variant="outline" class="justify-start">
+                        <Clock class="mr-2 h-4 w-4" />
                         Pending approvals
                     </Button>
                     <Button as="a" href="#" variant="outline" class="justify-start">
+                        <BarChart3 class="mr-2 h-4 w-4" />
                         System reports
                     </Button>
                 </div>
@@ -190,7 +211,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import CentralLayout from "../../Layouts/CentralLayout.vue";
 import { Button } from "@/components/ui/button";
@@ -202,6 +223,16 @@ import {
     CardHeader,
     CardTitle,
 } from "@/components/ui/card";
+import {
+    BarChart3,
+    Building2,
+    CheckCircle2,
+    ClipboardList,
+    Clock,
+    ShieldAlert,
+    UserCircle2,
+    Users,
+} from "lucide-vue-next";
 
 defineOptions({ layout: CentralLayout });
 

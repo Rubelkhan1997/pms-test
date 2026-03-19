@@ -1,5 +1,6 @@
 <template>
     <div class="bg-muted/30">
+        <Head title="Central Home" />
         <div class="mx-auto max-w-6xl px-6 py-20">
             <div class="grid gap-10 lg:grid-cols-[2fr_1fr]">
                 <div class="space-y-6">
@@ -159,7 +160,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link } from "@inertiajs/vue3";
+import { Head, Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

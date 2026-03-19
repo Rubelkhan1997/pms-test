@@ -16,13 +16,11 @@ class ForceCentralConnection
      */
     public function handle(Request $request, Closure $next)
     {
-        $connection = env('DB_CONNECTION', config('database.default', 'pgsql'));
-        $database = env('DB_DATABASE', config("database.connections.{$connection}.database"));
+        $connection = config('central.connection', 'central');
+        $database = config('central.database', config("database.connections.{$connection}.database"));
 
-        config([
-            'database.default' => $connection,
-            "database.connections.{$connection}.database" => $database,
-        ]);
+        config(['database.default' => $connection]);
+        config(["database.connections.{$connection}.database" => $database]);
 
         DB::purge($connection);
         DB::setDefaultConnection($connection);

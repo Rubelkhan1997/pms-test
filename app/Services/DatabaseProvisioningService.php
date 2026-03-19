@@ -52,20 +52,20 @@ class DatabaseProvisioningService
      */
     protected function createDatabase(string $databaseName): void
     {
-        $connection = config('database.default');
+        $connection = config('central.connection', config('database.default'));
         $host = config("database.connections.{$connection}.host");
         $username = config("database.connections.{$connection}.username");
         $password = config("database.connections.{$connection}.password");
         $port = config("database.connections.{$connection}.port", 5432);
 
         // Connect to PostgreSQL server using 'postgres' database (required for creating databases)
-        DB::purge('pgsql');
+        DB::purge($connection);
         
         // Temporarily set database to 'postgres' for database creation
         $originalDatabase = config("database.connections.{$connection}.database");
         config(["database.connections.{$connection}.database" => 'postgres']);
         
-        DB::purge('pgsql');
+        DB::purge($connection);
 
         try {
             DB::statement("CREATE DATABASE \"{$databaseName}\"
@@ -118,15 +118,15 @@ class DatabaseProvisioningService
     protected function grantSchemaPermissions(string $databaseName, string $username): void
     {
         // Connect to tenant database
-        $originalConnection = config('database.default');
-        $originalDatabase = config('database.connections.pgsql.database');
+        $originalConnection = config('central.connection', config('database.default'));
+        $originalDatabase = config("database.connections.{$originalConnection}.database");
         
         config([
-            'database.default' => 'pgsql',
-            "database.connections.pgsql.database" => $databaseName,
+            'database.default' => $originalConnection,
+            "database.connections.{$originalConnection}.database" => $databaseName,
         ]);
         
-        DB::purge('pgsql');
+        DB::purge($originalConnection);
         
         try {
             // Grant schema permissions
@@ -138,10 +138,10 @@ class DatabaseProvisioningService
             // Restore original connection
             config([
                 'database.default' => $originalConnection,
-                "database.connections.pgsql.database" => $originalDatabase,
+                "database.connections.{$originalConnection}.database" => $originalDatabase,
             ]);
             DB::setDefaultConnection($originalConnection);
-            DB::purge('pgsql');
+            DB::purge($originalConnection);
         }
     }
     
@@ -152,7 +152,7 @@ class DatabaseProvisioningService
     {
         // Store original connection config
         $originalConnection = config('database.default');
-        $originalDatabase = config('database.connections.pgsql.database');
+        $originalDatabase = config("database.connections.{$originalConnection}.database");
         $connectionName = $this->getConnectionName($tenant);
 
         // Set tenant database connection
@@ -169,10 +169,10 @@ class DatabaseProvisioningService
             // Restore original connection
             config([
                 'database.default' => $originalConnection,
-                "database.connections.pgsql.database" => $originalDatabase,
+                "database.connections.{$originalConnection}.database" => $originalDatabase,
             ]);
             DB::setDefaultConnection($originalConnection);
-            DB::purge('pgsql');
+            DB::purge($originalConnection);
         }
     }
 
@@ -183,7 +183,7 @@ class DatabaseProvisioningService
     {
         // Store original connection config
         $originalConnection = config('database.default');
-        $originalDatabase = config('database.connections.pgsql.database');
+        $originalDatabase = config("database.connections.{$originalConnection}.database");
         $connectionName = $this->getConnectionName($tenant);
 
         $this->setTenantConnection($tenant);
@@ -199,10 +199,10 @@ class DatabaseProvisioningService
             // Restore original connection
             config([
                 'database.default' => $originalConnection,
-                "database.connections.pgsql.database" => $originalDatabase,
+                "database.connections.{$originalConnection}.database" => $originalDatabase,
             ]);
             DB::setDefaultConnection($originalConnection);
-            DB::purge('pgsql');
+            DB::purge($originalConnection);
         }
     }
     
@@ -236,11 +236,12 @@ class DatabaseProvisioningService
     protected function deleteDatabase(string $databaseName): void
     {
         // First, reconnect to 'postgres' database if we're connected to the one being dropped
-        $currentDb = config('database.connections.pgsql.database');
+        $centralConnection = config('central.connection', config('database.default'));
+        $currentDb = config("database.connections.{$centralConnection}.database");
         if ($currentDb === $databaseName) {
-            config(['database.connections.pgsql.database' => 'postgres']);
-            DB::purge('pgsql');
-            DB::reconnect('pgsql');
+            config(["database.connections.{$centralConnection}.database" => 'postgres']);
+            DB::purge($centralConnection);
+            DB::reconnect($centralConnection);
         }
 
         // Terminate all connections to database
@@ -262,6 +263,7 @@ class DatabaseProvisioningService
     {
         $databaseName = $tenant->database_name;
         $connectionName = 'tenant_' . $tenant->id;
+        $centralConnection = config('central.connection', config('database.default'));
         
         // Get tenant DB credentials
         $username = $tenant->metadata['db_username'] ?? null;
@@ -271,8 +273,8 @@ class DatabaseProvisioningService
         config([
             "database.connections.{$connectionName}" => [
                 'driver' => 'pgsql',
-                'host' => config('database.connections.pgsql.host'),
-                'port' => config('database.connections.pgsql.port'),
+                'host' => config("database.connections.{$centralConnection}.host"),
+                'port' => config("database.connections.{$centralConnection}.port"),
                 'database' => $databaseName,
                 'username' => $username,
                 'password' => $password,

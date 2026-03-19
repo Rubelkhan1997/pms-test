@@ -1,5 +1,6 @@
 <template>
     <div class="min-h-screen bg-muted/30 px-6 py-12">
+        <Head title="Tenant Registration" />
         <div class="mx-auto max-w-2xl">
             <Card>
                 <CardHeader>
@@ -119,7 +120,7 @@
 </template>
 
 <script setup lang="ts">
-import { useForm, Link } from "@inertiajs/vue3";
+import { Head, useForm, Link } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

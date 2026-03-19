@@ -1,5 +1,6 @@
 <template>
     <div class="space-y-6">
+        <Head title="Profile" />
         <Card>
             <CardHeader>
                 <div class="text-xs font-semibold uppercase tracking-[0.3em] text-muted-foreground">
@@ -64,7 +65,7 @@
 
 <script setup lang="ts">
 import { computed } from "vue";
-import { useForm, usePage } from "@inertiajs/vue3";
+import { Head, useForm, usePage } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import CentralLayout from "../../Layouts/CentralLayout.vue";
 import { Button } from "@/components/ui/button";

@@ -1,5 +1,6 @@
 <template>
     <div class="space-y-6">
+        <Head title="Tenants" />
         <Card>
             <CardHeader class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -152,7 +153,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { Link, router } from "@inertiajs/vue3";
+import { Head, Link, router } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import CentralLayout from "../../../Layouts/CentralLayout.vue";
 import { Button } from "@/components/ui/button";

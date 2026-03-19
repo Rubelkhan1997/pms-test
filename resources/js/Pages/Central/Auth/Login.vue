@@ -1,5 +1,6 @@
 <template>
     <div class="min-h-screen bg-muted/30 px-6 py-12">
+        <Head title="Central Login" />
         <div class="mx-auto grid max-w-5xl items-center gap-8 lg:grid-cols-[1fr_1fr]">
             <Card>
                 <CardHeader>
@@ -86,7 +87,7 @@
 </template>
 
 <script setup lang="ts">
-import { Link, useForm } from "@inertiajs/vue3";
+import { Head, Link, useForm } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
