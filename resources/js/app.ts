@@ -2,11 +2,11 @@ import './bootstrap';
 import '../css/app.css';
 
 import { createApp, h, DefineComponent } from 'vue';
-import { createInertiaApp } from '@inertiajs/vue3';
+import { createInertiaApp, Head, Link } from '@inertiajs/vue3';
 import { createPinia } from 'pinia';
 
 // Import default layout statically (used as fallback)
-import { AppLayout, HotelLayout, MobileLayout } from '@/Layouts';
+import AppLayout from '@/Layouts/AppLayout.vue';
 
 // Import global components (truly universal components used everywhere)
 // TODO: Uncomment when components are implemented
@@ -31,6 +31,10 @@ createInertiaApp({
         const app = createApp({ render: () => h(App, props) });
 
         // Register global components (available in all templates without import)
+        // Inertia.js global components
+        app.component('Head', Head);
+        app.component('Link', Link);
+
         // TODO: Uncomment when components are implemented
         // app.component('AppButton', AppButton);
         // app.component('AppInput', AppInput);
