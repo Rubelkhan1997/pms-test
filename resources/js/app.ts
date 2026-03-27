@@ -6,8 +6,10 @@ import { createInertiaApp, Head, Link } from '@inertiajs/vue3';
 import { createPinia } from 'pinia';
 
 // Import layouts
-import AppLayout from './Layouts/AppLayout.vue';
-import HotelLayout from './Layouts/HotelLayout.vue';
+import { AppLayout, HotelLayout, MobileLayout } from '@/Layouts';
+
+// Register global components (optional - for frequently used components)
+// import { AppButton, AppInput, AppModal } from '@/Components';
 
 createInertiaApp({
     title: (title) => title ? `${title} - PMS` : 'PMS',
@@ -23,12 +25,20 @@ createInertiaApp({
     },
 
     setup({ el, App, props, plugin }) {
-        createApp({ render: () => h(App, props) })
-            .use(plugin)
-            .use(createPinia())
-            .component('Head', Head)
-            .component('Link', Link)
-            .mount(el);
+        const app = createApp({ render: () => h(App, props) });
+
+        // Use plugins
+        app.use(plugin);
+        app.use(createPinia());
+
+        // Register global components
+        app.component('Head', Head);
+        app.component('Link', Link);
+        // app.component('AppButton', AppButton);
+        // app.component('AppInput', AppInput);
+        // app.component('AppModal', AppModal);
+
+        app.mount(el);
     },
 
     progress: {

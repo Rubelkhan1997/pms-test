@@ -4,9 +4,9 @@
  */
 
 // FrontDesk module stores
-export { useReservationsStore } from './FrontDesk/reservations';
+export { useReservationsStore } from './FrontDesk/reservationStore';
 
-// Housekeeping module stores
+// Housekeeping module stores (to be implemented)
 // export { useHousekeepingStore } from './Housekeeping/housekeepingStore';
 
 // Auth store (to be implemented)

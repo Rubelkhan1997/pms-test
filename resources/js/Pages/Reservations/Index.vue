@@ -299,9 +299,9 @@
 // ─────────────────────────────────────────────────────────────────────
 import { ref, reactive, onMounted } from 'vue';
 import { Head } from '@inertiajs/vue3';
-import { useReservations } from '@/Composables/FrontDesk/useReservations';
-import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
-import HotelLayout from '@/Layouts/HotelLayout.vue';
+import { useReservations } from '@/Composables';
+import { useReservationsStore } from '@/Stores';
+import { HotelLayout } from '@/Layouts';
 
 // ─────────────────────────────────────────────────────────────────────
 // 2. SETUP - Composables + Stores

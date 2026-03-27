@@ -1,5 +1,5 @@
 import { ref, shallowRef, readonly, computed, triggerRef, onMounted, onUnmounted } from 'vue';
-import apiClient from '@/Services/apiClient';
+import { apiClient } from '@/Services';
 import { router } from '@inertiajs/vue3';
 import { useLoading, useMessage, usePolling } from '@/Helpers';
 

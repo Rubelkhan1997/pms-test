@@ -4,42 +4,43 @@
  */
 
 // Common types
-export * from './common';
+export type { User, UserRole } from './common';
 
 // API types
-export * from './api';
+export type { ApiResponse, PaginatedResponse } from './api';
 
 // Payment types
-export * from './payment';
+export type { Payment, PaymentMethod, PaymentStatus } from './payment';
 
 // FrontDesk module types
-export {
+export type {
     Reservation,
     ReservationStatus,
     Guest,
     Room
 } from './FrontDesk/reservation';
 
-export type { RoomStatus } from './FrontDesk/room';
-export type { Room as RoomDetail, RoomType } from './FrontDesk/room';
-export type { Guest as GuestDetail, GuestProfile } from './FrontDesk/guest';
+export type { RoomStatus, RoomType } from './FrontDesk/room';
+export type { GuestProfile, GuestType } from './FrontDesk/guest';
 
 // Housekeeping module types
 export type { HousekeepingTask, TaskStatus, TaskPriority } from './Housekeeping/task';
 
-// Global namespace for backward compatibility
+// ============================================================================
+// Global PMS Namespace (for backward compatibility & template type hints)
+// ============================================================================
 declare global {
     namespace PMS {
-        // Common
+        // Common types
         export type { User, UserRole } from './common';
-        export type { ApiResponse, PaginatedResponse } from './common';
+        export type { ApiResponse, PaginatedResponse } from './api';
 
-        // FrontDesk
+        // FrontDesk types
         export type { Reservation, ReservationStatus } from './FrontDesk/reservation';
         export type { Guest } from './FrontDesk/reservation';
         export type { Room } from './FrontDesk/reservation';
 
-        // POS
+        // POS types
         export interface PosOrder {
             id: number;
             reference: string;
@@ -47,7 +48,7 @@ declare global {
             outlet: string;
         }
 
-        // HR
+        // HR types
         export interface Employee {
             id: number;
             reference: string;

@@ -3,11 +3,12 @@
  * Central export file for all API services
  */
 
-// API Client
-export { apiClient, default as apiClientInstance } from './apiClient';
+// API Client (default export includes all versions)
+export { default as apiClient } from './apiClient';
+export { apiClientV1, apiClientV2 } from './apiClient';
 
-// Reservation Service
-export * from './reservationService';
+// Reservation Service (when implemented)
+// export * from './reservationService';
 
 // Room Service (to be implemented)
 // export * from './roomService';

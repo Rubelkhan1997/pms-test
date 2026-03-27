@@ -61,5 +61,5 @@
 
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
-import AppLayout from '@/Layouts/AppLayout.vue';
+import { AppLayout } from '@/Layouts';
 </script>

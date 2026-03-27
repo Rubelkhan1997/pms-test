@@ -169,8 +169,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
-import HotelLayout from '@/Layouts/HotelLayout.vue';
-import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
+import { HotelLayout } from '@/Layouts';
+import { useReservationsStore } from '@/Stores';
 
 const store = useReservationsStore();
 const reservation = computed(() => store.selectedReservation);
