@@ -214,7 +214,6 @@
                                 :disabled="isSaving"
                                 class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <!-- ✅ Fix: একটাই saving state ব্যবহার -->
                                 {{ isSaving ? 'Creating...' : 'Create Reservation' }}
                             </button>
                             <Link
@@ -234,7 +233,6 @@
 </template>
 
 <script setup lang="ts">
-// ✅ Fix: Link এবং Head import যোগ করা হয়েছে
 import { computed } from 'vue';
 import { useForm, router, Link, Head } from '@inertiajs/vue3';
 import { AppLayout } from '@/Layouts';
@@ -298,7 +296,6 @@ const form = useForm({
     notes: '',
 });
 
-// ✅ Fix: একটাই computed saving state — form.processing OR composable saving
 const isSaving = computed(() => form.processing || saving.value);
 
 // ─── Submit ──────────────────────────────────────────────
@@ -313,7 +310,6 @@ async function submit() {
     }
 
     try {
-        // ✅ Fix: hotel_id এখন পাঠানো হচ্ছে
         await createReservation({
             hotel_id: form.hotel_id,
             guest_profile_id: form.guest_profile_id,

@@ -43,7 +43,6 @@ export const useReservationsStore = defineStore('reservations', {
         checkedInCount: (state) =>
             state.reservations.filter(r => r.status === 'checked_in').length,
 
-        // ✅ Fix: আগে এই দুটো getter ছিল না
         checkedOutCount: (state) =>
             state.reservations.filter(r => r.status === 'checked_out').length,
 
@@ -86,7 +85,6 @@ export const useReservationsStore = defineStore('reservations', {
         totalRevenue: (state) =>
             state.reservations.reduce((sum, r) => sum + r.total_amount, 0),
 
-        // ✅ Fix: আগে এই getter ছিল না
         pendingRevenue: (state) =>
             state.reservations
                 .filter(r => r.status === 'pending')
@@ -166,7 +164,6 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // ✅ Fix: আগে এই action ছিল না
         /**
          * Create new reservation
          */
@@ -197,7 +194,6 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // ✅ Fix: আগে এই action ছিল না
         /**
          * Update existing reservation
          */
@@ -217,7 +213,6 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // ✅ Fix: আগে এই action ছিল না
         /**
          * Cancel reservation
          */
@@ -237,7 +232,6 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // ✅ Fix: আগে এই action ছিল না
         /**
          * Delete reservation
          */
@@ -256,7 +250,6 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // ✅ Fix: আগে এই action ছিল না
         /**
          * Check In guest
          */
@@ -276,7 +269,6 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // ✅ Fix: আগে এই action ছিল না
         /**
          * Check Out guest
          */

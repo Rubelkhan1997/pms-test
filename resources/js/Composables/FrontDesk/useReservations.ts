@@ -1,6 +1,6 @@
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed } from 'vue';
 import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
-import { useLoading, useMessage, usePolling } from '@/Helpers';
+import { useLoading, useMessage } from '@/Helpers';
 
 /**
  * Reservation Composable - Business Logic Layer
@@ -65,24 +65,12 @@ export function useReservations(options: UseReservationOptions = {}) {
     const pendingCount = computed(() => store.pendingCount);
     const confirmedCount = computed(() => store.confirmedCount);
     const checkedInCount = computed(() => store.checkedInCount);
-    // ✅ Fix: এই দুটো আগে missing ছিল
-    const checkedOutCount = computed(() => store.checkedOutCount);
-    const cancelledCount = computed(() => store.cancelledCount);
     const todayCheckIns = computed(() => store.todayCheckIns);
-    const todayCheckOuts = computed(() => store.todayCheckOuts);
-    const filteredReservations = computed(() => store.filteredReservations);
-    const totalRevenue = computed(() => store.totalRevenue);
-    // ✅ Fix: এটাও আগে missing ছিল
-    const pendingRevenue = computed(() => store.pendingRevenue);
 
     // ─────────────────────────────────────────────────────
     // Actions
     // ─────────────────────────────────────────────────────
 
-    /**
-     * Fetch all reservations
-     * ✅ Fix: page parameter যোগ করা হয়েছে
-     */
     async function fetchAll(page: number = 1, params?: ReservationFilters): Promise<void> {
         startLoading();
         clearError();
@@ -100,9 +88,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    /**
-     * Fetch single reservation
-     */
     async function fetchById(id: number): Promise<void> {
         startLoading();
         clearError();
@@ -117,10 +102,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    /**
-     * Create reservation
-     * ✅ Fix: hotel_id যোগ করা হয়েছে
-     */
     async function create(data: {
         hotel_id: number | string;
         guest_profile_id: number | string;
@@ -148,9 +129,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    /**
-     * Update reservation
-     */
     async function update(id: number, data: Partial<PMS.Reservation>): Promise<any> {
         startSaving();
         clearError();
@@ -167,9 +145,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    /**
-     * Cancel reservation
-     */
     async function cancel(id: number): Promise<void> {
         startSaving();
         clearError();
@@ -185,9 +160,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    /**
-     * Delete reservation
-     */
     async function deleteReservation(id: number): Promise<void> {
         startSaving();
         clearError();
@@ -203,9 +175,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    /**
-     * Check In
-     */
     async function checkIn(id: number): Promise<void> {
         startSaving();
         clearError();
@@ -221,9 +190,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    /**
-     * Check Out
-     */
     async function checkOut(id: number, paymentData?: any): Promise<void> {
         startSaving();
         clearError();
@@ -239,36 +205,12 @@ export function useReservations(options: UseReservationOptions = {}) {
         }
     }
 
-    // ─── Filter Management ───────────────────────────────
-
     function setFilters(newFilters: ReservationFilters): void {
         store.setFilters(newFilters);
     }
 
     function resetFilters(): void {
         store.resetFilters();
-    }
-
-    // ─── Polling ─────────────────────────────────────────
-
-    const { start: startPolling, stop: stopPolling } = usePolling(
-        () => fetchAll(),
-        pollingInterval,
-        () => true
-    );
-
-    // ─── Lifecycle ───────────────────────────────────────
-
-    if (autoFetch) {
-        onMounted(() => {
-            if (Object.keys(initialFilters).length > 0) {
-                store.setFilters(initialFilters);
-            }
-            fetchAll();
-            if (pollingInterval > 0) startPolling();
-        });
-
-        onUnmounted(() => stopPolling());
     }
 
     // ─── Public API ──────────────────────────────────────
@@ -288,13 +230,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         pendingCount,
         confirmedCount,
         checkedInCount,
-        checkedOutCount,
-        cancelledCount,
         todayCheckIns,
-        todayCheckOuts,
-        filteredReservations,
-        totalRevenue,
-        pendingRevenue,
 
         // Actions
         fetchAll,

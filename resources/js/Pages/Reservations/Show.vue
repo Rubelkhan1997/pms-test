@@ -167,14 +167,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import { Head, router } from '@inertiajs/vue3';
 import { HotelLayout } from '@/Layouts';
-import { useReservationsStore } from '@/Stores';
+import { useReservations } from '@/Composables';
 
-const store = useReservationsStore();
-const reservation = computed(() => store.selectedReservation);
-const loading = computed(() => store.loadingDetail);
+const {
+    reservation,
+    loading,
+    fetchById,
+    checkIn: handleCheckInAction,
+    checkOut: handleCheckOutAction,
+    cancel: cancelAction,
+} = useReservations();
 
 // Calculate number of nights
 const calculateNights = computed(() => {
@@ -211,31 +216,32 @@ function formatStatus(status: string): string {
 }
 
 // Handle Check In
-function handleCheckIn() {
+async function handleCheckIn() {
     if (!confirm('Are you sure you want to check in this guest?')) return;
 
     if (reservation.value) {
-        // Use store action or API call
-        // For now, using store
-        console.log('Check in reservation:', reservation.value.id);
+        await handleCheckInAction(reservation.value.id);
+        router.reload();
     }
 }
 
 // Handle Check Out
-function handleCheckOut() {
+async function handleCheckOut() {
     if (!confirm('Are you sure you want to check out this guest?')) return;
 
     if (reservation.value) {
-        console.log('Check out reservation:', reservation.value.id);
+        await handleCheckOutAction(reservation.value.id);
+        router.reload();
     }
 }
 
 // Handle Cancel
-function handleCancel() {
+async function handleCancel() {
     if (!confirm('Are you sure you want to cancel this reservation?')) return;
 
     if (reservation.value) {
-        console.log('Cancel reservation:', reservation.value.id);
+        await cancelAction(reservation.value.id);
+        router.reload();
     }
 }
 

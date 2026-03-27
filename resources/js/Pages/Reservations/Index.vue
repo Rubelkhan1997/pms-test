@@ -20,7 +20,6 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
                 <div class="text-sm text-slate-500">Pending</div>
-                <!-- ✅ Fix: composable থেকে নেওয়া, store direct নয় -->
                 <div class="text-2xl font-bold text-slate-800">{{ pendingCount }}</div>
             </div>
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
@@ -242,14 +241,12 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-// ✅ Fix: Link এবং Head import যোগ করা হয়েছে
 import { Link, Head } from '@inertiajs/vue3';
 import { AppLayout } from '@/Layouts';
 import { useReservations } from '@/Composables';
 
 // ─── Composable ──────────────────────────────────────────
-// ✅ Fix: Store আর সরাসরি ব্যবহার করা হচ্ছে না
-//         সব কিছু composable দিয়ে করা হচ্ছে
+
 const {
     reservations,
     loading,
@@ -298,7 +295,6 @@ function applyFilters() {
     fetchAll(1);
 }
 
-// ✅ Fix: reset-এ composable method ব্যবহার
 function handleResetFilters() {
     localFilters.status = '';
     localFilters.check_in_date = '';
@@ -351,7 +347,6 @@ async function handleDelete(res: PMS.Reservation) {
     if (!confirm(`Delete reservation: ${res.reference}? This cannot be undone.`)) return;
     try {
         await deleteReservation(res.id);
-        // ✅ যদি last page-এ শুধু একটা item ছিল, আগের page-এ যাও
         const targetPage = reservations.value.length === 0 && pagination.value.current_page > 1
             ? pagination.value.current_page - 1
             : pagination.value.current_page;
@@ -361,7 +356,6 @@ async function handleDelete(res: PMS.Reservation) {
     }
 }
 
-// ✅ Fix: composable-এর fetchAll(page) ব্যবহার করা হচ্ছে
 function changePage(page: number) {
     if (page < 1 || page > pagination.value.last_page) return;
     fetchAll(page);
