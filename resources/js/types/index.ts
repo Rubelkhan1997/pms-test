@@ -31,17 +31,20 @@ export type { HousekeepingTask, TaskStatus, TaskPriority } from './Housekeeping/
 // ============================================================================
 declare global {
     namespace PMS {
-        // Common types
-        export type { User, UserRole } from './common';
-        export type { ApiResponse, PaginatedResponse } from './api';
+        // Common types (use type alias, not export)
+        type User = import('./common').User;
+        type UserRole = import('./common').UserRole;
+        type ApiResponse = import('./api').ApiResponse;
+        type PaginatedResponse = import('./api').PaginatedResponse;
 
         // FrontDesk types
-        export type { Reservation, ReservationStatus } from './FrontDesk/reservation';
-        export type { Guest } from './FrontDesk/reservation';
-        export type { Room } from './FrontDesk/reservation';
+        type Reservation = import('./FrontDesk/reservation').Reservation;
+        type ReservationStatus = import('./FrontDesk/reservation').ReservationStatus;
+        type Guest = import('./FrontDesk/reservation').Guest;
+        type Room = import('./FrontDesk/reservation').Room;
 
         // POS types
-        export interface PosOrder {
+        interface PosOrder {
             id: number;
             reference: string;
             status: string;
@@ -49,7 +52,7 @@ declare global {
         }
 
         // HR types
-        export interface Employee {
+        interface Employee {
             id: number;
             reference: string;
             department: string;

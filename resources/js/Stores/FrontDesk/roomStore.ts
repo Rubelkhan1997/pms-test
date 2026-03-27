@@ -2,8 +2,8 @@ import { defineStore } from 'pinia';
 import { apiClient } from '@/Services';
 
 /**
- * Housekeeping Store (Pinia)
- * Global state management for housekeeping tasks
+ * Room Store (Pinia)
+ * Global state management for rooms
  *
  * Best Practices Applied:
  * - Minimal state, derive rest with getters
@@ -11,16 +11,16 @@ import { apiClient } from '@/Services';
  * - Typed state and actions
  * - Use apiClient for API calls
  */
-export const useHousekeepingStore = defineStore('housekeeping', {
+export const useRoomsStore = defineStore('rooms', {
     // ─────────────────────────────────────────────────────────
     // State (Reactive Data) - Best Practice
     // ─────────────────────────────────────────────────────────
     state: () => ({
-        // Tasks list
-        tasks: [] as any[],
+        // Rooms list
+        rooms: [] as any[],
 
-        // Currently selected task
-        selectedTask: null as any | null,
+        // Currently selected room
+        selectedRoom: null as any | null,
 
         // Loading states
         loading: false,
@@ -33,9 +33,9 @@ export const useHousekeepingStore = defineStore('housekeeping', {
         // Filters
         filters: {
             status: '',
-            priority: '',
-            assigned_to: 0,
-            room_id: 0
+            floor: 0,
+            type: '',
+            search: ''
         },
 
         // Pagination
@@ -52,84 +52,95 @@ export const useHousekeepingStore = defineStore('housekeeping', {
     // ─────────────────────────────────────────────────────────
     getters: {
         /**
-         * Get tasks by status
+         * Get rooms by status
          */
         byStatus: (state) => {
-            return (status: string) => state.tasks.filter(t => t.status === status);
+            return (status: string) => state.rooms.filter(r => r.status === status);
         },
 
         /**
-         * Get pending tasks count - Derived state
+         * Get available rooms count - Derived state
          */
-        pendingCount: (state) => {
-            return state.tasks.filter(t => t.status === 'pending').length;
+        availableCount: (state) => {
+            return state.rooms.filter(r => r.status === 'available').length;
         },
 
         /**
-         * Get in-progress tasks count - Derived state
+         * Get occupied rooms count - Derived state
          */
-        inProgressCount: (state) => {
-            return state.tasks.filter(t => t.status === 'in_progress').length;
+        occupiedCount: (state) => {
+            return state.rooms.filter(r => r.status === 'occupied').length;
         },
 
         /**
-         * Get completed tasks count - Derived state
+         * Get maintenance rooms count - Derived state
          */
-        completedCount: (state) => {
-            return state.tasks.filter(t => t.status === 'completed').length;
+        maintenanceCount: (state) => {
+            return state.rooms.filter(r => r.status === 'maintenance').length;
         },
 
         /**
-         * Get high priority tasks - Derived state
+         * Get dirty rooms count - Derived state
          */
-        highPriorityTasks: (state) => {
-            return state.tasks.filter(t => t.priority === 'high');
+        dirtyCount: (state) => {
+            return state.rooms.filter(r => r.status === 'dirty').length;
         },
 
         /**
-         * Get unassigned tasks - Derived state
+         * Get rooms by floor - Derived state
          */
-        unassignedTasks: (state) => {
-            return state.tasks.filter(t => !t.assigned_to);
+        byFloor: (state) => {
+            return (floor: number) => state.rooms.filter(r => r.floor === floor);
         },
 
         /**
-         * Get filtered tasks - Derived state with multiple criteria
+         * Get rooms by type - Derived state
          */
-        filteredTasks: (state) => {
-            let filtered = [...state.tasks];
+        byType: (state) => {
+            return (type: string) => state.rooms.filter(r => r.type === type);
+        },
+
+        /**
+         * Get filtered rooms - Derived state with multiple criteria
+         */
+        filteredRooms: (state) => {
+            let filtered = [...state.rooms];
             const filters = state.filters;
 
             // Filter by status
             if (filters.status) {
-                filtered = filtered.filter(t => t.status === filters.status);
+                filtered = filtered.filter(r => r.status === filters.status);
             }
 
-            // Filter by priority
-            if (filters.priority) {
-                filtered = filtered.filter(t => t.priority === filters.priority);
+            // Filter by floor
+            if (filters.floor) {
+                filtered = filtered.filter(r => r.floor === filters.floor);
             }
 
-            // Filter by assigned to
-            if (filters.assigned_to) {
-                filtered = filtered.filter(t => t.assigned_to === filters.assigned_to);
+            // Filter by type
+            if (filters.type) {
+                filtered = filtered.filter(r => r.type === filters.type);
             }
 
-            // Filter by room ID
-            if (filters.room_id) {
-                filtered = filtered.filter(t => t.room_id === filters.room_id);
+            // Search by room number or type
+            if (filters.search) {
+                const search = filters.search.toLowerCase();
+                filtered = filtered.filter(r =>
+                    r.number?.toLowerCase().includes(search) ||
+                    r.type?.toLowerCase().includes(search)
+                );
             }
 
             return filtered;
         },
 
         /**
-         * Get completion rate - Derived state
+         * Get occupancy rate - Derived state
          */
-        completionRate: (state) => {
-            if (state.tasks.length === 0) return 0;
-            const completed = state.tasks.filter(t => t.status === 'completed').length;
-            return Math.round((completed / state.tasks.length) * 100);
+        occupancyRate: (state) => {
+            if (state.rooms.length === 0) return 0;
+            const occupied = state.rooms.filter(r => r.status === 'occupied').length;
+            return Math.round((occupied / state.rooms.length) * 100);
         }
     },
 
@@ -150,28 +161,28 @@ export const useHousekeepingStore = defineStore('housekeeping', {
         resetFilters() {
             this.filters = {
                 status: '',
-                priority: '',
-                assigned_to: 0,
-                room_id: 0
+                floor: 0,
+                type: '',
+                search: ''
             };
         },
 
         /**
-         * Fetch all tasks with pagination
+         * Fetch all rooms with pagination
          */
         async fetchAll(page: number = 1) {
             this.loadingList = true;
             this.error = null;
 
             try {
-                const { data } = await apiClient.v1.get('/housekeeping/tasks', {
+                const { data } = await apiClient.v1.get('/housekeeping/rooms', {
                     params: {
                         ...this.filters,
                         page
                     }
                 });
 
-                this.tasks = data.data;
+                this.rooms = data.data;
                 this.pagination = {
                     current_page: data.current_page,
                     per_page: data.per_page,
@@ -179,121 +190,99 @@ export const useHousekeepingStore = defineStore('housekeeping', {
                     last_page: data.last_page
                 };
             } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to fetch tasks';
-                console.error('Fetch tasks error:', err);
+                this.error = err.response?.data?.message || 'Failed to fetch rooms';
+                console.error('Fetch rooms error:', err);
             } finally {
                 this.loadingList = false;
             }
         },
 
         /**
-         * Fetch single task
+         * Fetch single room
          */
         async fetchById(id: number) {
             this.loadingDetail = true;
             this.error = null;
 
             try {
-                const { data } = await apiClient.v1.get(`/housekeeping/tasks/${id}`);
-                this.selectedTask = data.data;
+                const { data } = await apiClient.v1.get(`/housekeeping/rooms/${id}`);
+                this.selectedRoom = data.data;
             } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to fetch task';
-                console.error('Fetch task error:', err);
+                this.error = err.response?.data?.message || 'Failed to fetch room';
+                console.error('Fetch room error:', err);
             } finally {
                 this.loadingDetail = false;
             }
         },
 
         /**
-         * Set selected task
+         * Set selected room
          */
-        setSelectedTask(task: any | null) {
-            this.selectedTask = task;
+        setSelectedRoom(room: any | null) {
+            this.selectedRoom = room;
         },
 
         /**
-         * Clear selected task
+         * Clear selected room
          */
-        clearSelectedTask() {
-            this.selectedTask = null;
+        clearSelectedRoom() {
+            this.selectedRoom = null;
         },
 
         /**
-         * Add task to list
+         * Add room to list
          */
-        addTask(task: any) {
-            this.tasks.unshift(task);
+        addRoom(room: any) {
+            this.rooms.unshift(room);
             this.pagination.total++;
         },
 
         /**
-         * Update task in list
+         * Update room in list
          */
-        updateTask(id: number, data: any) {
-            const index = this.tasks.findIndex(t => t.id === id);
+        updateRoom(id: number, data: any) {
+            const index = this.rooms.findIndex(r => r.id === id);
             if (index !== -1) {
-                this.tasks[index] = { ...this.tasks[index], ...data };
+                this.rooms[index] = { ...this.rooms[index], ...data };
             }
 
             // Also update selected if it's the same
-            if (this.selectedTask?.id === id) {
-                this.selectedTask = { ...this.selectedTask, ...data };
+            if (this.selectedRoom?.id === id) {
+                this.selectedRoom = { ...this.selectedRoom, ...data };
             }
         },
 
         /**
-         * Remove task from list
+         * Remove room from list
          */
-        removeTask(id: number) {
-            const index = this.tasks.findIndex(t => t.id === id);
+        removeRoom(id: number) {
+            const index = this.rooms.findIndex(r => r.id === id);
             if (index !== -1) {
-                this.tasks.splice(index, 1);
+                this.rooms.splice(index, 1);
                 this.pagination.total--;
             }
         },
 
         /**
-         * Update task status
+         * Update room status
          */
-        async updateTaskStatus(id: number, status: string) {
+        async updateRoomStatus(id: number, status: string) {
             this.loading = true;
             this.error = null;
 
             try {
-                const { data } = await apiClient.v1.patch(`/housekeeping/tasks/${id}/status`, { status });
+                const { data } = await apiClient.v1.patch(`/housekeeping/rooms/${id}/status`, { status });
                 
                 // Update local state
-                this.updateTask(id, data.data);
+                this.updateRoom(id, data.data);
                 
                 // Clear selected if it's the same
-                if (this.selectedTask?.id === id) {
-                    this.selectedTask = data.data;
+                if (this.selectedRoom?.id === id) {
+                    this.selectedRoom = data.data;
                 }
             } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to update task status';
-                console.error('Update task status error:', err);
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        /**
-         * Assign task to staff
-         */
-        async assignTask(id: number, assignedTo: number) {
-            this.loading = true;
-            this.error = null;
-
-            try {
-                const { data } = await apiClient.v1.patch(`/housekeeping/tasks/${id}/assign`, {
-                    assigned_to: assignedTo
-                });
-                
-                // Update local state
-                this.updateTask(id, data.data);
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to assign task';
-                console.error('Assign task error:', err);
+                this.error = err.response?.data?.message || 'Failed to update room status';
+                console.error('Update room status error:', err);
             } finally {
                 this.loading = false;
             }
@@ -311,17 +300,17 @@ export const useHousekeepingStore = defineStore('housekeeping', {
          */
         $reset() {
             this.$patch({
-                tasks: [],
-                selectedTask: null,
+                rooms: [],
+                selectedRoom: null,
                 loading: false,
                 loadingList: false,
                 loadingDetail: false,
                 error: null,
                 filters: {
                     status: '',
-                    priority: '',
-                    assigned_to: 0,
-                    room_id: 0
+                    floor: 0,
+                    type: '',
+                    search: ''
                 },
                 pagination: {
                     current_page: 1,

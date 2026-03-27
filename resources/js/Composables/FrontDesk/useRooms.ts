@@ -1,14 +1,26 @@
-import { ref, shallowRef, computed } from 'vue';
-import { useLoading, useMessage } from '@/Helpers';
+import { ref, shallowRef, readonly, computed, triggerRef, onMounted, onUnmounted } from 'vue';
+import { apiClient } from '@/Services';
+import { useLoading, useMessage, usePolling } from '@/Helpers';
 
 /**
- * Room Composable - Business Logic for Room Management
- * 
- * Note: This is a base template. Update API endpoints as needed.
+ * Room Composable - Best Practices Implementation
+ *
+ * Applied Best Practices:
+ * ✅ shallowRef for primitives (performance)
+ * ✅ ref for arrays (deep reactivity needed)
+ * ✅ readonly for protected state (controlled mutations)
+ * ✅ computed for derived values (cached results)
+ * ✅ Options object pattern (flexible configuration)
+ * ✅ Composable composition (build from smaller pieces)
+ * ✅ Explicit actions for state mutations
+ * ✅ TypeScript type safety
+ *
+ * @see https://vuejs.org/guide/best-practices/performance.html
+ * @see https://vuejs.org/guide/reusability/composables.html
  */
 
 // ─────────────────────────────────────────────────────────
-// Types
+// Types (Exported for reuse)
 // ─────────────────────────────────────────────────────────
 
 export interface RoomFilters {
@@ -19,8 +31,14 @@ export interface RoomFilters {
 }
 
 export interface UseRoomOptions {
+    /** Auto-fetch on mount */
     autoFetch?: boolean;
+    /** Initial filters */
     initialFilters?: RoomFilters;
+    /** Enable polling for real-time updates */
+    pollingInterval?: number;
+    /** Cache results */
+    cacheEnabled?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -29,29 +47,37 @@ export interface UseRoomOptions {
 
 export function useRooms(options: UseRoomOptions = {}) {
     // ─────────────────────────────────────────────────────
-    // Options with defaults
+    // Options with defaults (Options Object Pattern)
     // ─────────────────────────────────────────────────────
     const {
         autoFetch = false,
-        initialFilters = {}
+        initialFilters = {},
+        pollingInterval = 30000, // 30 seconds
+        cacheEnabled = false
     } = options;
 
     // ─────────────────────────────────────────────────────
-    // State
+    // State - Best Practice
     // ─────────────────────────────────────────────────────
+
+    // ✅ ref() for arrays (deep reactivity, replacement pattern)
     const _rooms = ref<any[]>([]);
     const _room = ref<any | null>(null);
-    const _filters = shallowRef<RoomFilters>(initialFilters);
 
-    // Compose smaller composables
+    // ✅ shallowRef() for primitives (performance)
+    const _filters = shallowRef<RoomFilters>(initialFilters);
+    const _cache = shallowRef<Map<string, any[]>>(new Map());
+
+    // ✅ Compose smaller composables
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
     const { message: _successMessage, showMessage: showSuccess, clearMessage: clearSuccess } = useMessage();
     const { message: _error, showMessage: showError, clearMessage: clearError } = useMessage();
 
     // ─────────────────────────────────────────────────────
-    // Computed (Derived State)
+    // Computed (Derived State) - Best Practice
     // ─────────────────────────────────────────────────────
+
     const rooms = computed(() => _rooms.value);
     const room = computed(() => _room.value);
     const loading = computed(() => _loading.value);
@@ -59,7 +85,7 @@ export function useRooms(options: UseRoomOptions = {}) {
     const successMessage = computed(() => _successMessage.value);
     const error = computed(() => _error.value);
 
-    // Room counts by status
+    // ✅ Room counts by status (cached by computed)
     const availableCount = computed(() =>
         _rooms.value.filter((r: any) => r.status === 'available').length
     );
@@ -76,7 +102,7 @@ export function useRooms(options: UseRoomOptions = {}) {
         _rooms.value.filter((r: any) => r.status === 'dirty').length
     );
 
-    // Filtered rooms
+    // ✅ Filtered rooms (computed, not in template)
     const filteredRooms = computed(() => {
         let filtered = [..._rooms.value];
         const filters = _filters.value;
@@ -105,76 +131,107 @@ export function useRooms(options: UseRoomOptions = {}) {
     });
 
     // ─────────────────────────────────────────────────────
-    // Actions (Update with your API endpoints)
+    // API Calls - Best Practice
     // ─────────────────────────────────────────────────────
 
+    /**
+     * Get cache key from filters
+     */
+    function getCacheKey(filters: RoomFilters): string {
+        return JSON.stringify(filters);
+    }
+
+    /**
+     * Fetch all rooms with optional filters
+     */
     async function fetchAll(params?: RoomFilters): Promise<void> {
         const fetchFilters = params || _filters.value;
+        const cacheKey = getCacheKey(fetchFilters);
+
+        // Check cache first
+        if (cacheEnabled && _cache.value.has(cacheKey)) {
+            _rooms.value = _cache.value.get(cacheKey)!;
+            return;
+        }
 
         startLoading();
         clearError();
 
         try {
-            // TODO: Update with your actual API endpoint
-            // const { data } = await axios.get('/api/v1/rooms', {
-            //     params: fetchFilters
-            // });
-            // _rooms.value = data.data;
+            const { data } = await apiClient.v1.get('/housekeeping/rooms', {
+                params: fetchFilters
+            });
 
-            // Mock data for base project
-            _rooms.value = [];
+            _rooms.value = data.data;
+
+            // Update cache
+            if (cacheEnabled) {
+                _cache.value.set(cacheKey, data.data);
+                // Trigger reactivity for shallowRef
+                triggerRef(_cache);
+            }
 
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch rooms';
             showError(message);
             console.error('Fetch rooms error:', err);
+            throw err;
         } finally {
             stopLoading();
         }
     }
 
+    /**
+     * Fetch single room by ID
+     */
     async function fetchById(id: number): Promise<void> {
         startLoading();
         clearError();
 
         try {
-            // TODO: Update with your actual API endpoint
-            // const { data } = await axios.get(`/api/v1/rooms/${id}`);
-            // _room.value = data.data;
-
-            _room.value = null;
-
+            const { data } = await apiClient.v1.get(`/housekeeping/rooms/${id}`);
+            _room.value = data.data;
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch room';
             showError(message);
             console.error('Fetch room error:', err);
+            throw err;
         } finally {
             stopLoading();
         }
     }
 
+    /**
+     * Update room status
+     */
     async function updateStatus(id: number, status: string): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            // TODO: Update with your actual API endpoint
-            // await axios.patch(`/api/v1/rooms/${id}/status`, { status });
+            const response = await apiClient.v1.patch(`/housekeeping/rooms/${id}/status`, { status });
             showSuccess(`Room status updated to ${status}`);
 
+            // Update local state (replace entire array to trigger reactivity)
             const index = _rooms.value.findIndex((r: any) => r.id === id);
             if (index !== -1) {
                 _rooms.value = [
                     ..._rooms.value.slice(0, index),
-                    { ..._rooms.value[index], status },
+                    response.data.data,
                     ..._rooms.value.slice(index + 1)
                 ];
             }
 
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
+            }
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to update room status';
             showError(message);
             console.error('Update room status error:', err);
+            throw err;
         } finally {
             stopSaving();
         }
@@ -184,20 +241,64 @@ export function useRooms(options: UseRoomOptions = {}) {
     // Filter Management
     // ─────────────────────────────────────────────────────
 
+    /**
+     * Set filters (immutable update)
+     */
     function setFilters(newFilters: RoomFilters): void {
         _filters.value = { ..._filters.value, ...newFilters };
     }
 
+    /**
+     * Reset filters to initial state
+     */
     function resetFilters(): void {
         _filters.value = initialFilters;
     }
 
+    /**
+     * Clear cache
+     */
+    function clearCache(): void {
+        _cache.value.clear();
+        triggerRef(_cache);
+    }
+
     // ─────────────────────────────────────────────────────
-    // Return (Public API)
+    // Polling (Optional Real-time Updates)
+    // ─────────────────────────────────────────────────────
+
+    const { start: startPolling, stop: stopPolling } = usePolling(
+        () => fetchAll(),
+        pollingInterval,
+        () => true // Always enabled by default
+    );
+
+    // ─────────────────────────────────────────────────────
+    // Lifecycle Hooks (Auto-fetch, Auto-polling)
+    // ─────────────────────────────────────────────────────
+
+    if (autoFetch) {
+        onMounted(() => {
+            fetchAll();
+
+            // Start polling if interval is set
+            if (pollingInterval > 0) {
+                startPolling();
+            }
+        });
+
+        // Cleanup on unmount
+        onUnmounted(() => {
+            stopPolling();
+        });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Return (Public API) - Best Practice: Readonly + Actions
     // ─────────────────────────────────────────────────────
 
     return {
-        // Readonly state
+        // ✅ Readonly state (can't mutate from components directly)
         rooms,
         room,
         loading,
@@ -205,19 +306,20 @@ export function useRooms(options: UseRoomOptions = {}) {
         successMessage,
         error,
 
-        // Computed values
+        // ✅ Computed values (derived state - cached)
         availableCount,
         occupiedCount,
         maintenanceCount,
         dirtyCount,
         filteredRooms,
 
-        // Actions
+        // ✅ Actions (only way to mutate state)
         fetchAll,
         fetchById,
         updateStatus,
         setFilters,
         resetFilters,
+        clearCache,
         clearError,
         clearSuccess
     };

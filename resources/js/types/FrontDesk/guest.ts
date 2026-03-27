@@ -1,3 +1,5 @@
+export type GuestType = 'individual' | 'corporate' | 'group' | 'vip';
+
 export interface Guest {
     id: number;
     name: string;

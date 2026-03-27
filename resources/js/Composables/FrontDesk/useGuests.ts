@@ -1,14 +1,26 @@
-import { ref, shallowRef, computed } from 'vue';
-import { useLoading, useMessage } from '@/Helpers';
+import { ref, shallowRef, readonly, computed, triggerRef, onMounted, onUnmounted } from 'vue';
+import { apiClient } from '@/Services';
+import { useLoading, useMessage, usePolling } from '@/Helpers';
 
 /**
- * Guest Composable - Business Logic for Guest Management
- * 
- * Note: This is a base template. Update API endpoints as needed.
+ * Guest Composable - Best Practices Implementation
+ *
+ * Applied Best Practices:
+ * ✅ shallowRef for primitives (performance)
+ * ✅ ref for arrays (deep reactivity needed)
+ * ✅ readonly for protected state (controlled mutations)
+ * ✅ computed for derived values (cached results)
+ * ✅ Options object pattern (flexible configuration)
+ * ✅ Composable composition (build from smaller pieces)
+ * ✅ Explicit actions for state mutations
+ * ✅ TypeScript type safety
+ *
+ * @see https://vuejs.org/guide/best-practices/performance.html
+ * @see https://vuejs.org/guide/reusability/composables.html
  */
 
 // ─────────────────────────────────────────────────────────
-// Types
+// Types (Exported for reuse)
 // ─────────────────────────────────────────────────────────
 
 export interface GuestFilters {
@@ -18,8 +30,14 @@ export interface GuestFilters {
 }
 
 export interface UseGuestOptions {
+    /** Auto-fetch on mount */
     autoFetch?: boolean;
+    /** Initial filters */
     initialFilters?: GuestFilters;
+    /** Enable polling for real-time updates */
+    pollingInterval?: number;
+    /** Cache results */
+    cacheEnabled?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────
@@ -28,29 +46,37 @@ export interface UseGuestOptions {
 
 export function useGuests(options: UseGuestOptions = {}) {
     // ─────────────────────────────────────────────────────
-    // Options with defaults
+    // Options with defaults (Options Object Pattern)
     // ─────────────────────────────────────────────────────
     const {
         autoFetch = false,
-        initialFilters = {}
+        initialFilters = {},
+        pollingInterval = 30000, // 30 seconds
+        cacheEnabled = false
     } = options;
 
     // ─────────────────────────────────────────────────────
-    // State
+    // State - Best Practice
     // ─────────────────────────────────────────────────────
+
+    // ✅ ref() for arrays (deep reactivity, replacement pattern)
     const _guests = ref<any[]>([]);
     const _guest = ref<any | null>(null);
-    const _filters = shallowRef<GuestFilters>(initialFilters);
 
-    // Compose smaller composables
+    // ✅ shallowRef() for primitives (performance)
+    const _filters = shallowRef<GuestFilters>(initialFilters);
+    const _cache = shallowRef<Map<string, any[]>>(new Map());
+
+    // ✅ Compose smaller composables
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
     const { message: _successMessage, showMessage: showSuccess, clearMessage: clearSuccess } = useMessage();
     const { message: _error, showMessage: showError, clearMessage: clearError } = useMessage();
 
     // ─────────────────────────────────────────────────────
-    // Computed (Derived State)
+    // Computed (Derived State) - Best Practice
     // ─────────────────────────────────────────────────────
+
     const guests = computed(() => _guests.value);
     const guest = computed(() => _guest.value);
     const loading = computed(() => _loading.value);
@@ -58,10 +84,10 @@ export function useGuests(options: UseGuestOptions = {}) {
     const successMessage = computed(() => _successMessage.value);
     const error = computed(() => _error.value);
 
-    // Guest counts
+    // ✅ Guest counts (cached by computed)
     const totalGuests = computed(() => _guests.value.length);
 
-    // Filtered guests
+    // ✅ Filtered guests (computed, not in template)
     const filteredGuests = computed(() => {
         let filtered = [..._guests.value];
         const filters = _filters.value;
@@ -86,96 +112,138 @@ export function useGuests(options: UseGuestOptions = {}) {
     });
 
     // ─────────────────────────────────────────────────────
-    // Actions (Update with your API endpoints)
+    // API Calls - Best Practice
     // ─────────────────────────────────────────────────────
 
+    /**
+     * Get cache key from filters
+     */
+    function getCacheKey(filters: GuestFilters): string {
+        return JSON.stringify(filters);
+    }
+
+    /**
+     * Fetch all guests with optional filters
+     */
     async function fetchAll(params?: GuestFilters): Promise<void> {
         const fetchFilters = params || _filters.value;
+        const cacheKey = getCacheKey(fetchFilters);
+
+        // Check cache first
+        if (cacheEnabled && _cache.value.has(cacheKey)) {
+            _guests.value = _cache.value.get(cacheKey)!;
+            return;
+        }
 
         startLoading();
         clearError();
 
         try {
-            // TODO: Update with your actual API endpoint
-            // const { data } = await axios.get('/api/v1/guests', {
-            //     params: fetchFilters
-            // });
-            // _guests.value = data.data;
+            const { data } = await apiClient.v1.get('/guests/profiles', {
+                params: fetchFilters
+            });
 
-            // Mock data for base project
-            _guests.value = [];
+            _guests.value = data.data;
+
+            // Update cache
+            if (cacheEnabled) {
+                _cache.value.set(cacheKey, data.data);
+                // Trigger reactivity for shallowRef
+                triggerRef(_cache);
+            }
 
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch guests';
             showError(message);
             console.error('Fetch guests error:', err);
+            throw err;
         } finally {
             stopLoading();
         }
     }
 
+    /**
+     * Fetch single guest by ID
+     */
     async function fetchById(id: number): Promise<void> {
         startLoading();
         clearError();
 
         try {
-            // TODO: Update with your actual API endpoint
-            // const { data } = await axios.get(`/api/v1/guests/${id}`);
-            // _guest.value = data.data;
-
-            _guest.value = null;
-
+            const { data } = await apiClient.v1.get(`/guests/profiles/${id}`);
+            _guest.value = data.data;
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch guest';
             showError(message);
             console.error('Fetch guest error:', err);
+            throw err;
         } finally {
             stopLoading();
         }
     }
 
+    /**
+     * Create new guest
+     */
     async function create(data: any): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            // TODO: Update with your actual API endpoint
-            // const response = await axios.post('/api/v1/guests', data);
+            const response = await apiClient.v1.post('/guests/profiles', data);
             showSuccess('Guest created successfully');
 
-            // _guests.value.unshift(response.data.data);
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
+            }
 
+            // Refresh list
+            await fetchAll();
+
+            return response.data;
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to create guest';
             showError(message);
             console.error('Create guest error:', err);
+            throw err;
         } finally {
             stopSaving();
         }
     }
 
+    /**
+     * Update existing guest
+     */
     async function update(id: number, data: any): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            // TODO: Update with your actual API endpoint
-            // const response = await axios.put(`/api/v1/guests/${id}`, data);
+            const response = await apiClient.v1.put(`/guests/profiles/${id}`, data);
             showSuccess('Guest updated successfully');
 
+            // Update local state (replace entire array to trigger reactivity)
             const index = _guests.value.findIndex((g: any) => g.id === id);
             if (index !== -1) {
                 _guests.value = [
                     ..._guests.value.slice(0, index),
-                    data,
+                    response.data.data,
                     ..._guests.value.slice(index + 1)
                 ];
             }
 
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
+            }
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to update guest';
             showError(message);
             console.error('Update guest error:', err);
+            throw err;
         } finally {
             stopSaving();
         }
@@ -185,20 +253,64 @@ export function useGuests(options: UseGuestOptions = {}) {
     // Filter Management
     // ─────────────────────────────────────────────────────
 
+    /**
+     * Set filters (immutable update)
+     */
     function setFilters(newFilters: GuestFilters): void {
         _filters.value = { ..._filters.value, ...newFilters };
     }
 
+    /**
+     * Reset filters to initial state
+     */
     function resetFilters(): void {
         _filters.value = initialFilters;
     }
 
+    /**
+     * Clear cache
+     */
+    function clearCache(): void {
+        _cache.value.clear();
+        triggerRef(_cache);
+    }
+
     // ─────────────────────────────────────────────────────
-    // Return (Public API)
+    // Polling (Optional Real-time Updates)
+    // ─────────────────────────────────────────────────────
+
+    const { start: startPolling, stop: stopPolling } = usePolling(
+        () => fetchAll(),
+        pollingInterval,
+        () => true // Always enabled by default
+    );
+
+    // ─────────────────────────────────────────────────────
+    // Lifecycle Hooks (Auto-fetch, Auto-polling)
+    // ─────────────────────────────────────────────────────
+
+    if (autoFetch) {
+        onMounted(() => {
+            fetchAll();
+
+            // Start polling if interval is set
+            if (pollingInterval > 0) {
+                startPolling();
+            }
+        });
+
+        // Cleanup on unmount
+        onUnmounted(() => {
+            stopPolling();
+        });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Return (Public API) - Best Practice: Readonly + Actions
     // ─────────────────────────────────────────────────────
 
     return {
-        // Readonly state
+        // ✅ Readonly state (can't mutate from components directly)
         guests,
         guest,
         loading,
@@ -206,17 +318,18 @@ export function useGuests(options: UseGuestOptions = {}) {
         successMessage,
         error,
 
-        // Computed values
+        // ✅ Computed values (derived state - cached)
         totalGuests,
         filteredGuests,
 
-        // Actions
+        // ✅ Actions (only way to mutate state)
         fetchAll,
         fetchById,
         create,
         update,
         setFilters,
         resetFilters,
+        clearCache,
         clearError,
         clearSuccess
     };

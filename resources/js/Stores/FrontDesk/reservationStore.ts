@@ -1,14 +1,15 @@
 import { defineStore } from 'pinia';
-import axios from 'axios';
+import { apiClient } from '@/Services';
 
 /**
  * Reservation Store (Pinia)
  * Global state management for reservations
- * 
+ *
  * Best Practices Applied:
  * - Minimal state, derive rest with getters
  * - Explicit actions for mutations
  * - Typed state and actions
+ * - Use apiClient for API calls
  */
 export const useReservationsStore = defineStore('reservations', {
     // ─────────────────────────────────────────────────────────
@@ -182,7 +183,7 @@ export const useReservationsStore = defineStore('reservations', {
             this.error = null;
 
             try {
-                const { data } = await axios.get('/api/v1/front-desk/reservations', {
+                const { data } = await apiClient.v1.get('/front-desk/reservations', {
                     params: {
                         ...this.filters,
                         page
@@ -212,7 +213,7 @@ export const useReservationsStore = defineStore('reservations', {
             this.error = null;
 
             try {
-                const { data } = await axios.get(`/api/v1/reservations/${id}`);
+                const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
                 this.selectedReservation = data.data;
             } catch (err: any) {
                 this.error = err.response?.data?.message || 'Failed to fetch reservation';

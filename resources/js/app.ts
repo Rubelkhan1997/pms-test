@@ -2,13 +2,14 @@ import './bootstrap';
 import '../css/app.css';
 
 import { createApp, h, DefineComponent } from 'vue';
-import { createInertiaApp, Head, Link } from '@inertiajs/vue3';
+import { createInertiaApp } from '@inertiajs/vue3';
 import { createPinia } from 'pinia';
 
-// Import layouts
+// Import default layout statically (used as fallback)
 import { AppLayout, HotelLayout, MobileLayout } from '@/Layouts';
 
-// Register global components (optional - for frequently used components)
+// Import global components (truly universal components used everywhere)
+// TODO: Uncomment when components are implemented
 // import { AppButton, AppInput, AppModal } from '@/Components';
 
 createInertiaApp({
@@ -18,8 +19,10 @@ createInertiaApp({
         const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
         const page = pages[`./Pages/${name}.vue`] as DefineComponent;
 
-        // Set default layout
-        page.default.layout = page.default.layout || AppLayout;
+        // Set default layout if not defined on the page
+        if (!page.default.layout) {
+            page.default.layout = AppLayout;
+        }
 
         return page;
     },
@@ -27,16 +30,14 @@ createInertiaApp({
     setup({ el, App, props, plugin }) {
         const app = createApp({ render: () => h(App, props) });
 
-        // Use plugins
-        app.use(plugin);
-        app.use(createPinia());
-
-        // Register global components
-        app.component('Head', Head);
-        app.component('Link', Link);
+        // Register global components (available in all templates without import)
+        // TODO: Uncomment when components are implemented
         // app.component('AppButton', AppButton);
         // app.component('AppInput', AppInput);
         // app.component('AppModal', AppModal);
+
+        app.use(plugin);
+        app.use(createPinia());
 
         app.mount(el);
     },

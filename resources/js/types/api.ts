@@ -5,6 +5,18 @@
 
 import type { PaginatedResponse } from './common';
 
+// ============================================================================
+// Re-export common types for convenience
+// ============================================================================
+export type { PaginatedResponse } from './common';
+
+export interface ApiResponse<T = any> {
+    success: boolean;
+    data: T;
+    message?: string;
+    errors?: Record<string, string[]>;
+}
+
 export interface ApiError {
     message: string;
     errors?: Record<string, string[]>;
