@@ -1,55 +1,62 @@
 /**
  * API Client
- * Axios instance configuration for API requests
- * 
- * Note: This is a base template. Update baseURL and interceptors as needed.
+ * Centralized axios instance for all API requests
  */
 
 import axios, { AxiosInstance } from 'axios';
 
-// Create axios instance with default config
-const apiClient: AxiosInstance = axios.create({
-    baseURL: '/api', // Update with your API base URL
-    timeout: 30000,  // 30 seconds
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
-    }
-});
+// Create base axios instance with default config
+function createApiClient(baseURL: string): AxiosInstance {
+    const apiClient: AxiosInstance = axios.create({
+        baseURL,
+        timeout: 30000,
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+        },
+    });
 
-// Request interceptor (optional)
-apiClient.interceptors.request.use(
-    (config) => {
-        // Add auth token if available
-        // const token = localStorage.getItem('auth_token');
-        // if (token) {
-        //     config.headers.Authorization = `Bearer ${token}`;
-        // }
-        
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
-    }
-);
+    // Request interceptor - Add auth token
+    apiClient.interceptors.request.use(
+        (config) => {
+            const token = localStorage.getItem('auth_token');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        },
+        (error) => {
+            return Promise.reject(error);
+        }
+    );
 
-// Response interceptor (optional)
-apiClient.interceptors.response.use(
-    (response) => {
-        return response;
-    },
-    (error) => {
-        // Handle common errors here
-        // if (error.response?.status === 401) {
-        //     // Handle unauthorized
-        // }
-        
-        return Promise.reject(error);
-    }
-);
+    // Response interceptor - Handle errors globally
+    apiClient.interceptors.response.use(
+        (response) => response,
+        (error) => {
+            if (error.response?.status === 401) {
+                localStorage.removeItem('auth_token');
+                window.location.href = '/login';
+            }
+            return Promise.reject(error);
+        }
+    );
 
-// Export default instance
+    return apiClient;
+}
+
+// API instances
+const apiClientV1 = createApiClient('/api/v1');
+const apiClientV2 = createApiClient('/api/v2');
+
+// Named exports
+export { apiClientV1, apiClientV2 };
+
+// Default export - Object with all versions
+const apiClient = {
+    v1: apiClientV1,
+    v2: apiClientV2,
+};
+
 export default apiClient;
-
-// Export for direct usage
-export { apiClient };

@@ -1,5 +1,5 @@
 import { ref, shallowRef, readonly, computed, triggerRef, onMounted, onUnmounted } from 'vue';
-import axios from 'axios';
+import apiClient from '@/Services/apiClient';
 import { router } from '@inertiajs/vue3';
 import { useLoading, useMessage, usePolling } from '@/Helpers';
 
@@ -196,7 +196,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            const { data } = await axios.get('/api/v1/front-desk/reservations', {
+            const { data } = await apiClient.v1.get('/front-desk/reservations', {
                 params: fetchFilters
             });
 
@@ -227,7 +227,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            const { data } = await axios.get(`/api/v1/reservations/${id}`);
+            const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
             _reservation.value = data.data;
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch reservation';
@@ -254,7 +254,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            const response = await axios.post('/api/v1/reservations', data);
+            const response = await apiClient.v1.post('/front-desk/reservations', data);
             showSuccess('Reservation created successfully');
 
             // Invalidate cache
@@ -285,7 +285,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            const response = await axios.put(`/api/v1/reservations/${id}`, data);
+            const response = await apiClient.v1.put(`/front-desk/reservations/${id}`, data);
             showSuccess('Reservation updated successfully');
 
             // Update local state (replace entire array to trigger reactivity)
@@ -321,7 +321,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            await axios.post(`/api/v1/reservations/${id}/cancel`);
+            await apiClient.v1.post(`/front-desk/reservations/${id}/cancel`);
             showSuccess('Reservation cancelled successfully');
 
             // Update local state
@@ -357,7 +357,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            const response = await axios.post(`/api/v1/reservations/${id}/check-in`);
+            const response = await apiClient.v1.post(`/front-desk/reservations/${id}/check-in`);
             showSuccess('Guest checked in successfully');
 
             // Update local state
@@ -396,7 +396,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            const response = await axios.post(`/api/v1/reservations/${id}/check-out`, paymentData);
+            const response = await apiClient.v1.post(`/front-desk/reservations/${id}/check-out`, paymentData);
             showSuccess('Guest checked out successfully');
 
             // Update local state
