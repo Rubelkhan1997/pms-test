@@ -18,10 +18,10 @@ export const useReservationsStore = defineStore('reservations', {
     state: () => ({
         // ✅ ref() for arrays (replacement pattern)
         reservations: [] as PMS.Reservation[],
-        
+
         // Currently selected reservation
         selectedReservation: null as PMS.Reservation | null,
-        
+
         // ✅ shallowRef equivalent for loading states (via state)
         loading: false,
         loadingList: false,
@@ -62,21 +62,21 @@ export const useReservationsStore = defineStore('reservations', {
          * Get pending reservations count - Derived state
          */
         pendingCount: (state) => {
-            return state.reservations.filter(r => r.status === 'pending').length;
+            return (state.reservations || []).filter(r => r.status === 'pending').length;
         },
 
         /**
          * Get confirmed reservations count - Derived state
          */
         confirmedCount: (state) => {
-            return state.reservations.filter(r => r.status === 'confirmed').length;
+            return (state.reservations || []).filter(r => r.status === 'confirmed').length;
         },
 
         /**
          * Get checked in reservations count - Derived state
          */
         checkedInCount: (state) => {
-            return state.reservations.filter(r => r.status === 'checked_in').length;
+            return (state.reservations || []).filter(r => r.status === 'checked_in').length;
         },
 
         /**
@@ -84,7 +84,7 @@ export const useReservationsStore = defineStore('reservations', {
          */
         todayCheckIns: (state) => {
             const today = new Date().toISOString().split('T')[0];
-            return state.reservations.filter(r => r.check_in_date === today);
+            return (state.reservations || []).filter(r => r.check_in_date === today);
         },
 
         /**
@@ -92,14 +92,14 @@ export const useReservationsStore = defineStore('reservations', {
          */
         todayCheckOuts: (state) => {
             const today = new Date().toISOString().split('T')[0];
-            return state.reservations.filter(r => r.check_out_date === today);
+            return (state.reservations || []).filter(r => r.check_out_date === today);
         },
 
         /**
          * Get filtered reservations - Derived state with multiple criteria
          */
         filteredReservations: (state) => {
-            let filtered = [...state.reservations];
+            let filtered = [...(state.reservations || [])];
 
             // Filter by status
             if (state.filters.status) {
@@ -119,7 +119,7 @@ export const useReservationsStore = defineStore('reservations', {
             // Search by reference or guest name
             if (state.filters.search) {
                 const search = state.filters.search.toLowerCase();
-                filtered = filtered.filter(r => 
+                filtered = filtered.filter(r =>
                     r.reference.toLowerCase().includes(search) ||
                     r.guest?.name.toLowerCase().includes(search)
                 );
@@ -132,7 +132,7 @@ export const useReservationsStore = defineStore('reservations', {
          * Get total revenue from reservations - Derived state
          */
         totalRevenue: (state) => {
-            return state.reservations.reduce((sum, r) => sum + r.total_amount, 0);
+            return (state.reservations || []).reduce((sum, r) => sum + r.total_amount, 0);
         },
 
         /**

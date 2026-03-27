@@ -1,6 +1,6 @@
 <template>
     <Head title="Reservations" />
-    <HotelLayout class="space-y-6">
+    <AppLayout class="space-y-6">
         <!-- ───────────────────────────────────────────────────── -->
         <!-- Header Section -->
         <!-- ───────────────────────────────────────────────────── -->
@@ -9,12 +9,12 @@
                 <h1 class="text-2xl font-semibold text-slate-800">Reservations</h1>
                 <p class="text-sm text-slate-500 mt-1">Manage all guest bookings</p>
             </div>
-            <button 
-                @click="openCreateModal"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            <Link
+                href="/reservations/create"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
             >
-                + New Reservation
-            </button>
+                New Reservation
+            </Link>
         </div>
 
         <!-- ───────────────────────────────────────────────────── -->
@@ -207,53 +207,49 @@
                                 {{ formatDate(reservation.check_out_date) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <StatusBadge :status="reservation.status" />
+                                <span
+                                    :class="{
+                                        'bg-yellow-100 text-yellow-800': reservation.status === 'pending',
+                                        'bg-green-100 text-green-800': reservation.status === 'confirmed',
+                                        'bg-blue-100 text-blue-800': reservation.status === 'checked_in',
+                                        'bg-purple-100 text-purple-800': reservation.status === 'checked_out',
+                                        'bg-red-100 text-red-800': reservation.status === 'cancelled',
+                                    }"
+                                    class="px-2 py-1 text-xs font-medium rounded"
+                                >
+                                    {{ reservation.status.replace('_', ' ').toUpperCase() }}
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                                 ৳{{ reservation.total_amount.toLocaleString() }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex justify-end gap-2">
-                                    <!-- View -->
-                                    <button 
-                                        @click="viewReservation(reservation)"
+                                    <!-- Edit -->
+                                    <Link
+                                        :href="`/reservations/${reservation.id}/edit`"
                                         class="text-blue-600 hover:text-blue-900"
+                                        title="Edit"
+                                    >
+                                        Edit
+                                    </Link>
+
+                                    <!-- View -->
+                                    <Link
+                                        :href="`/reservations/${reservation.id}`"
+                                        class="text-green-600 hover:text-green-900"
                                         title="View"
                                     >
                                         View
-                                    </button>
+                                    </Link>
 
-                                    <!-- Check In -->
-                                    <button 
-                                        v-if="reservation.status === 'confirmed'"
-                                        @click="handleCheckIn(reservation)"
-                                        :disabled="loadingCheckIn"
-                                        class="text-green-600 hover:text-green-900 disabled:opacity-50"
-                                        title="Check In"
+                                    <!-- Delete -->
+                                    <button
+                                        @click="handleDelete(reservation)"
+                                        class="text-red-600 hover:text-red-900"
+                                        title="Delete"
                                     >
-                                        {{ loadingCheckIn ? '...' : 'Check In' }}
-                                    </button>
-
-                                    <!-- Check Out -->
-                                    <button 
-                                        v-if="reservation.status === 'checked_in'"
-                                        @click="handleCheckOut(reservation)"
-                                        :disabled="loadingCheckOut"
-                                        class="text-orange-600 hover:text-orange-900 disabled:opacity-50"
-                                        title="Check Out"
-                                    >
-                                        {{ loadingCheckOut ? '...' : 'Check Out' }}
-                                    </button>
-
-                                    <!-- Cancel -->
-                                    <button 
-                                        v-if="['pending', 'confirmed'].includes(reservation.status)"
-                                        @click="handleCancel(reservation)"
-                                        :disabled="loading"
-                                        class="text-red-600 hover:text-red-900 disabled:opacity-50"
-                                        title="Cancel"
-                                    >
-                                        {{ loading ? '...' : 'Cancel' }}
+                                        Delete
                                     </button>
                                 </div>
                             </td>
@@ -287,8 +283,8 @@
                     </button>
                 </div>
             </div>
-        </div> 
-    </HotelLayout>
+        </div>
+    </AppLayout>
 </template>
 
 <script setup lang="ts">
@@ -298,7 +294,7 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useReservations } from '@/Composables';
 import { useReservationsStore } from '@/Stores';
-import { HotelLayout } from '@/Layouts';
+import { AppLayout } from '@/Layouts';
 
 // ─────────────────────────────────────────────────────────────────────
 // 2. SETUP - Composables + Stores
@@ -313,6 +309,7 @@ const {
     checkIn,
     checkOut,
     cancel: cancelReservation,
+    deleteReservation,
     clearError,
     clearSuccess
 } = useReservations();
@@ -421,12 +418,26 @@ async function handleCheckOut(reservation: PMS.Reservation) {
  */
 async function handleCancel(reservation: PMS.Reservation) {
     if (!confirm(`Cancel reservation: ${reservation.reference}?`)) return;
-    
+
     try {
         await cancelReservation(reservation.id);
         await store.fetchAll();
     } catch (error) {
         console.error('Cancel failed:', error);
+    }
+}
+
+/**
+ * Handle Delete - Action with confirmation
+ */
+async function handleDelete(reservation: PMS.Reservation) {
+    if (!confirm(`Delete reservation: ${reservation.reference}? This action cannot be undone.`)) return;
+
+    try {
+        await deleteReservation(reservation.id);
+        await store.fetchAll();
+    } catch (error) {
+        console.error('Delete failed:', error);
     }
 }
 
@@ -437,13 +448,7 @@ function changePage(page: number) {
     if (page < 1 || page > store.pagination.last_page) return;
     store.fetchAll(page);
 }
-
-/**
- * Open create modal
- */
-function openCreateModal() {
-    console.log('Open create reservation modal');
-}
+ 
 
 // ─────────────────────────────────────────────────────────────────────
 // 5. LIFECYCLE HOOKS - Best Practice

@@ -1,6 +1,11 @@
 /**
  * Validation Utility Functions
- * Form validation rules and helpers
+ * 
+ * BEST PRACTICE: These utilities are for CUSTOM validation logic.
+ * For Inertia forms, use backend validation (Laravel FormRequest) + Inertia's form.errors
+ * 
+ * @see https://vuejs.org/guide/best-practices
+ * @see https://inertiajs.com/validation
  */
 
 export interface ValidationResult {
@@ -8,10 +13,15 @@ export interface ValidationResult {
     message?: string;
 }
 
-export type ValidationRule = (value: any) => ValidationResult | boolean;
+// ============================================================================
+// BASIC VALIDATORS (Use with compose())
+// ============================================================================
 
 /**
  * Check if value is required
+ * 
+ * @example
+ * if (!required(value).valid) { error = required(value).message; }
  */
 export function required(value: any): ValidationResult {
     if (typeof value === 'string') {
@@ -48,10 +58,14 @@ export function phone(value: string): ValidationResult {
     };
 }
 
+// ============================================================================
+// LENGTH VALIDATORS
+// ============================================================================
+
 /**
  * Validate minimum length
  */
-export function minLength(length: number): ValidationRule {
+export function minLength(length: number) {
     return (value: string): ValidationResult => ({
         valid: value.length >= length,
         message: `Must be at least ${length} characters`
@@ -61,195 +75,191 @@ export function minLength(length: number): ValidationRule {
 /**
  * Validate maximum length
  */
-export function maxLength(length: number): ValidationRule {
+export function maxLength(length: number) {
     return (value: string): ValidationResult => ({
         valid: value.length <= length,
         message: `Must not exceed ${length} characters`
     });
 }
 
-/**
- * Validate exact length
- */
-export function length(length: number): ValidationRule {
-    return (value: string): ValidationResult => ({
-        valid: value.length === length,
-        message: `Must be exactly ${length} characters`
-    });
-}
+// ============================================================================
+// NUMBER VALIDATORS
+// ============================================================================
 
 /**
- * Validate minimum value (numbers)
+ * Validate minimum value
  */
-export function minValue(min: number): ValidationRule {
-    return (value: number): ValidationResult => ({
-        valid: value >= min,
-        message: `Must be at least ${min}`
-    });
-}
-
-/**
- * Validate maximum value (numbers)
- */
-export function maxValue(max: number): ValidationRule {
-    return (value: number): ValidationResult => ({
-        valid: value <= max,
-        message: `Must not exceed ${max}`
-    });
-}
-
-/**
- * Validate number pattern
- */
-export function number(value: string | number): ValidationResult {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return {
-        valid: !isNaN(num) && isFinite(num),
-        message: 'Please enter a valid number'
+export function minValue(min: number) {
+    return (value: number | string): ValidationResult => {
+        const num = typeof value === 'string' ? parseFloat(value) : value;
+        return {
+            valid: num >= min,
+            message: `Must be at least ${min}`
+        };
     };
 }
 
 /**
- * Validate integer
+ * Validate maximum value
  */
-export function integer(value: number | string): ValidationResult {
-    const num = typeof value === 'string' ? parseFloat(value) : value;
-    return {
-        valid: Number.isInteger(num),
-        message: 'Please enter a whole number'
+export function maxValue(max: number) {
+    return (value: number | string): ValidationResult => {
+        const num = typeof value === 'string' ? parseFloat(value) : value;
+        return {
+            valid: num <= max,
+            message: `Must not exceed ${max}`
+        };
     };
 }
 
 /**
  * Validate positive number
  */
-export function positive(value: number): ValidationResult {
+export function positive(value: number | string): ValidationResult {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
     return {
-        valid: value > 0,
+        valid: num > 0,
         message: 'Value must be positive'
     };
 }
+
+// ============================================================================
+// DATE VALIDATORS
+// ============================================================================
 
 /**
  * Validate date is in the future
  */
 export function futureDate(value: string | Date): ValidationResult {
     const date = typeof value === 'string' ? new Date(value) : value;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
     return {
-        valid: date.getTime() > new Date().getTime(),
-        message: 'Date must be in the future'
+        valid: date >= today,
+        message: 'Date must be today or later'
     };
 }
 
 /**
- * Validate date is in the past
- */
-export function pastDate(value: string | Date): ValidationResult {
-    const date = typeof value === 'string' ? new Date(value) : value;
-    return {
-        valid: date.getTime() < new Date().getTime(),
-        message: 'Date must be in the past'
-    };
-}
-
-/**
- * Validate date range (check-in before check-out)
+ * Validate date range (start before end)
+ * 
+ * @example
+ * const result = dateRange(form.checkIn, form.checkOut);
+ * if (!result.valid) { error = result.message; }
  */
 export function dateRange(start: string | Date, end: string | Date): ValidationResult {
     const startDate = typeof start === 'string' ? new Date(start) : start;
     const endDate = typeof end === 'string' ? new Date(end) : end;
     return {
-        valid: startDate.getTime() < endDate.getTime(),
+        valid: startDate < endDate,
+        message: 'End date must be after start date'
+    };
+}
+
+/**
+ * Validate check-in date (today or future)
+ */
+export function checkInDate(value: string): ValidationResult {
+    if (!value) {
+        return { valid: false, message: 'Check-in date is required' };
+    }
+    const checkIn = new Date(value);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return {
+        valid: checkIn >= today,
+        message: 'Check-in date must be today or later'
+    };
+}
+
+/**
+ * Validate check-out date (after check-in)
+ */
+export function checkOutDate(checkOut: string, checkIn: string): ValidationResult {
+    if (!checkOut) {
+        return { valid: false, message: 'Check-out date is required' };
+    }
+    if (!checkIn) {
+        return { valid: true }; // Can't validate without check-in
+    }
+    const checkOutDate = new Date(checkOut);
+    const checkInDate = new Date(checkIn);
+    return {
+        valid: checkOutDate > checkInDate,
         message: 'Check-out date must be after check-in date'
     };
 }
 
-/**
- * Validate matching fields (e.g., password confirmation)
- */
-export function matches(fieldValue: string, confirmFieldValue: string): ValidationResult {
-    return {
-        valid: fieldValue === confirmFieldValue,
-        message: 'Fields do not match'
-    };
-}
-
-/**
- * Validate URL format
- */
-export function url(value: string): ValidationResult {
-    const pattern = /^https?:\/\/.+/;
-    return {
-        valid: pattern.test(value),
-        message: 'Please enter a valid URL'
-    };
-}
-
-/**
- * Validate alphanumeric
- */
-export function alphanumeric(value: string): ValidationResult {
-    const pattern = /^[a-zA-Z0-9]+$/;
-    return {
-        valid: pattern.test(value),
-        message: 'Only letters and numbers are allowed'
-    };
-}
-
-/**
- * Validate with custom regex pattern
- */
-export function pattern(value: string, regex: RegExp, message: string): ValidationResult {
-    return {
-        valid: regex.test(value),
-        message
-    };
-}
-
-/**
- * Validate file size (in bytes)
- */
-export function fileSize(maxSize: number): ValidationRule {
-    return (file: File): ValidationResult => ({
-        valid: file.size <= maxSize,
-        message: `File size must not exceed ${formatFileSize(maxSize)}`
-    });
-}
-
-/**
- * Validate file type
- */
-export function fileType(allowedTypes: string[]): ValidationRule {
-    return (file: File): ValidationResult => ({
-        valid: allowedTypes.includes(file.type),
-        message: `Allowed file types: ${allowedTypes.join(', ')}`
-    });
-}
+// ============================================================================
+// COMPOSE VALIDATORS (Combine multiple rules)
+// ============================================================================
 
 /**
  * Compose multiple validators
+ * 
+ * @example
+ * const validateGuest = compose(
+ *     required,
+ *     (value) => ({ valid: value > 0, message: 'Invalid guest' })
+ * );
+ * 
+ * const result = validateGuest(form.guest_id);
+ * if (!result.valid) { error = result.message; }
  */
-export function compose(...validators: ValidationRule[]): ValidationRule {
+export function compose(...validators: Array<(value: any) => ValidationResult>) {
     return (value: any): ValidationResult => {
         for (const validator of validators) {
             const result = validator(value);
-            if (typeof result === 'boolean' && !result) {
-                return { valid: false, message: 'Validation failed' };
-            }
-            if (typeof result === 'object' && !result.valid) {
-                return result;
+            if (!result.valid) {
+                return result; // Return first error
             }
         }
         return { valid: true };
     };
 }
 
+// ============================================================================
+// INERTIA FORM VALIDATION HELPER
+// ============================================================================
+
 /**
- * Format file size helper for validation messages
+ * Set validation errors on Inertia form
+ * 
+ * BEST PRACTICE: Use this for client-side validation before submitting
+ * Backend will validate again with Laravel FormRequest
+ * 
+ * @example
+ * const form = useForm({ guest_id: '', room_id: '' });
+ * 
+ * function submit() {
+ *     if (!validateInertiaForm(form, {
+ *         guest_id: [required],
+ *         room_id: [required],
+ *     })) {
+ *         return; // Don't submit
+ *     }
+ *     form.post('/reservations');
+ * }
  */
-function formatFileSize(bytes: number): string {
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+export function validateInertiaForm<T extends Record<string, any>>(
+    form: any,
+    rules: Record<keyof T, Array<(value: any) => ValidationResult>>
+): boolean {
+    let isValid = true;
+    form.clearErrors();
+
+    for (const [field, validators] of Object.entries(rules)) {
+        const value = form[field as keyof T];
+        
+        for (const validator of validators as Array<(value: any) => ValidationResult>) {
+            const result = validator(value);
+            if (!result.valid) {
+                form.setError(field as keyof T, result.message!);
+                isValid = false;
+                break; // Stop at first error for this field
+            }
+        }
+    }
+
+    return isValid;
 }

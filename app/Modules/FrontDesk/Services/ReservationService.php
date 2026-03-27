@@ -21,9 +21,42 @@ readonly class ReservationService
     /**
      * Return a paginated list.
      */
-    public function paginate(): LengthAwarePaginator
+    public function paginate(array $filters = [], int $page = 1, int $perPage = 15): LengthAwarePaginator
     {
-        return Reservation::query()->latest('id')->paginate(15);
+        $query = Reservation::query()->latest('id');
+
+        // Apply filters
+        if (!empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (!empty($filters['check_in_date'])) {
+            $query->where('check_in_date', '>=', $filters['check_in_date']);
+        }
+
+        if (!empty($filters['check_out_date'])) {
+            $query->where('check_out_date', '<=', $filters['check_out_date']);
+        }
+
+        if (!empty($filters['search'])) {
+            $search = $filters['search'];
+            $query->where(function ($q) use ($search) {
+                $q->where('reference', 'like', "%{$search}%")
+                    ->orWhereHas('guest', function ($guestQuery) use ($search) {
+                        $guestQuery->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        return $query->paginate($perPage, page: $page);
+    }
+
+    /**
+     * Find a reservation by ID.
+     */
+    public function find(int $id): ?Reservation
+    {
+        return Reservation::with(['guest', 'room'])->find($id);
     }
 
     /**
@@ -46,6 +79,73 @@ readonly class ReservationService
             'cancelled', 'failed', 'blocked' => 'danger',
             default => 'warning',
         };
+    }
+
+    /**
+     * Update an existing reservation.
+     *
+     * @param array<string, mixed> $payload
+     */
+    public function update(int $id, array $payload): bool
+    {
+        $reservation = Reservation::find($id);
+        if (!$reservation) {
+            return false;
+        }
+        return $reservation->update($payload);
+    }
+
+    /**
+     * Delete a reservation.
+     */
+    public function delete(int $id): bool
+    {
+        $reservation = Reservation::find($id);
+        if (!$reservation) {
+            return false;
+        }
+        return $reservation->delete();
+    }
+
+    /**
+     * Check in a guest.
+     */
+    public function checkIn(int $id): bool
+    {
+        $reservation = Reservation::find($id);
+        if (!$reservation) {
+            return false;
+        }
+        return $reservation->update(['status' => 'checked_in']);
+    }
+
+    /**
+     * Check out a guest.
+     *
+     * @param array<string, mixed> $paymentData
+     */
+    public function checkOut(int $id, array $paymentData = []): bool
+    {
+        $reservation = Reservation::find($id);
+        if (!$reservation) {
+            return false;
+        }
+        return $reservation->update([
+            'status' => 'checked_out',
+            ...$paymentData
+        ]);
+    }
+
+    /**
+     * Cancel a reservation.
+     */
+    public function cancel(int $id): bool
+    {
+        $reservation = Reservation::find($id);
+        if (!$reservation) {
+            return false;
+        }
+        return $reservation->update(['status' => 'cancelled']);
     }
 }
 

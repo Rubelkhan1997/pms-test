@@ -6,6 +6,7 @@ namespace App\Enums;
 
 enum ReservationStatus: string
 {
+    case Pending = 'pending';
     case Draft = 'draft';
     case Confirmed = 'confirmed';
     case CheckedIn = 'checked_in';

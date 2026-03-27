@@ -350,6 +350,41 @@ export function useReservations(options: UseReservationOptions = {}) {
     }
 
     /**
+     * Delete reservation permanently
+     */
+    async function deleteReservation(id: number): Promise<void> {
+        startSaving();
+        clearError();
+
+        try {
+            await apiClient.v1.delete(`/front-desk/reservations/${id}`);
+            showSuccess('Reservation deleted successfully');
+
+            // Update local state
+            const index = _reservations.value.findIndex(r => r.id === id);
+            if (index !== -1) {
+                _reservations.value = [
+                    ..._reservations.value.slice(0, index),
+                    ..._reservations.value.slice(index + 1)
+                ];
+            }
+
+            // Invalidate cache
+            if (cacheEnabled) {
+                _cache.value.clear();
+                triggerRef(_cache);
+            }
+        } catch (err: any) {
+            const message = err.response?.data?.message || 'Failed to delete reservation';
+            showError(message);
+            console.error('Delete reservation error:', err);
+            throw err;
+        } finally {
+            stopSaving();
+        }
+    }
+
+    /**
      * Guest Check In
      */
     async function checkIn(id: number): Promise<void> {
@@ -512,6 +547,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         create,
         update,
         cancel,
+        deleteReservation,
         checkIn,
         checkOut,
         setFilters,

@@ -52,7 +52,13 @@ class ReservationController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Reservations/Create');
+        $guests = \App\Modules\Guest\Models\GuestProfile::orderBy('first_name')->get();
+        $rooms = \App\Modules\FrontDesk\Models\Room::where('status', 'available')->orderBy('number')->get();
+
+        return Inertia::render('Reservations/Create', [
+            'guests' => $guests,
+            'rooms' => $rooms,
+        ]);
     }
 
     /**
@@ -72,9 +78,13 @@ class ReservationController extends Controller
     public function edit(int $id): Response
     {
         $reservation = $this->service->find($id);
-        
+        $guests = \App\Modules\Guest\Models\GuestProfile::orderBy('first_name')->get();
+        $rooms = \App\Modules\FrontDesk\Models\Room::orderBy('number')->get();
+
         return Inertia::render('Reservations/Edit', [
             'reservation' => $reservation,
+            'guests' => $guests,
+            'rooms' => $rooms,
         ]);
     }
 

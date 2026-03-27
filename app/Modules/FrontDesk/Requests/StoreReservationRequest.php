@@ -24,11 +24,34 @@ class StoreReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hotel_id' => ['required', 'integer'],
-            'reference' => ['required', 'string', 'max:100'],
-            'status' => ['required', 'string', 'max:50'],
-            'scheduled_at' => ['nullable', 'date'],
-            'meta' => ['nullable', 'array'],
+            'guest_profile_id' => ['required', 'integer', 'exists:guest_profiles,id'],
+            'room_id' => ['required', 'integer', 'exists:rooms,id'],
+            'check_in_date' => ['required', 'date', 'after_or_equal:today'],
+            'check_out_date' => ['required', 'date', 'after:check_in_date'],
+            'total_amount' => ['required', 'numeric', 'min:0'],
+            'adults' => ['nullable', 'integer', 'min:1', 'max:10'],
+            'children' => ['nullable', 'integer', 'min:0', 'max:10'],
+            'status' => ['required', 'string', 'in:pending,confirmed,checked_in,checked_out,cancelled'],
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ];
+    }
+
+    /**
+     * Get custom messages for validator errors.
+     */
+    public function messages(): array
+    {
+        return [
+            'guest_profile_id.required' => 'Please select a guest',
+            'guest_profile_id.exists' => 'Selected guest does not exist',
+            'room_id.required' => 'Please select a room',
+            'room_id.exists' => 'Selected room does not exist',
+            'check_in_date.required' => 'Check-in date is required',
+            'check_in_date.after_or_equal' => 'Check-in date must be today or later',
+            'check_out_date.required' => 'Check-out date is required',
+            'check_out_date.after' => 'Check-out date must be after check-in date',
+            'total_amount.required' => 'Total amount is required',
+            'total_amount.min' => 'Total amount cannot be negative',
         ];
     }
 }

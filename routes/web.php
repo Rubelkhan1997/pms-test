@@ -30,25 +30,25 @@ Route::get('/dashboard', function () {
 Route::prefix('reservations')->name('reservations.')->group(function (): void {
     // List all reservations
     Route::get('/', [FrontDeskController::class, 'index'])->name('index');
-    
+
+    // Create reservation (form) - MUST be before {reservation} route!
+    Route::get('/create', [FrontDeskController::class, 'create'])->name('create');
+
     // View single reservation
     Route::get('/{reservation}', [FrontDeskController::class, 'show'])->name('show');
-    
-    // Create reservation (form)
-    Route::get('/create', [FrontDeskController::class, 'create'])->name('create');
-    
+
     // Store reservation
     Route::post('/', [FrontDeskController::class, 'store'])->name('store');
-    
+
     // Edit reservation (form)
     Route::get('/{reservation}/edit', [FrontDeskController::class, 'edit'])->name('edit');
-    
+
     // Update reservation
     Route::put('/{reservation}', [FrontDeskController::class, 'update'])->name('update');
-    
+
     // Delete reservation
     Route::delete('/{reservation}', [FrontDeskController::class, 'destroy'])->name('destroy');
-    
+
     // Actions
     Route::post('/{reservation}/check-in', [FrontDeskController::class, 'checkIn'])->name('check-in');
     Route::post('/{reservation}/check-out', [FrontDeskController::class, 'checkOut'])->name('check-out');
