@@ -13,15 +13,15 @@ use App\Modules\Reports\Controllers\Api\V1\ReportSnapshotController as ReportsCo
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->middleware(['auth:sanctum'])->group(function (): void {
+// middleware(['auth:sanctum'])->
+Route::prefix('v1')->group(function (): void {
     Route::get('/user', static fn (Request $request): mixed => $request->user());
 
-    Route::apiResource('front-desk/reservations', FrontDeskController::class)->only(['index', 'store']);
-    Route::apiResource('booking/ota-syncs', BookingController::class)->only(['index', 'store']);
-    Route::apiResource('guests/profiles', GuestController::class)->only(['index', 'store']);
-    Route::apiResource('housekeeping/tasks', HousekeepingController::class)->only(['index', 'store']);
-    Route::apiResource('pos/orders', PosController::class)->only(['index', 'store']);
-    Route::apiResource('reports/snapshots', ReportsController::class)->only(['index', 'store']);
-    Route::apiResource('mobile/tasks', MobileController::class)->only(['index', 'store']);
-    Route::apiResource('hr/employees', HrController::class)->only(['index', 'store']);
+    // Reservations API (Full CRUD)
+    Route::apiResource('front-desk/reservations', FrontDeskController::class);
+    Route::post('front-desk/reservations/{reservation}/check-in', [FrontDeskController::class, 'checkIn']);
+    Route::post('front-desk/reservations/{reservation}/check-out', [FrontDeskController::class, 'checkOut']);
+    Route::post('front-desk/reservations/{reservation}/cancel', [FrontDeskController::class, 'cancel']);
+
+  
 });

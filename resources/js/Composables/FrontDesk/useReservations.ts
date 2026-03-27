@@ -1,27 +1,18 @@
-import { ref, shallowRef, readonly, computed, triggerRef, onMounted, onUnmounted } from 'vue';
-import { apiClient } from '@/Services';
-import { router } from '@inertiajs/vue3';
+import { computed, onMounted, onUnmounted } from 'vue';
+import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
 import { useLoading, useMessage, usePolling } from '@/Helpers';
 
 /**
- * Reservation Composable - Best Practices Implementation
+ * Reservation Composable - Business Logic Layer
  *
- * Applied Best Practices:
- * ✅ shallowRef for primitives (performance)
- * ✅ ref for arrays (deep reactivity needed)
- * ✅ readonly for protected state (controlled mutations)
- * ✅ computed for derived values (cached results)
- * ✅ Options object pattern (flexible configuration)
- * ✅ Composable composition (build from smaller pieces)
- * ✅ Explicit actions for state mutations
- * ✅ TypeScript type safety
- *
- * @see https://vuejs.org/guide/best-practices/performance.html
- * @see https://vuejs.org/guide/reusability/composables.html
+ * Architecture:
+ * - Store  (reservationStore.ts) : Global state (Pinia)
+ * - Composable (useReservations.ts) : Business logic + UI
+ * - Pages  : Use composable only — never access store directly
  */
 
 // ─────────────────────────────────────────────────────────
-// Types (Exported for reuse)
+// Types
 // ─────────────────────────────────────────────────────────
 
 export interface ReservationFilters {
@@ -32,187 +23,77 @@ export interface ReservationFilters {
 }
 
 export interface UseReservationOptions {
-    /** Auto-fetch on mount */
     autoFetch?: boolean;
-    /** Initial filters */
     initialFilters?: ReservationFilters;
-    /** Enable polling for real-time updates */
     pollingInterval?: number;
-    /** Cache results */
-    cacheEnabled?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────
-// Main Composable: useReservations
+// Composable
 // ─────────────────────────────────────────────────────────
 
 export function useReservations(options: UseReservationOptions = {}) {
-    // ─────────────────────────────────────────────────────
-    // Options with defaults (Options Object Pattern)
-    // ─────────────────────────────────────────────────────
+
     const {
         autoFetch = false,
         initialFilters = {},
-        pollingInterval = 30000, // 30 seconds
-        cacheEnabled = false
+        pollingInterval = 30000,
     } = options;
 
-    // ─────────────────────────────────────────────────────
-    // State - Best Practice
-    // ─────────────────────────────────────────────────────
+    // ─── Store ───────────────────────────────────────────
+    const store = useReservationsStore();
 
-    // ✅ ref() for arrays (deep reactivity, replacement pattern)
-    const _reservations = ref<PMS.Reservation[]>([]);
-    const _reservation = ref<PMS.Reservation | null>(null);
-
-    // ✅ shallowRef() for primitives (performance)
-    const _filters = shallowRef<ReservationFilters>(initialFilters);
-    const _cache = shallowRef<Map<string, PMS.Reservation[]>>(new Map());
-
-    // ✅ Compose smaller composables
+    // ─── UI Helpers ──────────────────────────────────────
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
-    const { message: _successMessage, showMessage: showSuccess, clearMessage: clearSuccess } = useMessage();
+    const { message: _success, showMessage: showSuccess, clearMessage: clearSuccess } = useMessage();
     const { message: _error, showMessage: showError, clearMessage: clearError } = useMessage();
 
-    // ─────────────────────────────────────────────────────
-    // Computed (Derived State) - Best Practice
-    // ─────────────────────────────────────────────────────
+    // ─── Reactive State (from Store) ─────────────────────
+    const reservations = computed(() => store.reservations);
+    const reservation = computed(() => store.selectedReservation);
+    const filters = computed(() => store.filters);
+    const pagination = computed(() => store.pagination);
 
-    const reservations = computed(() => _reservations.value);
-    const reservation = computed(() => _reservation.value);
-    const loading = computed(() => _loading.value);
-    const saving = computed(() => _saving.value);
-    const successMessage = computed(() => _successMessage.value);
-    const error = computed(() => _error.value);
+    // ─── UI State ────────────────────────────────────────
+    const loading = computed(() => _loading.value || store.loadingList);
+    const saving = computed(() => _saving.value || store.loading);
+    const successMessage = computed(() => _success.value);
+    const error = computed(() => _error.value || store.error);
 
-    // ✅ Derived counts (cached by computed)
-    const pendingCount = computed(() =>
-        _reservations.value.filter(r => r.status === 'pending').length
-    );
-
-    const confirmedCount = computed(() =>
-        _reservations.value.filter(r => r.status === 'confirmed').length
-    );
-
-    const checkedInCount = computed(() =>
-        _reservations.value.filter(r => r.status === 'checked_in').length
-    );
-
-    const checkedOutCount = computed(() =>
-        _reservations.value.filter(r => r.status === 'checked_out').length
-    );
-
-    const cancelledCount = computed(() =>
-        _reservations.value.filter(r => r.status === 'cancelled').length
-    );
-
-    // ✅ Derived lists with date calculations
-    const todayCheckIns = computed(() => {
-        const today = new Date().toISOString().split('T')[0];
-        return _reservations.value.filter(r => r.check_in_date === today);
-    });
-
-    const todayCheckOuts = computed(() => {
-        const today = new Date().toISOString().split('T')[0];
-        return _reservations.value.filter(r => r.check_out_date === today);
-    });
-
-    const upcomingCheckIns = computed(() => {
-        const today = new Date().toISOString().split('T')[0];
-        return _reservations.value
-            .filter(r => r.check_in_date > today && r.status === 'confirmed')
-            .sort((a, b) => a.check_in_date.localeCompare(b.check_in_date));
-    });
-
-    // ✅ Filtered reservations (computed, not in template)
-    const filteredReservations = computed(() => {
-        let filtered = [..._reservations.value];
-        const filters = _filters.value;
-
-        // Filter by status
-        if (filters.status) {
-            filtered = filtered.filter(r => r.status === filters.status);
-        }
-
-        // Filter by check-in date
-        if (filters.check_in_date) {
-            filtered = filtered.filter(r => r.check_in_date >= filters.check_in_date!);
-        }
-
-        // Filter by check-out date
-        if (filters.check_out_date) {
-            filtered = filtered.filter(r => r.check_out_date <= filters.check_out_date!);
-        }
-
-        // Search by reference or guest name
-        if (filters.search) {
-            const search = filters.search.toLowerCase();
-            filtered = filtered.filter(r =>
-                r.reference.toLowerCase().includes(search) ||
-                r.guest?.name.toLowerCase().includes(search)
-            );
-        }
-
-        return filtered;
-    });
-
-    // ✅ Revenue calculations
-    const totalRevenue = computed(() =>
-        _reservations.value.reduce((sum, r) => sum + r.total_amount, 0)
-    );
-
-    const pendingRevenue = computed(() =>
-        _reservations.value
-            .filter(r => r.status === 'pending')
-            .reduce((sum, r) => sum + r.total_amount, 0)
-    );
+    // ─── Derived from Store (Getters) ────────────────────
+    const pendingCount = computed(() => store.pendingCount);
+    const confirmedCount = computed(() => store.confirmedCount);
+    const checkedInCount = computed(() => store.checkedInCount);
+    // ✅ Fix: এই দুটো আগে missing ছিল
+    const checkedOutCount = computed(() => store.checkedOutCount);
+    const cancelledCount = computed(() => store.cancelledCount);
+    const todayCheckIns = computed(() => store.todayCheckIns);
+    const todayCheckOuts = computed(() => store.todayCheckOuts);
+    const filteredReservations = computed(() => store.filteredReservations);
+    const totalRevenue = computed(() => store.totalRevenue);
+    // ✅ Fix: এটাও আগে missing ছিল
+    const pendingRevenue = computed(() => store.pendingRevenue);
 
     // ─────────────────────────────────────────────────────
-    // API Calls - Best Practice
+    // Actions
     // ─────────────────────────────────────────────────────
 
     /**
-     * Get cache key from filters
+     * Fetch all reservations
+     * ✅ Fix: page parameter যোগ করা হয়েছে
      */
-    function getCacheKey(filters: ReservationFilters): string {
-        return JSON.stringify(filters);
-    }
-
-    /**
-     * Fetch all reservations with optional filters
-     */
-    async function fetchAll(params?: ReservationFilters): Promise<void> {
-        const fetchFilters = params || _filters.value;
-        const cacheKey = getCacheKey(fetchFilters);
-
-        // Check cache first
-        if (cacheEnabled && _cache.value.has(cacheKey)) {
-            _reservations.value = _cache.value.get(cacheKey)!;
-            return;
-        }
-
+    async function fetchAll(page: number = 1, params?: ReservationFilters): Promise<void> {
         startLoading();
         clearError();
 
+        if (params) store.setFilters(params);
+
         try {
-            const { data } = await apiClient.v1.get('/front-desk/reservations', {
-                params: fetchFilters
-            });
-
-            _reservations.value = data.data;
-
-            // Update cache
-            if (cacheEnabled) {
-                _cache.value.set(cacheKey, data.data);
-                // Trigger reactivity for shallowRef
-                triggerRef(_cache);
-            }
-
+            await store.fetchAll(page);
         } catch (err: any) {
             const message = err.response?.data?.message || 'Failed to fetch reservations';
             showError(message);
-            console.error('Fetch reservations error:', err);
             throw err;
         } finally {
             stopLoading();
@@ -220,19 +101,16 @@ export function useReservations(options: UseReservationOptions = {}) {
     }
 
     /**
-     * Fetch single reservation by ID
+     * Fetch single reservation
      */
     async function fetchById(id: number): Promise<void> {
         startLoading();
         clearError();
 
         try {
-            const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
-            _reservation.value = data.data;
+            await store.fetchById(id);
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to fetch reservation';
-            showError(message);
-            console.error('Fetch reservation error:', err);
+            showError(err.response?.data?.message || 'Failed to fetch reservation');
             throw err;
         } finally {
             stopLoading();
@@ -240,37 +118,30 @@ export function useReservations(options: UseReservationOptions = {}) {
     }
 
     /**
-     * Create new reservation
+     * Create reservation
+     * ✅ Fix: hotel_id যোগ করা হয়েছে
      */
     async function create(data: {
-        guest_id: number;
-        room_id: number;
+        hotel_id: number | string;
+        guest_profile_id: number | string;
+        room_id: number | string;
         check_in_date: string;
         check_out_date: string;
         total_amount: number;
+        adults?: number;
+        children?: number;
+        status?: string;
         notes?: string;
-    }): Promise<void> {
+    }): Promise<any> {
         startSaving();
         clearError();
 
         try {
-            const response = await apiClient.v1.post('/front-desk/reservations', data);
+            const response = await store.create(data);
             showSuccess('Reservation created successfully');
-
-            // Invalidate cache
-            if (cacheEnabled) {
-                _cache.value.clear();
-                triggerRef(_cache);
-            }
-
-            // Refresh list
-            await fetchAll();
-
-            return response.data;
+            return response;
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to create reservation';
-            showError(message);
-            console.error('Create reservation error:', err);
+            showError(err.response?.data?.message || 'Failed to create reservation');
             throw err;
         } finally {
             stopSaving();
@@ -278,35 +149,18 @@ export function useReservations(options: UseReservationOptions = {}) {
     }
 
     /**
-     * Update existing reservation
+     * Update reservation
      */
-    async function update(id: number, data: Partial<PMS.Reservation>): Promise<void> {
+    async function update(id: number, data: Partial<PMS.Reservation>): Promise<any> {
         startSaving();
         clearError();
 
         try {
-            const response = await apiClient.v1.put(`/front-desk/reservations/${id}`, data);
+            const response = await store.update(id, data);
             showSuccess('Reservation updated successfully');
-
-            // Update local state (replace entire array to trigger reactivity)
-            const index = _reservations.value.findIndex(r => r.id === id);
-            if (index !== -1) {
-                _reservations.value = [
-                    ..._reservations.value.slice(0, index),
-                    response.data.data,
-                    ..._reservations.value.slice(index + 1)
-                ];
-            }
-
-            // Invalidate cache
-            if (cacheEnabled) {
-                _cache.value.clear();
-                triggerRef(_cache);
-            }
+            return response;
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to update reservation';
-            showError(message);
-            console.error('Update reservation error:', err);
+            showError(err.response?.data?.message || 'Failed to update reservation');
             throw err;
         } finally {
             stopSaving();
@@ -321,28 +175,10 @@ export function useReservations(options: UseReservationOptions = {}) {
         clearError();
 
         try {
-            await apiClient.v1.post(`/front-desk/reservations/${id}/cancel`);
+            await store.cancel(id);
             showSuccess('Reservation cancelled successfully');
-
-            // Update local state
-            const index = _reservations.value.findIndex(r => r.id === id);
-            if (index !== -1) {
-                _reservations.value = [
-                    ..._reservations.value.slice(0, index),
-                    { ..._reservations.value[index], status: 'cancelled' },
-                    ..._reservations.value.slice(index + 1)
-                ];
-            }
-
-            // Invalidate cache
-            if (cacheEnabled) {
-                _cache.value.clear();
-                triggerRef(_cache);
-            }
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to cancel reservation';
-            showError(message);
-            console.error('Cancel reservation error:', err);
+            showError(err.response?.data?.message || 'Failed to cancel reservation');
             throw err;
         } finally {
             stopSaving();
@@ -350,34 +186,17 @@ export function useReservations(options: UseReservationOptions = {}) {
     }
 
     /**
-     * Delete reservation permanently
+     * Delete reservation
      */
     async function deleteReservation(id: number): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            await apiClient.v1.delete(`/front-desk/reservations/${id}`);
+            await store.delete(id);
             showSuccess('Reservation deleted successfully');
-
-            // Update local state
-            const index = _reservations.value.findIndex(r => r.id === id);
-            if (index !== -1) {
-                _reservations.value = [
-                    ..._reservations.value.slice(0, index),
-                    ..._reservations.value.slice(index + 1)
-                ];
-            }
-
-            // Invalidate cache
-            if (cacheEnabled) {
-                _cache.value.clear();
-                triggerRef(_cache);
-            }
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to delete reservation';
-            showError(message);
-            console.error('Delete reservation error:', err);
+            showError(err.response?.data?.message || 'Failed to delete reservation');
             throw err;
         } finally {
             stopSaving();
@@ -385,35 +204,17 @@ export function useReservations(options: UseReservationOptions = {}) {
     }
 
     /**
-     * Guest Check In
+     * Check In
      */
     async function checkIn(id: number): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            const response = await apiClient.v1.post(`/front-desk/reservations/${id}/check-in`);
+            await store.checkIn(id);
             showSuccess('Guest checked in successfully');
-
-            // Update local state
-            const index = _reservations.value.findIndex(r => r.id === id);
-            if (index !== -1) {
-                _reservations.value = [
-                    ..._reservations.value.slice(0, index),
-                    { ..._reservations.value[index], status: 'checked_in' },
-                    ..._reservations.value.slice(index + 1)
-                ];
-            }
-
-            // Invalidate cache
-            if (cacheEnabled) {
-                _cache.value.clear();
-                triggerRef(_cache);
-            }
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Check in failed';
-            showError(message);
-            console.error('Check in error:', err);
+            showError(err.response?.data?.message || 'Check in failed');
             throw err;
         } finally {
             stopSaving();
@@ -421,114 +222,69 @@ export function useReservations(options: UseReservationOptions = {}) {
     }
 
     /**
-     * Guest Check Out
+     * Check Out
      */
-    async function checkOut(id: number, paymentData?: {
-        paid_amount: number;
-        payment_method: string;
-    }): Promise<void> {
+    async function checkOut(id: number, paymentData?: any): Promise<void> {
         startSaving();
         clearError();
 
         try {
-            const response = await apiClient.v1.post(`/front-desk/reservations/${id}/check-out`, paymentData);
+            await store.checkOut(id, paymentData);
             showSuccess('Guest checked out successfully');
-
-            // Update local state
-            const index = _reservations.value.findIndex(r => r.id === id);
-            if (index !== -1) {
-                _reservations.value = [
-                    ..._reservations.value.slice(0, index),
-                    { ..._reservations.value[index], status: 'checked_out' },
-                    ..._reservations.value.slice(index + 1)
-                ];
-            }
-
-            // Invalidate cache
-            if (cacheEnabled) {
-                _cache.value.clear();
-                triggerRef(_cache);
-            }
         } catch (err: any) {
-            const message = err.response?.data?.message || 'Check out failed';
-            showError(message);
-            console.error('Check out error:', err);
+            showError(err.response?.data?.message || 'Check out failed');
             throw err;
         } finally {
             stopSaving();
         }
     }
 
-    // ─────────────────────────────────────────────────────
-    // Filter Management
-    // ─────────────────────────────────────────────────────
+    // ─── Filter Management ───────────────────────────────
 
-    /**
-     * Set filters (immutable update)
-     */
     function setFilters(newFilters: ReservationFilters): void {
-        _filters.value = { ..._filters.value, ...newFilters };
+        store.setFilters(newFilters);
     }
 
-    /**
-     * Reset filters to initial state
-     */
     function resetFilters(): void {
-        _filters.value = initialFilters;
+        store.resetFilters();
     }
 
-    /**
-     * Clear cache
-     */
-    function clearCache(): void {
-        _cache.value.clear();
-        triggerRef(_cache);
-    }
-
-    // ─────────────────────────────────────────────────────
-    // Polling (Optional Real-time Updates)
-    // ─────────────────────────────────────────────────────
+    // ─── Polling ─────────────────────────────────────────
 
     const { start: startPolling, stop: stopPolling } = usePolling(
         () => fetchAll(),
         pollingInterval,
-        () => true // Always enabled by default
+        () => true
     );
 
-    // ─────────────────────────────────────────────────────
-    // Lifecycle Hooks (Auto-fetch, Auto-polling)
-    // ─────────────────────────────────────────────────────
+    // ─── Lifecycle ───────────────────────────────────────
 
     if (autoFetch) {
         onMounted(() => {
-            fetchAll();
-
-            // Start polling if interval is set
-            if (pollingInterval > 0) {
-                startPolling();
+            if (Object.keys(initialFilters).length > 0) {
+                store.setFilters(initialFilters);
             }
+            fetchAll();
+            if (pollingInterval > 0) startPolling();
         });
 
-        // Cleanup on unmount
-        onUnmounted(() => {
-            stopPolling();
-        });
+        onUnmounted(() => stopPolling());
     }
 
-    // ─────────────────────────────────────────────────────
-    // Return (Public API) - Best Practice: Readonly + Actions
-    // ─────────────────────────────────────────────────────
+    // ─── Public API ──────────────────────────────────────
 
     return {
-        // ✅ Readonly state (can't mutate from components directly)
+        // State
         reservations,
         reservation,
+        filters,
+        pagination,
         loading,
         saving,
         successMessage,
         error,
 
-        // ✅ Computed values (derived state - cached)
+        // Computed
         pendingCount,
         confirmedCount,
         checkedInCount,
@@ -536,12 +292,11 @@ export function useReservations(options: UseReservationOptions = {}) {
         cancelledCount,
         todayCheckIns,
         todayCheckOuts,
-        upcomingCheckIns,
         filteredReservations,
         totalRevenue,
         pendingRevenue,
 
-        // ✅ Actions (only way to mutate state)
+        // Actions
         fetchAll,
         fetchById,
         create,
@@ -552,8 +307,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         checkOut,
         setFilters,
         resetFilters,
-        clearCache,
         clearError,
-        clearSuccess
+        clearSuccess,
     };
 }
