@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\FrontDesk\Models;
 
 use App\Enums\ReservationStatus;
-use App\Models\Hotel;
+use App\Modules\FrontDesk\Models\Hotel;
 use App\Models\User;
 use App\Modules\Guest\Models\GuestProfile;
 use Illuminate\Database\Eloquent\Builder;

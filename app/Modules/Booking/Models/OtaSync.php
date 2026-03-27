@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\Booking\Models;
 
 use App\Enums\PaymentStatus;
-use App\Models\Hotel;
+use App\Modules\FrontDesk\Models\Hotel;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

@@ -19,6 +19,25 @@
         <!-- Reservation Form -->
         <div class="bg-white rounded-lg shadow p-6">
             <form @submit.prevent="submit" class="space-y-6">
+                <!-- Hotel Selection (Read-only - can't change hotel) -->
+                <div>
+                    <label for="hotel_id" class="block text-sm font-medium text-slate-700 mb-2">
+                        Hotel
+                    </label>
+                    <select
+                        id="hotel_id"
+                        v-model="form.hotel_id"
+                        disabled
+                        class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
+                    >
+                        <option value="">Select a hotel</option>
+                        <option v-for="hotel in hotels" :key="hotel.id" :value="hotel.id">
+                            {{ hotel.name }} ({{ hotel.code }})
+                        </option>
+                    </select>
+                    <p class="mt-1 text-sm text-slate-500">Hotel cannot be changed after creation</p>
+                </div>
+
                 <!-- Guest & Room Selection -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Guest Selection -->
@@ -175,6 +194,12 @@
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { AppLayout } from '@/Layouts';
 
+interface Hotel {
+    id: number;
+    name: string;
+    code: string;
+}
+
 interface Guest {
     id: number;
     first_name: string;
@@ -193,6 +218,7 @@ interface Room {
 
 interface Reservation {
     id: number;
+    hotel_id: number;
     guest_profile_id: number;
     room_id: number;
     check_in_date: string;
@@ -206,6 +232,7 @@ interface Reservation {
 
 interface Props {
     reservation: Reservation;
+    hotels: Hotel[];
     guests: Guest[];
     rooms: Room[];
 }
@@ -213,6 +240,7 @@ interface Props {
 const props = defineProps<Props>();
 
 const form = useForm({
+    hotel_id: props.reservation.hotel_id,
     guest_profile_id: props.reservation.guest_profile_id,
     room_id: props.reservation.room_id,
     check_in_date: props.reservation.check_in_date,

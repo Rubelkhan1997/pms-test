@@ -30,6 +30,25 @@
                     </div>
 
                     <form @submit.prevent="submit" class="space-y-6">
+                        <!-- Hotel Selection -->
+                        <div>
+                            <label for="hotel_id" class="block text-sm font-medium text-slate-700 mb-2">
+                                Hotel <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="hotel_id"
+                                v-model="form.hotel_id"
+                                :class="{ 'border-red-500': form.errors.hotel_id }"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Select a hotel</option>
+                                <option v-for="hotel in hotels" :key="hotel.id" :value="hotel.id">
+                                    {{ hotel.name }} ({{ hotel.code }})
+                                </option>
+                            </select>
+                            <p v-if="form.errors.hotel_id" class="mt-1 text-sm text-red-500">{{ form.errors.hotel_id }}</p>
+                        </div>
+
                         <!-- Guest & Room Selection -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <!-- Guest Selection -->
@@ -190,6 +209,12 @@ import { ref } from 'vue';
 import { AppLayout } from '@/Layouts';
 import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
 
+interface Hotel {
+    id: number;
+    name: string;
+    code: string;
+}
+
 interface Guest {
     id: number;
     first_name: string;
@@ -207,6 +232,7 @@ interface Room {
 }
 
 interface Props {
+    hotels: Hotel[];
     guests: Guest[];
     rooms: Room[];
 }
@@ -218,6 +244,7 @@ const availableRooms = props.rooms.filter(room => room.status === 'available');
 
 // Inertia form with validation
 const form = useForm({
+    hotel_id: '',
     guest_profile_id: '',
     room_id: '',
     check_in_date: new Date().toISOString().split('T')[0], // Today's date as default
@@ -231,17 +258,21 @@ const form = useForm({
 
 /**
  * Submit form with validation
+ * 
+ * NOTE: Frontend validation temporarily disabled for testing
+ * Laravel backend validation will still work
  */
 function submit() {
     // Client-side validation before submit
-    if (!validateForm()) {
-        // Scroll to first error
-        const firstError = document.querySelector('.border-red-500');
-        firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-    }
+    // TEMPORARILY DISABLED - Uncomment to re-enable
+    // if (!validateForm()) {
+    //     // Scroll to first error
+    //     const firstError = document.querySelector('.border-red-500');
+    //     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    //     return;
+    // }
 
-    form.post('/reservations', {
+    form.post('/reservations/store', {
         preserveScroll: true,
         onSuccess: () => {
             // Form submitted successfully
@@ -249,7 +280,7 @@ function submit() {
         },
         onError: (errors) => {
             // Backend validation errors are automatically set in form.errors
-            console.error('Validation errors:', errors);
+            console.error('Backend validation errors:', errors);
         }
     });
 }
@@ -260,6 +291,7 @@ function submit() {
  */
 function validateForm(): boolean {
     return validateInertiaForm(form, {
+        hotel_id: [required],
         guest_profile_id: [required],
         room_id: [required],
         check_in_date: [required, checkInDate],

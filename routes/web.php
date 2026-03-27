@@ -38,7 +38,7 @@ Route::prefix('reservations')->name('reservations.')->group(function (): void {
     Route::get('/{reservation}', [FrontDeskController::class, 'show'])->name('show');
 
     // Store reservation
-    Route::post('/', [FrontDeskController::class, 'store'])->name('store');
+    Route::post('/store', [FrontDeskController::class, 'store'])->name('store');
 
     // Edit reservation (form)
     Route::get('/{reservation}/edit', [FrontDeskController::class, 'edit'])->name('edit');

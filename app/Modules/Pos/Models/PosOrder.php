@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Pos\Models;
 
 use App\Enums\POSOrderStatus;
-use App\Models\Hotel;
 use App\Models\User;
+use App\Modules\FrontDesk\Models\Hotel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

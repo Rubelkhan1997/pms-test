@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace App\Modules\Housekeeping\Models;
 
 use App\Enums\HousekeepingStatus;
-use App\Models\Hotel;
 use App\Models\User;
+use App\Modules\FrontDesk\Models\Hotel;
 use App\Modules\FrontDesk\Models\Room;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;

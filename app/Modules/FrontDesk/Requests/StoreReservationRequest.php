@@ -24,6 +24,7 @@ class StoreReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'hotel_id' => ['nullable', 'integer', 'exists:hotels,id'],
             'guest_profile_id' => ['required', 'integer', 'exists:guest_profiles,id'],
             'room_id' => ['required', 'integer', 'exists:rooms,id'],
             'check_in_date' => ['required', 'date', 'after_or_equal:today'],

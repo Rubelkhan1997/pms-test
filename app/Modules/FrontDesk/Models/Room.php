@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\FrontDesk\Models;
 
 use App\Enums\RoomStatus;
-use App\Models\Hotel;
+use App\Modules\FrontDesk\Models\Hotel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
