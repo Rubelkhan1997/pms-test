@@ -7,7 +7,6 @@ import type {
     ReservationFilters,
     CreateReservationDto,
     UpdateReservationDto,
-    CheckOutPaymentDto,
 } from '@/types/FrontDesk/reservation';
 
 // ─────────────────────────────────────────────────────────
@@ -65,13 +64,9 @@ export function useReservations(options: UseReservationOptions = {}) {
     const pendingCount = computed(() => store.pendingCount);
     const confirmedCount = computed(() => store.confirmedCount);
     const checkedInCount = computed(() => store.checkedInCount);
-    const checkedOutCount = computed(() => store.checkedOutCount);
-    const cancelledCount = computed(() => store.cancelledCount);
     const todayCheckIns = computed(() => store.todayCheckIns);
-    const todayCheckOuts = computed(() => store.todayCheckOuts);
-    const totalRevenue = computed(() => store.totalRevenue);
-    const pendingRevenue = computed(() => store.pendingRevenue);
 
+    
     // ─────────────────────────────────────────────────────
     // Actions
     // ─────────────────────────────────────────────────────
@@ -160,35 +155,7 @@ export function useReservations(options: UseReservationOptions = {}) {
             stopSaving();
         }
     }
-
-    async function checkIn(id: number): Promise<void> {
-        startSaving();
-        clearError();
-        try {
-            await store.checkIn(id);
-            showSuccess('Guest checked in successfully');
-        } catch (err: unknown) {
-            showError(getApiError(err, 'Check in failed'));
-            throw err;
-        } finally {
-            stopSaving();
-        }
-    }
-
-    async function checkOut(id: number, paymentData?: CheckOutPaymentDto): Promise<void> {
-        startSaving();
-        clearError();
-        try {
-            await store.checkOut(id, paymentData);
-            showSuccess('Guest checked out successfully');
-        } catch (err: unknown) {
-            showError(getApiError(err, 'Check out failed'));
-            throw err;
-        } finally {
-            stopSaving();
-        }
-    }
-
+ 
     function setFilters(filters: Partial<ReservationFilters>): void {
         store.setFilters(filters);
     }
@@ -232,13 +199,8 @@ export function useReservations(options: UseReservationOptions = {}) {
         // Derived
         pendingCount,
         confirmedCount,
-        checkedInCount,
-        checkedOutCount,
-        cancelledCount,
-        todayCheckIns,
-        todayCheckOuts,
-        totalRevenue,
-        pendingRevenue,
+        checkedInCount, 
+        todayCheckIns, 
 
         // Actions
         fetchAll,
@@ -246,9 +208,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         create,
         update,
         cancel,
-        deleteReservation,
-        checkIn,
-        checkOut,
+        deleteReservation, 
         setFilters,
         resetFilters,
         clearError,

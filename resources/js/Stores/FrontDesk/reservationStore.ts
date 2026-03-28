@@ -8,7 +8,6 @@ import type {
     ReservationPagination,
     CreateReservationDto,
     UpdateReservationDto,
-    CheckOutPaymentDto,
 } from '@/types/FrontDesk/reservation';
 
 // ─────────────────────────────────────────────────────────
@@ -45,26 +44,10 @@ export const useReservationsStore = defineStore('reservations', {
         pendingCount: (state): number => state.reservations.filter(r => r.status === 'pending').length,
         confirmedCount: (state): number => state.reservations.filter(r => r.status === 'confirmed').length,
         checkedInCount: (state): number => state.reservations.filter(r => r.status === 'checked_in').length,
-        checkedOutCount: (state): number => state.reservations.filter(r => r.status === 'checked_out').length,
-        cancelledCount: (state): number => state.reservations.filter(r => r.status === 'cancelled').length,
-
         todayCheckIns: (state): Reservation[] => {
             const today = new Date().toISOString().split('T')[0];
             return state.reservations.filter(r => r.check_in_date === today);
         },
-
-        todayCheckOuts: (state): Reservation[] => {
-            const today = new Date().toISOString().split('T')[0];
-            return state.reservations.filter(r => r.check_out_date === today);
-        },
-
-        totalRevenue: (state): number =>
-            state.reservations.reduce((sum, r) => sum + r.total_amount, 0),
-
-        pendingRevenue: (state): number =>
-            state.reservations
-                .filter(r => r.status === 'pending')
-                .reduce((sum, r) => sum + r.total_amount, 0),
     },
 
     // ─────────────────────────────────────────────────────
@@ -196,37 +179,6 @@ export const useReservationsStore = defineStore('reservations', {
                 this.loading = false;
             }
         },
- 
-        async checkIn(id: number): Promise<void> {
-            this.loading = true;
-            this.error = null;
-            try {
-                await apiClient.v1.patch(`/front-desk/reservations/${id}/check-in`);
-                this.updateReservation(id, { status: 'checked_in' });
-            } catch (err: unknown) {
-                this.error = getErrorMessage(err, 'Check in failed');
-                throw err;
-            } finally {
-                this.loading = false;
-            }
-        },
- 
-        async checkOut(id: number, paymentData?: CheckOutPaymentDto): Promise<void> {
-            this.loading = true;
-            this.error = null;
-            try {
-                await apiClient.v1.patch(
-                    `/front-desk/reservations/${id}/check-out`,
-                    paymentData ?? {},
-                );
-                this.updateReservation(id, { status: 'checked_out' });
-            } catch (err: unknown) {
-                this.error = getErrorMessage(err, 'Check out failed');
-                throw err;
-            } finally {
-                this.loading = false;
-            }
-        },
 
         // ── Helpers (internal) ───────────────────────────
 
@@ -265,7 +217,7 @@ export const useReservationsStore = defineStore('reservations', {
                 loadingList: false,
                 loadingDetail: false,
                 error: null,
-                filters: { status: '', check_in_date: '', check_out_date: '', search: '' },
+                filters: { status: '', check_in_date: '', check_out_date: '', search: '', per_page: 15 },
                 pagination: { current_page: 1, per_page: 15, total: 0, last_page: 1 },
             });
         },

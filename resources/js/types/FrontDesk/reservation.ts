@@ -95,12 +95,6 @@ export interface UpdateReservationDto {
     notes?: string;
 }
 
-export interface CheckOutPaymentDto {
-    payment_method_id?: number;
-    amount_paid?: number;
-    notes?: string;
-}
-
 // ============================================================================
 // Page Props Types
 // ============================================================================
