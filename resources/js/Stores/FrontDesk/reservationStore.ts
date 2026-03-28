@@ -1,6 +1,45 @@
 import { defineStore } from 'pinia';
 import { apiClient } from '@/Services';
 
+// ─────────────────────────────────────────────────────────
+// Type Definitions
+// ─────────────────────────────────────────────────────────
+interface ReservationFilters {
+    status: string;
+    check_in_date: string;
+    check_out_date: string;
+    search: string;
+}
+
+interface ReservationPagination {
+    current_page: number;
+    per_page: number;
+    total: number;
+    last_page: number;
+}
+
+interface CreateReservationDto {
+    hotel_id: number;
+    guest_profile_id: number;
+    room_id: number;
+    check_in_date: string;
+    check_out_date: string;
+    total_amount: number;
+    adults?: number;
+    children?: number;
+    status?: PMS.ReservationStatus;
+    notes?: string;
+}
+
+interface CheckOutPaymentDto {
+    payment_method_id?: number;
+    amount_paid?: number;
+    notes?: string;
+}
+
+// ─────────────────────────────────────────────────────────
+// Store Definition
+// ─────────────────────────────────────────────────────────
 export const useReservationsStore = defineStore('reservations', {
     // ─────────────────────────────────────────────────────────
     // State
@@ -17,23 +56,19 @@ export const useReservationsStore = defineStore('reservations', {
             check_in_date: '',
             check_out_date: '',
             search: ''
-        },
+        } as ReservationFilters,
         pagination: {
             current_page: 1,
             per_page: 15,
             total: 0,
             last_page: 1
-        }
+        } as ReservationPagination
     }),
 
     // ─────────────────────────────────────────────────────────
     // Getters
     // ─────────────────────────────────────────────────────────
     getters: {
-        byStatus: (state) => {
-            return (status: string) => state.reservations.filter(r => r.status === status);
-        },
-
         pendingCount: (state) =>
             state.reservations.filter(r => r.status === 'pending').length,
 
@@ -43,70 +78,17 @@ export const useReservationsStore = defineStore('reservations', {
         checkedInCount: (state) =>
             state.reservations.filter(r => r.status === 'checked_in').length,
 
-        checkedOutCount: (state) =>
-            state.reservations.filter(r => r.status === 'checked_out').length,
-
-        cancelledCount: (state) =>
-            state.reservations.filter(r => r.status === 'cancelled').length,
-
         todayCheckIns: (state) => {
             const today = new Date().toISOString().split('T')[0];
             return state.reservations.filter(r => r.check_in_date === today);
         },
-
-        todayCheckOuts: (state) => {
-            const today = new Date().toISOString().split('T')[0];
-            return state.reservations.filter(r => r.check_out_date === today);
-        },
-
-        filteredReservations: (state) => {
-            let filtered = [...(state.reservations || [])];
-
-            if (state.filters.status) {
-                filtered = filtered.filter(r => r.status === state.filters.status);
-            }
-            if (state.filters.check_in_date) {
-                filtered = filtered.filter(r => r.check_in_date >= state.filters.check_in_date);
-            }
-            if (state.filters.check_out_date) {
-                filtered = filtered.filter(r => r.check_out_date <= state.filters.check_out_date);
-            }
-            if (state.filters.search) {
-                const search = state.filters.search.toLowerCase();
-                filtered = filtered.filter(r =>
-                    r.reference.toLowerCase().includes(search) ||
-                    r.guest?.name.toLowerCase().includes(search)
-                );
-            }
-
-            return filtered;
-        },
-
-        totalRevenue: (state) =>
-            state.reservations.reduce((sum, r) => sum + r.total_amount, 0),
-
-        pendingRevenue: (state) =>
-            state.reservations
-                .filter(r => r.status === 'pending')
-                .reduce((sum, r) => sum + r.total_amount, 0),
-
-        averageStayDuration: (state) => {
-            if (state.reservations.length === 0) return 0;
-            const totalDays = state.reservations.reduce((sum, r) => {
-                const checkIn = new Date(r.check_in_date);
-                const checkOut = new Date(r.check_out_date);
-                const days = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
-                return sum + days;
-            }, 0);
-            return Math.round(totalDays / state.reservations.length);
-        }
     },
 
     // ─────────────────────────────────────────────────────────
     // Actions
     // ─────────────────────────────────────────────────────────
     actions: {
-        setFilters(filters: Partial<typeof this.filters>) {
+        setFilters(filters: Partial<ReservationFilters>) {
             this.filters = { ...this.filters, ...filters };
         },
 
@@ -116,13 +98,13 @@ export const useReservationsStore = defineStore('reservations', {
                 check_in_date: '',
                 check_out_date: '',
                 search: ''
-            };
+            } as ReservationFilters;
         },
 
         /**
          * Fetch all reservations with pagination
          */
-        async fetchAll(page: number = 1) {
+        async fetchAll(page: number = 1): Promise<void> {
             this.loadingList = true;
             this.error = null;
 
@@ -137,9 +119,12 @@ export const useReservationsStore = defineStore('reservations', {
                     per_page: data.per_page,
                     total: data.total,
                     last_page: data.last_page
-                };
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to fetch reservations';
+                } as ReservationPagination;
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Failed to fetch reservations';
+                this.error = message;
                 throw err;
             } finally {
                 this.loadingList = false;
@@ -149,15 +134,18 @@ export const useReservationsStore = defineStore('reservations', {
         /**
          * Fetch single reservation
          */
-        async fetchById(id: number) {
+        async fetchById(id: number): Promise<void> {
             this.loadingDetail = true;
             this.error = null;
 
             try {
                 const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
                 this.selectedReservation = data.data;
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to fetch reservation';
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Failed to fetch reservation';
+                this.error = message;
                 throw err;
             } finally {
                 this.loadingDetail = false;
@@ -167,18 +155,7 @@ export const useReservationsStore = defineStore('reservations', {
         /**
          * Create new reservation
          */
-        async create(data: {
-            hotel_id: number | string;
-            guest_profile_id: number | string;
-            room_id: number | string;
-            check_in_date: string;
-            check_out_date: string;
-            total_amount: number;
-            adults?: number;
-            children?: number;
-            status?: string;
-            notes?: string;
-        }) {
+        async create(data: CreateReservationDto): Promise<PMS.Reservation> {
             this.loading = true;
             this.error = null;
 
@@ -186,8 +163,11 @@ export const useReservationsStore = defineStore('reservations', {
                 const { data: res } = await apiClient.v1.post('/front-desk/reservations', data);
                 this.addReservation(res.data);
                 return res.data;
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to create reservation';
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Failed to create reservation';
+                this.error = message;
                 throw err;
             } finally {
                 this.loading = false;
@@ -197,7 +177,7 @@ export const useReservationsStore = defineStore('reservations', {
         /**
          * Update existing reservation
          */
-        async update(id: number, data: Partial<PMS.Reservation>) {
+        async update(id: number, data: Partial<PMS.Reservation>): Promise<PMS.Reservation> {
             this.loading = true;
             this.error = null;
 
@@ -205,8 +185,11 @@ export const useReservationsStore = defineStore('reservations', {
                 const { data: res } = await apiClient.v1.put(`/front-desk/reservations/${id}`, data);
                 this.updateReservation(id, res.data);
                 return res.data;
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to update reservation';
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Failed to update reservation';
+                this.error = message;
                 throw err;
             } finally {
                 this.loading = false;
@@ -216,7 +199,7 @@ export const useReservationsStore = defineStore('reservations', {
         /**
          * Cancel reservation
          */
-        async cancel(id: number) {
+        async cancel(id: number): Promise<void> {
             this.loading = true;
             this.error = null;
 
@@ -224,8 +207,11 @@ export const useReservationsStore = defineStore('reservations', {
                 const { data } = await apiClient.v1.patch(`/front-desk/reservations/${id}/cancel`);
                 this.updateReservation(id, { status: 'cancelled' });
                 return data;
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to cancel reservation';
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Failed to cancel reservation';
+                this.error = message;
                 throw err;
             } finally {
                 this.loading = false;
@@ -235,15 +221,18 @@ export const useReservationsStore = defineStore('reservations', {
         /**
          * Delete reservation
          */
-        async delete(id: number) {
+        async delete(id: number): Promise<void> {
             this.loading = true;
             this.error = null;
 
             try {
                 await apiClient.v1.delete(`/front-desk/reservations/${id}`);
                 this.removeReservation(id);
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Failed to delete reservation';
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Failed to delete reservation';
+                this.error = message;
                 throw err;
             } finally {
                 this.loading = false;
@@ -253,7 +242,7 @@ export const useReservationsStore = defineStore('reservations', {
         /**
          * Check In guest
          */
-        async checkIn(id: number) {
+        async checkIn(id: number): Promise<void> {
             this.loading = true;
             this.error = null;
 
@@ -261,8 +250,11 @@ export const useReservationsStore = defineStore('reservations', {
                 const { data } = await apiClient.v1.patch(`/front-desk/reservations/${id}/check-in`);
                 this.updateReservation(id, { status: 'checked_in' });
                 return data;
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Check in failed';
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Check in failed';
+                this.error = message;
                 throw err;
             } finally {
                 this.loading = false;
@@ -272,7 +264,7 @@ export const useReservationsStore = defineStore('reservations', {
         /**
          * Check Out guest
          */
-        async checkOut(id: number, paymentData?: any) {
+        async checkOut(id: number, paymentData?: CheckOutPaymentDto): Promise<void> {
             this.loading = true;
             this.error = null;
 
@@ -283,22 +275,18 @@ export const useReservationsStore = defineStore('reservations', {
                 );
                 this.updateReservation(id, { status: 'checked_out' });
                 return data;
-            } catch (err: any) {
-                this.error = err.response?.data?.message || 'Check out failed';
+            } catch (err: unknown) {
+                const message = err instanceof Error && err.message
+                    ? err.message
+                    : 'Check out failed';
+                this.error = message;
                 throw err;
             } finally {
                 this.loading = false;
             }
         },
 
-        setSelectedReservation(reservation: PMS.Reservation | null) {
-            this.selectedReservation = reservation;
-        },
-
-        clearSelectedReservation() {
-            this.selectedReservation = null;
-        },
-
+        // Internal helper methods
         addReservation(reservation: PMS.Reservation) {
             this.reservations.unshift(reservation);
             this.pagination.total++;
@@ -322,31 +310,31 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        clearError() {
-            this.error = null;
-        },
+        // clearError() {
+        //     this.error = null;
+        // },
 
-        $reset() {
-            this.$patch({
-                reservations: [],
-                selectedReservation: null,
-                loading: false,
-                loadingList: false,
-                loadingDetail: false,
-                error: null,
-                filters: {
-                    status: '',
-                    check_in_date: '',
-                    check_out_date: '',
-                    search: ''
-                },
-                pagination: {
-                    current_page: 1,
-                    per_page: 15,
-                    total: 0,
-                    last_page: 1
-                }
-            });
-        }
+        // $reset() {
+        //     this.$patch({
+        //         reservations: [],
+        //         selectedReservation: null,
+        //         loading: false,
+        //         loadingList: false,
+        //         loadingDetail: false,
+        //         error: null,
+        //         filters: {
+        //             status: '',
+        //             check_in_date: '',
+        //             check_out_date: '',
+        //             search: ''
+        //         },
+        //         pagination: {
+        //             current_page: 1,
+        //             per_page: 15,
+        //             total: 0,
+        //             last_page: 1
+        //         }
+        //     });
+        // }
     }
 });

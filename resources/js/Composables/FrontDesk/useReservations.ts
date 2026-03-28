@@ -52,7 +52,6 @@ export function useReservations(options: UseReservationOptions = {}) {
     // ─── Reactive State (from Store) ─────────────────────
     const reservations = computed(() => store.reservations);
     const reservation = computed(() => store.selectedReservation);
-    const filters = computed(() => store.filters);
     const pagination = computed(() => store.pagination);
 
     // ─── UI State ────────────────────────────────────────
@@ -119,10 +118,23 @@ export function useReservations(options: UseReservationOptions = {}) {
 
         try {
             const response = await store.create(data);
-            showSuccess('Reservation created successfully');
+
+            // API theke message handle kora (Laravel default structure)
+            // { status: 1, data: {...}, message: "..." }
+            if (response.status === 1 || response.data) {
+                // Success - Laravel resource response
+                showSuccess(response.message || 'Reservation created successfully');
+            }
+
             return response;
         } catch (err: any) {
-            showError(err.response?.data?.message || 'Failed to create reservation');
+            // API error response handle kora
+            if (err.response?.data) {
+                const apiResponse = err.response.data;
+                if (apiResponse.message) {
+                    showError(apiResponse.message);
+                }
+            }
             throw err;
         } finally {
             stopSaving();
@@ -219,7 +231,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         // State
         reservations,
         reservation,
-        filters,
         pagination,
         loading,
         saving,
@@ -236,7 +247,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         fetchAll,
         fetchById,
         create,
-        update,
         cancel,
         deleteReservation,
         checkIn,
@@ -245,5 +255,6 @@ export function useReservations(options: UseReservationOptions = {}) {
         resetFilters,
         clearError,
         clearSuccess,
+        showError,
     };
 }

@@ -19,9 +19,7 @@ Route::prefix('v1')->group(function (): void {
 
     // Reservations API (Full CRUD)
     Route::apiResource('front-desk/reservations', FrontDeskController::class);
-    Route::post('front-desk/reservations/{reservation}/check-in', [FrontDeskController::class, 'checkIn']);
-    Route::post('front-desk/reservations/{reservation}/check-out', [FrontDeskController::class, 'checkOut']);
-    Route::post('front-desk/reservations/{reservation}/cancel', [FrontDeskController::class, 'cancel']);
-
-  
+    Route::patch('front-desk/reservations/{reservation}/check-in', [FrontDeskController::class, 'checkIn']);
+    Route::patch('front-desk/reservations/{reservation}/check-out', [FrontDeskController::class, 'checkOut']);
+    Route::patch('front-desk/reservations/{reservation}/cancel', [FrontDeskController::class, 'cancel']);
 });

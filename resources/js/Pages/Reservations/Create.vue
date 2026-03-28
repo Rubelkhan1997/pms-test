@@ -22,18 +22,13 @@
                 <div class="bg-white rounded-lg shadow p-6">
 
                     <!-- Global Error -->
-                    <div v-if="form.hasErrors" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <div v-if="Object.keys(form.errors).length > 0" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
                         <div class="flex items-center gap-2">
                             <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
                             </svg>
                             <span class="text-red-800 font-medium">Please fix the errors below</span>
                         </div>
-                    </div>
-
-                    <!-- Composable Error -->
-                    <div v-if="error" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <span class="text-red-800">{{ error }}</span>
                     </div>
 
                     <form @submit.prevent="submit" class="space-y-6">
@@ -234,7 +229,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { useForm, router, Link, Head } from '@inertiajs/vue3';
+import { useForm, router} from '@inertiajs/vue3';
 import { AppLayout } from '@/Layouts';
 import { useReservations } from '@/Composables';
 import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
@@ -275,7 +270,7 @@ const props = defineProps<Props>();
 
 // ─── Composable ──────────────────────────────────────────
 
-const { create: createReservation, saving, error, clearError } = useReservations();
+const { create: createReservation, saving, error, clearError, showError, clearSuccess } = useReservations();
 
 // ─── Available Rooms ─────────────────────────────────────
 
@@ -302,12 +297,13 @@ const isSaving = computed(() => form.processing || saving.value);
 
 async function submit() {
     clearError();
+    form.clearErrors();
 
-    if (!validateForm()) {
-        const firstError = document.querySelector('.border-red-500');
-        firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        return;
-    }
+    // if (!validateForm()) {
+    //     const firstError = document.querySelector('.border-red-500');
+    //     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    //     return;
+    // }
 
     try {
         await createReservation({
@@ -323,13 +319,45 @@ async function submit() {
             notes: form.notes,
         });
 
-        router.visit('/reservations');
-    } catch (err) {
+        // Success - show message and reset form
+        router.visit('/reservations', {
+            preserveState: true,
+            onSuccess: () => {
+                // Clear form after navigation
+                form.reset();
+            }
+        });
+    } catch (err: any) {
         console.error('Create failed:', err);
+
+        // Backend validation errors thakle
+        if (err.response?.data?.errors) {
+            Object.keys(err.response.data.errors).forEach(key => {
+                form.setError(key, err.response.data.errors[key][0]);
+            });
+            // API theke general message thakle show kora
+            if (err.response.data.message) {
+                showError(err.response.data.message);
+            } else {
+                showError('Please fix the validation errors below.');
+            }
+
+            // Scroll to first error
+            setTimeout(() => {
+                const firstError = document.querySelector('.border-red-500');
+                firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 100);
+        }
+        // Backend general error thakle (already handled in composable)
+        else if (err.response?.data?.message) {
+            // Composable e already show kora hocche, tai ekhane duplicate show korar dorkar nai
+        }
+        // Unknown error
+        else {
+            showError('Failed to create reservation. Please try again.');
+        }
     }
 }
-
-// ─── Validation ──────────────────────────────────────────
 
 function validateForm(): boolean {
     return validateInertiaForm(form, {

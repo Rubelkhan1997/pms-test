@@ -40,8 +40,8 @@ declare global {
         // FrontDesk types
         type Reservation = import('./FrontDesk/reservation').Reservation;
         type ReservationStatus = import('./FrontDesk/reservation').ReservationStatus;
-        type Guest = import('./FrontDesk/reservation').Guest;
-        type Room = import('./FrontDesk/reservation').Room;
+        type ReservationGuest = import('./FrontDesk/reservation').Guest;
+        type ReservationRoom = import('./FrontDesk/reservation').Room;
 
         // POS types
         interface PosOrder {

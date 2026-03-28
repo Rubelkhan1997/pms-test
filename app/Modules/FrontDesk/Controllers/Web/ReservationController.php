@@ -6,9 +6,7 @@ namespace App\Modules\FrontDesk\Controllers\Web;
 
 use App\Http\Controllers\Controller;
 use App\Modules\FrontDesk\Models\Hotel;
-use App\Modules\FrontDesk\Requests\StoreReservationRequest;
 use App\Modules\FrontDesk\Services\ReservationService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -88,33 +86,6 @@ class ReservationController extends Controller
     }
 
     /**
-     * Store a newly created resource.
-     */
-    public function store(StoreReservationRequest $request): RedirectResponse
-    {
-        try {
-            $validated = $request->validated();
-            
-            // Add hotel_id from authenticated user or default hotel
-            $validated['hotel_id'] = $request->user()?->currentHotelId() ?? Hotel::first()?->id;
-            
-            if (!$validated['hotel_id']) {
-                return back()->withErrors(['hotel_id' => 'No hotel available']);
-            }
-            
-            $this->service->create($validated);
-
-            return redirect()->route('reservations.index')
-                ->with('success', 'Reservation created successfully.');
-        } catch (Throwable $e) {
-            logger()->error('Error creating reservation: ' . $e->getMessage());
-            return back()
-                ->withInput()
-                ->withErrors(['error' => 'Failed to create reservation: ' . $e->getMessage()]);
-        }
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(int $id): Response
@@ -139,89 +110,6 @@ class ReservationController extends Controller
         } catch (Throwable $e) {
             logger()->error('Error loading edit form: ' . $e->getMessage());
             abort(500, 'Failed to load form');
-        }
-    }
-
-    /**
-     * Update the specified resource.
-     */
-    public function update(StoreReservationRequest $request, int $id): RedirectResponse
-    {
-        try {
-            $validated = $request->validated();
-            
-            // Remove hotel_id from update (shouldn't change)
-            unset($validated['hotel_id']);
-            
-            $this->service->update($id, $validated);
-
-            return redirect()->route('reservations.index')
-                ->with('success', 'Reservation updated successfully.');
-        } catch (Throwable $e) {
-            logger()->error('Error updating reservation: ' . $e->getMessage());
-            return back()
-                ->withInput()
-                ->withErrors(['error' => 'Failed to update reservation: ' . $e->getMessage()]);
-        }
-    }
-
-    /**
-     * Remove the specified resource.
-     */
-    public function destroy(int $id): RedirectResponse
-    {
-        try {
-            $this->service->delete($id);
-
-            return back()->with('success', 'Reservation deleted successfully.');
-        } catch (Throwable $e) {
-            logger()->error('Error deleting reservation: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to delete reservation: ' . $e->getMessage()]);
-        }
-    }
-
-    /**
-     * Check in guest.
-     */
-    public function checkIn(int $id): RedirectResponse
-    {
-        try {
-            $this->service->checkIn($id);
-
-            return back()->with('success', 'Guest checked in successfully.');
-        } catch (Throwable $e) {
-            logger()->error('Error checking in guest: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to check in guest: ' . $e->getMessage()]);
-        }
-    }
-
-    /**
-     * Check out guest.
-     */
-    public function checkOut(int $id, Request $request): RedirectResponse
-    {
-        try {
-            $this->service->checkOut($id, $request->only(['paid_amount', 'payment_method']));
-
-            return back()->with('success', 'Guest checked out successfully.');
-        } catch (Throwable $e) {
-            logger()->error('Error checking out guest: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to check out guest: ' . $e->getMessage()]);
-        }
-    }
-
-    /**
-     * Cancel reservation.
-     */
-    public function cancel(int $id): RedirectResponse
-    {
-        try {
-            $this->service->cancel($id);
-
-            return back()->with('success', 'Reservation cancelled successfully.');
-        } catch (Throwable $e) {
-            logger()->error('Error cancelling reservation: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Failed to cancel reservation: ' . $e->getMessage()]);
         }
     }
 }

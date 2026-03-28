@@ -53,7 +53,23 @@ class StoreReservationRequest extends FormRequest
             'check_out_date.after' => 'Check-out date must be after check-in date',
             'total_amount.required' => 'Total amount is required',
             'total_amount.min' => 'Total amount cannot be negative',
+            'status.required' => 'Reservation status is required',
+            'status.in' => 'Invalid status value',
         ];
+    }
+
+    /**
+     * Handle a failed validation attempt.
+     */
+    protected function failedValidation(\Illuminate\Contracts\Validation\Validator $validator): void
+    {
+        throw new \Illuminate\Http\Exceptions\HttpResponseException(
+            response()->json([
+                'status' => 0,
+                'message' => 'Validation failed',
+                'errors' => $validator->errors(),
+            ], 422)
+        );
     }
 }
 

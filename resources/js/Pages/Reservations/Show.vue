@@ -252,7 +252,7 @@ onMounted(() => {
     const reservationId = pathSegments[pathSegments.length - 1];
 
     if (reservationId) {
-        store.fetchById(parseInt(reservationId));
+        fetchById(parseInt(reservationId));
     }
 });
 </script>
