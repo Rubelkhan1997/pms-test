@@ -24,13 +24,21 @@ class ReservationController extends Controller
     /**
      * Display a paginated listing.
      */
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): JsonResponse
     {
-        return ReservationResource::collection($this->service->paginate(
+        $paginator = $this->service->paginate(
             filters: $request->only(['status', 'check_in_date', 'check_out_date', 'search']),
             page: (int) $request->get('page', 1),
-            perPage: 15
-        ));
+            perPage: (int) $request->get('per_page', 15)
+        );
+
+        return response()->json([
+            'data' => ReservationResource::collection($paginator),
+            'current_page' => $paginator->currentPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'last_page' => $paginator->lastPage(),
+        ]);
     }
 
     /**
@@ -80,7 +88,7 @@ class ReservationController extends Controller
         if (!$reservation) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Reservation not found',
+                'message'  => 'Reservation not found',
             ], 404);
         }
 
@@ -116,19 +124,20 @@ class ReservationController extends Controller
      */
     public function checkIn(int $id): JsonResponse
     {
-        try {
-            $this->service->checkIn($id);
+        $reservation = $this->service->checkIn($id);
 
-            return response()->json([
-                'status' => 1,
-                'message' => 'Guest checked in successfully',
-            ]);
-        } catch (\Exception $e) {
+        if (!$reservation) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Failed to check in guest: ' . $e->getMessage(),
+                'message' => 'Failed to check in guest',
             ], 422);
         }
+
+        return response()->json([
+            'status' => 1,
+            'data' => new ReservationResource($reservation),
+            'message' => 'Guest checked in successfully',
+        ]);
     }
 
     /**
@@ -136,19 +145,20 @@ class ReservationController extends Controller
      */
     public function checkOut(int $id, Request $request): JsonResponse
     {
-        try {
-            $this->service->checkOut($id, $request->only(['paid_amount', 'payment_method']));
+        $reservation = $this->service->checkOut($id, $request->only(['paid_amount', 'payment_method']));
 
-            return response()->json([
-                'status' => 1,
-                'message' => 'Guest checked out successfully',
-            ]);
-        } catch (\Exception $e) {
+        if (!$reservation) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Failed to check out guest: ' . $e->getMessage(),
+                'message' => 'Failed to check out guest',
             ], 422);
         }
+
+        return response()->json([
+            'status' => 1,
+            'data' => new ReservationResource($reservation),
+            'message' => 'Guest checked out successfully',
+        ]);
     }
 
     /**
@@ -156,19 +166,20 @@ class ReservationController extends Controller
      */
     public function cancel(int $id): JsonResponse
     {
-        try {
-            $this->service->cancel($id);
+        $reservation = $this->service->cancel($id);
 
-            return response()->json([
-                'status' => 1,
-                'message' => 'Reservation cancelled successfully',
-            ]);
-        } catch (\Exception $e) {
+        if (!$reservation) {
             return response()->json([
                 'status' => 0,
-                'message' => 'Failed to cancel reservation: ' . $e->getMessage(),
+                'message' => 'Failed to cancel reservation',
             ], 422);
         }
+
+        return response()->json([
+            'status' => 1,
+            'data' => new ReservationResource($reservation),
+            'message' => 'Reservation cancelled successfully',
+        ]);
     }
 }
 

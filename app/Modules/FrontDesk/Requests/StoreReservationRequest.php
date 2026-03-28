@@ -25,7 +25,7 @@ class StoreReservationRequest extends FormRequest
     {
         return [
             'hotel_id' => ['nullable', 'integer', 'exists:hotels,id'],
-            'guest_profile_id' => ['required', 'integer', 'exists:guest_profiles,id'],
+            'guest_id' => ['required', 'integer', 'exists:guest_profiles,id'],
             'room_id' => ['required', 'integer', 'exists:rooms,id'],
             'check_in_date' => ['required', 'date', 'after_or_equal:today'],
             'check_out_date' => ['required', 'date', 'after:check_in_date'],
@@ -43,8 +43,8 @@ class StoreReservationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'guest_profile_id.required' => 'Please select a guest',
-            'guest_profile_id.exists' => 'Selected guest does not exist',
+            'guest_id.required' => 'Please select a guest',
+            'guest_id.exists' => 'Selected guest does not exist',
             'room_id.required' => 'Please select a room',
             'room_id.exists' => 'Selected room does not exist',
             'check_in_date.required' => 'Check-in date is required',

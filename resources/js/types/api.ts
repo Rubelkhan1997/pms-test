@@ -10,11 +10,14 @@ import type { PaginatedResponse } from './common';
 // ============================================================================
 export type { PaginatedResponse } from './common';
 
+/**
+ * Standard API Response
+ * Your API returns: { status: 0|1, data: T|null, message: string }
+ */
 export interface ApiResponse<T = any> {
-    success: boolean;
-    data: T;
-    message?: string;
-    errors?: Record<string, string[]>;
+    status: 0 | 1;
+    data: T | null;
+    message: string;
 }
 
 export interface ApiError {

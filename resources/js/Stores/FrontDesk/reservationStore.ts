@@ -1,52 +1,24 @@
 import { defineStore } from 'pinia';
-import { apiClient } from '@/Services';
+import apiClient from '@/Services/apiClient';
+import { getErrorMessage } from '@/Helpers';
+import type { ApiResponse } from '@/types/api';
+import type {
+    Reservation,
+    ReservationFilters,
+    ReservationPagination,
+    CreateReservationDto,
+    UpdateReservationDto,
+    CheckOutPaymentDto,
+} from '@/types/FrontDesk/reservation';
 
 // ─────────────────────────────────────────────────────────
-// Type Definitions
-// ─────────────────────────────────────────────────────────
-interface ReservationFilters {
-    status: string;
-    check_in_date: string;
-    check_out_date: string;
-    search: string;
-}
-
-interface ReservationPagination {
-    current_page: number;
-    per_page: number;
-    total: number;
-    last_page: number;
-}
-
-interface CreateReservationDto {
-    hotel_id: number;
-    guest_profile_id: number;
-    room_id: number;
-    check_in_date: string;
-    check_out_date: string;
-    total_amount: number;
-    adults?: number;
-    children?: number;
-    status?: PMS.ReservationStatus;
-    notes?: string;
-}
-
-interface CheckOutPaymentDto {
-    payment_method_id?: number;
-    amount_paid?: number;
-    notes?: string;
-}
-
-// ─────────────────────────────────────────────────────────
-// Store Definition
+// Store
 // ─────────────────────────────────────────────────────────
 export const useReservationsStore = defineStore('reservations', {
-    // ─────────────────────────────────────────────────────────
-    // State
-    // ─────────────────────────────────────────────────────────
+
     state: () => ({
-        reservations: [] as PMS.Reservation[],
-        selectedReservation: null as PMS.Reservation | null,
+        reservations: [] as Reservation[],
+        selectedReservation: null as Reservation | null,
         loading: false,
         loadingList: false,
         loadingDetail: false,
@@ -55,244 +27,215 @@ export const useReservationsStore = defineStore('reservations', {
             status: '',
             check_in_date: '',
             check_out_date: '',
-            search: ''
+            search: '',
+            per_page: 5,
         } as ReservationFilters,
         pagination: {
             current_page: 1,
-            per_page: 15,
+            per_page: 5,
             total: 0,
-            last_page: 1
-        } as ReservationPagination
+            last_page: 1,
+        } as ReservationPagination,
     }),
 
-    // ─────────────────────────────────────────────────────────
-    // Getters
-    // ─────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────
+    // Getters — explicit return type দেওয়া হয়েছে
+    // ─────────────────────────────────────────────────────
     getters: {
-        pendingCount: (state) =>
-            state.reservations.filter(r => r.status === 'pending').length,
+        pendingCount: (state): number => state.reservations.filter(r => r.status === 'pending').length,
+        confirmedCount: (state): number => state.reservations.filter(r => r.status === 'confirmed').length,
+        checkedInCount: (state): number => state.reservations.filter(r => r.status === 'checked_in').length,
+        checkedOutCount: (state): number => state.reservations.filter(r => r.status === 'checked_out').length,
+        cancelledCount: (state): number => state.reservations.filter(r => r.status === 'cancelled').length,
 
-        confirmedCount: (state) =>
-            state.reservations.filter(r => r.status === 'confirmed').length,
-
-        checkedInCount: (state) =>
-            state.reservations.filter(r => r.status === 'checked_in').length,
-
-        todayCheckIns: (state) => {
+        todayCheckIns: (state): Reservation[] => {
             const today = new Date().toISOString().split('T')[0];
             return state.reservations.filter(r => r.check_in_date === today);
         },
+
+        todayCheckOuts: (state): Reservation[] => {
+            const today = new Date().toISOString().split('T')[0];
+            return state.reservations.filter(r => r.check_out_date === today);
+        },
+
+        totalRevenue: (state): number =>
+            state.reservations.reduce((sum, r) => sum + r.total_amount, 0),
+
+        pendingRevenue: (state): number =>
+            state.reservations
+                .filter(r => r.status === 'pending')
+                .reduce((sum, r) => sum + r.total_amount, 0),
     },
 
-    // ─────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────
     // Actions
-    // ─────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────
     actions: {
-        setFilters(filters: Partial<ReservationFilters>) {
+
+        setFilters(filters: Partial<ReservationFilters>): void {
             this.filters = { ...this.filters, ...filters };
         },
 
-        resetFilters() {
+        resetFilters(): void {
             this.filters = {
                 status: '',
                 check_in_date: '',
                 check_out_date: '',
-                search: ''
+                search: '',
+                per_page: this.filters.per_page || 15,  // ✅ Keep current per_page
             } as ReservationFilters;
         },
 
-        /**
-         * Fetch all reservations with pagination
-         */
         async fetchAll(page: number = 1): Promise<void> {
             this.loadingList = true;
             this.error = null;
-
             try {
                 const { data } = await apiClient.v1.get('/front-desk/reservations', {
-                    params: { ...this.filters, page }
+                    params: { 
+                        ...this.filters, 
+                        page,
+                        per_page: this.filters.per_page || 15 
+                    },
                 });
-
-                this.reservations = data.data;
+                this.reservations = data.data as Reservation[];
                 this.pagination = {
                     current_page: data.current_page,
                     per_page: data.per_page,
                     total: data.total,
-                    last_page: data.last_page
-                } as ReservationPagination;
+                    last_page: data.last_page,
+                };
+
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Failed to fetch reservations';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Failed to fetch reservations');
                 throw err;
             } finally {
                 this.loadingList = false;
             }
         },
 
-        /**
-         * Fetch single reservation
-         */
         async fetchById(id: number): Promise<void> {
             this.loadingDetail = true;
             this.error = null;
-
             try {
                 const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
-                this.selectedReservation = data.data;
+                this.selectedReservation = data.data as Reservation;
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Failed to fetch reservation';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Failed to fetch reservation');
                 throw err;
             } finally {
                 this.loadingDetail = false;
             }
         },
 
-        /**
-         * Create new reservation
-         */
-        async create(data: CreateReservationDto): Promise<PMS.Reservation> {
+        async create(payload: CreateReservationDto): Promise<ApiResponse<Reservation>> {
             this.loading = true;
             this.error = null;
-
             try {
-                const { data: res } = await apiClient.v1.post('/front-desk/reservations', data);
-                this.addReservation(res.data);
-                return res.data;
+                const { data } = await apiClient.v1.post('/front-desk/reservations', payload);
+                const response = data as ApiResponse<Reservation>;
+                
+                // Add to store
+                if (response.status === 1 && response.data) {
+                    this.addReservation(response.data);
+                }
+                
+                return response;
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Failed to create reservation';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Failed to create reservation');
                 throw err;
             } finally {
                 this.loading = false;
             }
         },
-
-        /**
-         * Update existing reservation
-         */
-        async update(id: number, data: Partial<PMS.Reservation>): Promise<PMS.Reservation> {
+ 
+        async update(id: number, payload: UpdateReservationDto): Promise<ApiResponse<Reservation>> {
             this.loading = true;
             this.error = null;
-
             try {
-                const { data: res } = await apiClient.v1.put(`/front-desk/reservations/${id}`, data);
-                this.updateReservation(id, res.data);
-                return res.data;
+                const { data } = await apiClient.v1.put(`/front-desk/reservations/${id}`, payload);
+                const response = data as ApiResponse<Reservation>;
+                
+                // Update store
+                if (response.status === 1 && response.data) {
+                    this.updateReservation(id, response.data);
+                }
+                
+                return response;
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Failed to update reservation';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Failed to update reservation');
                 throw err;
             } finally {
                 this.loading = false;
             }
         },
-
-        /**
-         * Cancel reservation
-         */
+ 
         async cancel(id: number): Promise<void> {
             this.loading = true;
             this.error = null;
-
             try {
-                const { data } = await apiClient.v1.patch(`/front-desk/reservations/${id}/cancel`);
+                await apiClient.v1.patch(`/front-desk/reservations/${id}/cancel`);
                 this.updateReservation(id, { status: 'cancelled' });
-                return data;
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Failed to cancel reservation';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Failed to cancel reservation');
                 throw err;
             } finally {
                 this.loading = false;
             }
         },
 
-        /**
-         * Delete reservation
-         */
         async delete(id: number): Promise<void> {
             this.loading = true;
             this.error = null;
-
             try {
                 await apiClient.v1.delete(`/front-desk/reservations/${id}`);
                 this.removeReservation(id);
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Failed to delete reservation';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Failed to delete reservation');
                 throw err;
             } finally {
                 this.loading = false;
             }
         },
-
-        /**
-         * Check In guest
-         */
+ 
         async checkIn(id: number): Promise<void> {
             this.loading = true;
             this.error = null;
-
             try {
-                const { data } = await apiClient.v1.patch(`/front-desk/reservations/${id}/check-in`);
+                await apiClient.v1.patch(`/front-desk/reservations/${id}/check-in`);
                 this.updateReservation(id, { status: 'checked_in' });
-                return data;
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Check in failed';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Check in failed');
                 throw err;
             } finally {
                 this.loading = false;
             }
         },
-
-        /**
-         * Check Out guest
-         */
+ 
         async checkOut(id: number, paymentData?: CheckOutPaymentDto): Promise<void> {
             this.loading = true;
             this.error = null;
-
             try {
-                const { data } = await apiClient.v1.patch(
+                await apiClient.v1.patch(
                     `/front-desk/reservations/${id}/check-out`,
-                    paymentData ?? {}
+                    paymentData ?? {},
                 );
                 this.updateReservation(id, { status: 'checked_out' });
-                return data;
             } catch (err: unknown) {
-                const message = err instanceof Error && err.message
-                    ? err.message
-                    : 'Check out failed';
-                this.error = message;
+                this.error = getErrorMessage(err, 'Check out failed');
                 throw err;
             } finally {
                 this.loading = false;
             }
         },
 
-        // Internal helper methods
-        addReservation(reservation: PMS.Reservation) {
+        // ── Helpers (internal) ───────────────────────────
+
+        addReservation(reservation: Reservation): void {
             this.reservations.unshift(reservation);
             this.pagination.total++;
         },
 
-        updateReservation(id: number, data: Partial<PMS.Reservation>) {
+        updateReservation(id: number, data: Partial<Reservation>): void {
             const index = this.reservations.findIndex(r => r.id === id);
             if (index !== -1) {
                 this.reservations[index] = { ...this.reservations[index], ...data };
@@ -302,7 +245,7 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        removeReservation(id: number) {
+        removeReservation(id: number): void {
             const index = this.reservations.findIndex(r => r.id === id);
             if (index !== -1) {
                 this.reservations.splice(index, 1);
@@ -310,31 +253,21 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // clearError() {
-        //     this.error = null;
-        // },
+        clearError(): void {
+            this.error = null;
+        },
 
-        // $reset() {
-        //     this.$patch({
-        //         reservations: [],
-        //         selectedReservation: null,
-        //         loading: false,
-        //         loadingList: false,
-        //         loadingDetail: false,
-        //         error: null,
-        //         filters: {
-        //             status: '',
-        //             check_in_date: '',
-        //             check_out_date: '',
-        //             search: ''
-        //         },
-        //         pagination: {
-        //             current_page: 1,
-        //             per_page: 15,
-        //             total: 0,
-        //             last_page: 1
-        //         }
-        //     });
-        // }
-    }
+        $reset(): void {
+            this.$patch({
+                reservations: [],
+                selectedReservation: null,
+                loading: false,
+                loadingList: false,
+                loadingDetail: false,
+                error: null,
+                filters: { status: '', check_in_date: '', check_out_date: '', search: '' },
+                pagination: { current_page: 1, per_page: 15, total: 0, last_page: 1 },
+            });
+        },
+    },
 });

@@ -23,7 +23,9 @@ readonly class ReservationService
      */
     public function paginate(array $filters = [], int $page = 1, int $perPage = 15): LengthAwarePaginator
     {
-        $query = Reservation::query()->latest('id');
+        $query = Reservation::query()
+            ->with(['hotel', 'room', 'guest'])
+            ->latest('id');
 
         // Apply filters
         if (!empty($filters['status'])) {
@@ -43,7 +45,10 @@ readonly class ReservationService
             $query->where(function ($q) use ($search) {
                 $q->where('reference', 'like', "%{$search}%")
                     ->orWhereHas('guest', function ($guestQuery) use ($search) {
-                        $guestQuery->where('name', 'like', "%{$search}%");
+                        $guestQuery->where(function ($q2) use ($search) {
+                            $q2->where('first_name', 'like', "%{$search}%")
+                               ->orWhere('last_name', 'like', "%{$search}%");
+                        });
                     });
             });
         }
@@ -56,7 +61,7 @@ readonly class ReservationService
      */
     public function find(int $id): ?Reservation
     {
-        return Reservation::with(['guest', 'room'])->find($id);
+        return Reservation::with(['hotel', 'guest', 'room'])->find($id);
     }
 
     /**
@@ -66,7 +71,8 @@ readonly class ReservationService
      */
     public function create(array $payload): Reservation
     {
-        return ($this->createAction)($payload);
+        $reservation = ($this->createAction)($payload);
+        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations after create
     }
 
     /**
@@ -86,13 +92,14 @@ readonly class ReservationService
      *
      * @param array<string, mixed> $payload
      */
-    public function update(int $id, array $payload): bool
+    public function update(int $id, array $payload): ?Reservation
     {
         $reservation = Reservation::find($id);
         if (!$reservation) {
-            return false;
+            return null;
         }
-        return $reservation->update($payload);
+        $reservation->update($payload);
+        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations after update
     }
 
     /**
@@ -110,13 +117,14 @@ readonly class ReservationService
     /**
      * Check in a guest.
      */
-    public function checkIn(int $id): bool
+    public function checkIn(int $id): ?Reservation
     {
         $reservation = Reservation::find($id);
         if (!$reservation) {
-            return false;
+            return null;
         }
-        return $reservation->update(['status' => 'checked_in']);
+        $reservation->update(['status' => 'checked_in']);
+        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations
     }
 
     /**
@@ -124,28 +132,30 @@ readonly class ReservationService
      *
      * @param array<string, mixed> $paymentData
      */
-    public function checkOut(int $id, array $paymentData = []): bool
+    public function checkOut(int $id, array $paymentData = []): ?Reservation
     {
         $reservation = Reservation::find($id);
         if (!$reservation) {
-            return false;
+            return null;
         }
-        return $reservation->update([
+        $reservation->update([
             'status' => 'checked_out',
             ...$paymentData
         ]);
+        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations
     }
 
     /**
      * Cancel a reservation.
      */
-    public function cancel(int $id): bool
+    public function cancel(int $id): ?Reservation
     {
         $reservation = Reservation::find($id);
         if (!$reservation) {
-            return false;
+            return null;
         }
-        return $reservation->update(['status' => 'cancelled']);
+        $reservation->update(['status' => 'cancelled']);
+        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations
     }
 }
 

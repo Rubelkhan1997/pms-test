@@ -1,6 +1,6 @@
 <template>
     <Head title="New Reservation" />
-    <AppLayout class="min-h-screen bg-slate-100 p-8">
+    <!-- <AppLayout class="min-h-screen bg-slate-100 p-8"> -->
         <div class="max-w-4xl mx-auto">
             <section class="space-y-6">
 
@@ -20,20 +20,17 @@
 
                 <!-- Reservation Form -->
                 <div class="bg-white rounded-lg shadow p-6">
-
-                    <!-- Global Error -->
-                    <div v-if="Object.keys(form.errors).length > 0" class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
-                            </svg>
-                            <span class="text-red-800 font-medium">Please fix the errors below</span>
-                        </div>
+                    <!-- API/Composable Error Banner -->
+                    <div
+                        v-if="error"
+                        class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center"
+                    >
+                        <span class="text-red-800">{{ error }}</span>
+                        <button @click="clearError" class="text-red-500 hover:text-red-700">✕</button>
                     </div>
 
                     <form @submit.prevent="submit" class="space-y-6">
-
-                        <!-- Hotel Selection -->
+                        <!-- Hotel -->
                         <div>
                             <label for="hotel_id" class="block text-sm font-medium text-slate-700 mb-2">
                                 Hotel <span class="text-red-500">*</span>
@@ -59,13 +56,13 @@
 
                             <!-- Guest -->
                             <div>
-                                <label for="guest_profile_id" class="block text-sm font-medium text-slate-700 mb-2">
+                                <label for="guest_id" class="block text-sm font-medium text-slate-700 mb-2">
                                     Guest <span class="text-red-500">*</span>
                                 </label>
                                 <select
-                                    id="guest_profile_id"
-                                    v-model="form.guest_profile_id"
-                                    :class="{ 'border-red-500': form.errors.guest_profile_id }"
+                                    id="guest_id"
+                                    v-model="form.guest_id"
+                                    :class="{ 'border-red-500': form.errors.guest_id }"
                                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="">Select a guest</option>
@@ -73,8 +70,8 @@
                                         {{ guest.first_name }} {{ guest.last_name }} ({{ guest.email }})
                                     </option>
                                 </select>
-                                <p v-if="form.errors.guest_profile_id" class="mt-1 text-sm text-red-500">
-                                    {{ form.errors.guest_profile_id }}
+                                <p v-if="form.errors.guest_id" class="mt-1 text-sm text-red-500">
+                                    {{ form.errors.guest_id }}
                                 </p>
                             </div>
 
@@ -90,8 +87,9 @@
                                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 >
                                     <option value="">Select a room</option>
+                                    <!-- ✅ Fix: base_rate → price (Room type অনুযায়ী) -->
                                     <option v-for="room in availableRooms" :key="room.id" :value="room.id">
-                                        Room {{ room.number }} - {{ room.type }} ({{ room.base_rate }} BDT)
+                                        Room {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
                                     </option>
                                 </select>
                                 <p v-if="form.errors.room_id" class="mt-1 text-sm text-red-500">
@@ -151,6 +149,7 @@
                                     id="total_amount"
                                     type="number"
                                     step="0.01"
+                                    min="1"
                                     v-model="form.total_amount"
                                     :class="{ 'border-red-500': form.errors.total_amount }"
                                     class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -209,7 +208,7 @@
                                 :disabled="isSaving"
                                 class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {{ isSaving ? 'Creating...' : 'Create Reservation' }}
+                                {{ submitLabel }}
                             </button>
                             <Link
                                 href="/reservations"
@@ -221,169 +220,147 @@
 
                     </form>
                 </div>
-
             </section>
         </div>
-    </AppLayout>
+    <!-- </AppLayout> -->
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { useForm, router} from '@inertiajs/vue3';
-import { AppLayout } from '@/Layouts';
-import { useReservations } from '@/Composables';
-import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
+    import { computed, watch, inject } from 'vue';
+    import { useForm } from '@inertiajs/vue3';
+    import { useReservations } from '@/Composables/FrontDesk/useReservations';
+    import type { ReservationStatus, HotelOption, GuestOption, RoomOption } from '@/types/FrontDesk/reservation';
+    import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
 
-// ─── Types ───────────────────────────────────────────────
+    // ─── Inject Toast ─────────────────────────────────────
+    const toast = inject('toast') as any;
 
-interface Hotel {
-    id: number;
-    name: string;
-    code: string;
-}
+    // ─── Props ───────────────────────────────────────────────
+    const props = defineProps<{
+        hotels: HotelOption[];
+        guests: GuestOption[];
+        rooms: RoomOption[];
+    }>();
 
-interface Guest {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email?: string;
-    phone?: string;
-}
+    // ─── Composable ────────────────────────────────────────── 
+    const { create: createReservation, saving, error, clearError } = useReservations();
 
-interface Room {
-    id: number;
-    number: string;
-    type: string;
-    base_rate: number;
-    status: string;
-}
+    // ─── Available Rooms ─────────────────────────────────────
+    const availableRooms = computed(() =>
+        props.rooms.filter(room => room.status === 'available')
+    );
 
-interface Props {
-    hotels: Hotel[];
-    guests: Guest[];
-    rooms: Room[];
-}
-
-// ─── Props ───────────────────────────────────────────────
-
-const props = defineProps<Props>();
-
-// ─── Composable ──────────────────────────────────────────
-
-const { create: createReservation, saving, error, clearError, showError, clearSuccess } = useReservations();
-
-// ─── Available Rooms ─────────────────────────────────────
-
-const availableRooms = props.rooms.filter(room => room.status === 'available');
-
-// ─── Form ────────────────────────────────────────────────
-
-const form = useForm({
-    hotel_id: '' as number | string,
-    guest_profile_id: '' as number | string,
-    room_id: '' as number | string,
-    check_in_date: new Date().toISOString().split('T')[0],
-    check_out_date: '',
-    total_amount: '' as number | string,
-    adults: 1,
-    children: 0,
-    status: 'pending',
-    notes: '',
-});
-
-const isSaving = computed(() => form.processing || saving.value);
-
-// ─── Submit ──────────────────────────────────────────────
-
-async function submit() {
-    clearError();
-    form.clearErrors();
-
-    // if (!validateForm()) {
-    //     const firstError = document.querySelector('.border-red-500');
-    //     firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    //     return;
-    // }
-
-    try {
-        await createReservation({
-            hotel_id: form.hotel_id,
-            guest_profile_id: form.guest_profile_id,
-            room_id: form.room_id,
-            check_in_date: form.check_in_date,
-            check_out_date: form.check_out_date,
-            total_amount: parseFloat(form.total_amount as string),
-            adults: form.adults,
-            children: form.children,
-            status: form.status,
-            notes: form.notes,
-        });
-
-        // Success - show message and reset form
-        router.visit('/reservations', {
-            preserveState: true,
-            onSuccess: () => {
-                // Clear form after navigation
-                form.reset();
-            }
-        });
-    } catch (err: any) {
-        console.error('Create failed:', err);
-
-        // Backend validation errors thakle
-        if (err.response?.data?.errors) {
-            Object.keys(err.response.data.errors).forEach(key => {
-                form.setError(key, err.response.data.errors[key][0]);
-            });
-            // API theke general message thakle show kora
-            if (err.response.data.message) {
-                showError(err.response.data.message);
-            } else {
-                showError('Please fix the validation errors below.');
-            }
-
-            // Scroll to first error
-            setTimeout(() => {
-                const firstError = document.querySelector('.border-red-500');
-                firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-        }
-        // Backend general error thakle (already handled in composable)
-        else if (err.response?.data?.message) {
-            // Composable e already show kora hocche, tai ekhane duplicate show korar dorkar nai
-        }
-        // Unknown error
-        else {
-            showError('Failed to create reservation. Please try again.');
-        }
-    }
-}
-
-function validateForm(): boolean {
-    return validateInertiaForm(form, {
-        hotel_id: [required],
-        guest_profile_id: [required],
-        room_id: [required],
-        check_in_date: [required, checkInDate],
-        check_out_date: [required],
-        total_amount: [required, minValue(0)],
+    // ─── Form ────────────────────────────────────────────────
+    const form = useForm({
+        hotel_id:       '' as number | string,
+        guest_id:       '' as number | string,
+        room_id:        '' as number | string,
+        check_in_date:  new Date().toISOString().split('T')[0],
+        check_out_date: '',
+        total_amount:   '' as number | string,
+        adults:         1,
+        children:       0,
+        status:         'pending' as ReservationStatus,
+        notes:          '',
     });
-}
 
-function validateCheckOutDate() {
-    if (form.check_out_date && form.check_in_date) {
-        const result = checkOutDate(form.check_out_date, form.check_in_date);
-        if (!result.valid) {
-            form.setError('check_out_date', result.message!);
-        } else {
-            form.clearErrors('check_out_date');
+    // ✅ Fix: template logic → computed-এ রাখা হয়েছে
+    const isSaving    = computed(() => form.processing || saving.value);
+    const submitLabel = computed(() => isSaving.value ? 'Creating...' : 'Create Reservation');
+
+    // ✅ Fix: check_in_date বদলালে check_out_date re-validate হবে
+    watch(() => form.check_in_date, () => {
+        if (form.check_out_date) validateCheckOutDate();
+    });
+
+    // ─── Submit ──────────────────────────────────────────────
+
+    async function submit(): Promise<void> {
+        clearError();
+        form.clearErrors();
+
+        if (!validateForm()) {
+            scrollToFirstError();
+            return;
+        }
+
+        try {
+            const result = await createReservation({
+                hotel_id:       Number(form.hotel_id),
+                guest_id:       Number(form.guest_id),
+                room_id:        Number(form.room_id),
+                check_in_date:  form.check_in_date,
+                check_out_date: form.check_out_date,
+                total_amount:   parseFloat(form.total_amount as string),
+                adults:         form.adults,
+                children:       form.children,
+                status:         form.status,
+                notes:          form.notes || undefined,
+            });
+
+            // Check API response status
+            if (result.status === 1) {
+                // // Reset form
+                // form.reset();
+                
+                toast.success(result.message);
+                router.visit('/reservations');
+            } else {
+                toast.error(result.message || 'Failed to create reservation');
+            }
+
+        } catch (err: unknown) {
+            // Backend Laravel validation errors
+            const apiErr = err as Record<string, any>;
+
+            if (apiErr?.response?.data?.errors) {
+                const backendErrors: Record<string, string[]> = apiErr.response.data.errors;
+                Object.entries(backendErrors).forEach(([key, messages]) => {
+                    form.setError(key as any, messages[0]);
+                });
+                scrollToFirstError();
+            } else {
+                // Show error toast for general errors
+                const message = apiErr?.response?.data?.message || 'Failed to create reservation';
+                toast.error(message);
+            }
         }
     }
-}
+
+    // ─── Validation ──────────────────────────────────────────
+
+    function validateForm(): boolean {
+        return validateInertiaForm(form, {
+            hotel_id:       [required],
+            guest_id:       [required],
+            room_id:        [required],
+            check_in_date:  [required, checkInDate],
+            check_out_date: [required],
+            total_amount:   [required, minValue(0)],
+        });
+    }
+
+    function validateCheckOutDate(): void {
+        if (form.check_out_date && form.check_in_date) {
+            const result = checkOutDate(form.check_out_date, form.check_in_date);
+            if (!result.valid) {
+                form.setError('check_out_date', result.message!);
+            } else {
+                form.clearErrors('check_out_date');
+            }
+        }
+    }
+
+    function scrollToFirstError(): void {
+        setTimeout(() => {
+            const firstError = document.querySelector('.border-red-500');
+            firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 100);
+    }
 </script>
 
 <style scoped>
-section.space-y-6 {
-    padding-bottom: 2rem;
-}
+    section.space-y-6 {
+        padding-bottom: 2rem;
+    }
 </style>

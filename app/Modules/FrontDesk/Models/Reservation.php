@@ -24,7 +24,7 @@ class Reservation extends Model
     protected $fillable = [
         'hotel_id',
         'room_id',
-        'guest_profile_id',
+        'guest_id',
         'created_by',
         'reference',
         'status',
@@ -45,8 +45,8 @@ class Reservation extends Model
     {
         return [
             'status' => ReservationStatus::class,
-            'check_in_date' => 'date',
-            'check_out_date' => 'date',
+            'check_in_date' => 'date:Y-m-d',
+            'check_out_date' => 'date:Y-m-d',
             'total_amount' => 'decimal:2',
             'meta' => 'array',
         ];
@@ -73,7 +73,7 @@ class Reservation extends Model
      */
     public function guest(): BelongsTo
     {
-        return $this->belongsTo(GuestProfile::class, 'guest_profile_id');
+        return $this->belongsTo(GuestProfile::class, 'guest_id');
     }
 
     /**

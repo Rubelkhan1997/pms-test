@@ -1,30 +1,22 @@
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted } from 'vue';
 import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
-import { useLoading, useMessage } from '@/Helpers';
-
-/**
- * Reservation Composable - Business Logic Layer
- *
- * Architecture:
- * - Store  (reservationStore.ts) : Global state (Pinia)
- * - Composable (useReservations.ts) : Business logic + UI
- * - Pages  : Use composable only — never access store directly
- */
+import { useLoading, useMessage, getApiError, usePolling } from '@/Helpers';
+import type { ApiResponse } from '@/types/api';
+import type {
+    Reservation,
+    ReservationFilters,
+    CreateReservationDto,
+    UpdateReservationDto,
+    CheckOutPaymentDto,
+} from '@/types/FrontDesk/reservation';
 
 // ─────────────────────────────────────────────────────────
 // Types
 // ─────────────────────────────────────────────────────────
 
-export interface ReservationFilters {
-    status?: string;
-    check_in_date?: string;
-    check_out_date?: string;
-    search?: string;
-}
-
 export interface UseReservationOptions {
     autoFetch?: boolean;
-    initialFilters?: ReservationFilters;
+    initialFilters?: Partial<ReservationFilters>;
     pollingInterval?: number;
 }
 
@@ -37,10 +29,10 @@ export function useReservations(options: UseReservationOptions = {}) {
     const {
         autoFetch = false,
         initialFilters = {},
-        pollingInterval = 30000,
+        pollingInterval = 0,  // ✅ Fix: default 0 — polling off by default
     } = options;
 
-    // ─── Store ───────────────────────────────────────────
+    // ─── Store (internal — expose করা হবে না) ────────────
     const store = useReservationsStore();
 
     // ─── UI Helpers ──────────────────────────────────────
@@ -49,38 +41,49 @@ export function useReservations(options: UseReservationOptions = {}) {
     const { message: _success, showMessage: showSuccess, clearMessage: clearSuccess } = useMessage();
     const { message: _error, showMessage: showError, clearMessage: clearError } = useMessage();
 
-    // ─── Reactive State (from Store) ─────────────────────
+    // ─── Polling ─────────────────────────────────────────
+    const { start: startPolling, stop: stopPolling } = usePolling(
+        () => fetchAll(),
+        pollingInterval,
+        () => pollingInterval > 0
+    );
+
+    // ─────────────────────────────────────────────────────
+    // Reactive State
+    // ─────────────────────────────────────────────────────
+
     const reservations = computed(() => store.reservations);
     const reservation = computed(() => store.selectedReservation);
     const pagination = computed(() => store.pagination);
 
-    // ─── UI State ────────────────────────────────────────
     const loading = computed(() => _loading.value || store.loadingList);
     const saving = computed(() => _saving.value || store.loading);
-    const successMessage = computed(() => _success.value);
+    const successMessage = computed(() => _success.value); 
     const error = computed(() => _error.value || store.error);
 
-    // ─── Derived from Store (Getters) ────────────────────
+    // ─── Derived (Store Getters) ──────────────────────────
     const pendingCount = computed(() => store.pendingCount);
     const confirmedCount = computed(() => store.confirmedCount);
     const checkedInCount = computed(() => store.checkedInCount);
+    const checkedOutCount = computed(() => store.checkedOutCount);
+    const cancelledCount = computed(() => store.cancelledCount);
     const todayCheckIns = computed(() => store.todayCheckIns);
+    const todayCheckOuts = computed(() => store.todayCheckOuts);
+    const totalRevenue = computed(() => store.totalRevenue);
+    const pendingRevenue = computed(() => store.pendingRevenue);
 
     // ─────────────────────────────────────────────────────
     // Actions
     // ─────────────────────────────────────────────────────
 
-    async function fetchAll(page: number = 1, params?: ReservationFilters): Promise<void> {
+    async function fetchAll(page = 1, params?: Partial<ReservationFilters>): Promise<void> {
         startLoading();
         clearError();
-
         if (params) store.setFilters(params);
-
         try {
             await store.fetchAll(page);
-        } catch (err: any) {
-            const message = err.response?.data?.message || 'Failed to fetch reservations';
-            showError(message);
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Failed to fetch reservations'));
             throw err;
         } finally {
             stopLoading();
@@ -90,67 +93,40 @@ export function useReservations(options: UseReservationOptions = {}) {
     async function fetchById(id: number): Promise<void> {
         startLoading();
         clearError();
-
         try {
             await store.fetchById(id);
-        } catch (err: any) {
-            showError(err.response?.data?.message || 'Failed to fetch reservation');
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Failed to fetch reservation'));
             throw err;
         } finally {
             stopLoading();
         }
     }
-
-    async function create(data: {
-        hotel_id: number | string;
-        guest_profile_id: number | string;
-        room_id: number | string;
-        check_in_date: string;
-        check_out_date: string;
-        total_amount: number;
-        adults?: number;
-        children?: number;
-        status?: string;
-        notes?: string;
-    }): Promise<any> {
+ 
+    async function create(payload: CreateReservationDto): Promise<ApiResponse<Reservation>> {
         startSaving();
         clearError();
-
         try {
-            const response = await store.create(data);
-
-            // API theke message handle kora (Laravel default structure)
-            // { status: 1, data: {...}, message: "..." }
-            if (response.status === 1 || response.data) {
-                // Success - Laravel resource response
-                showSuccess(response.message || 'Reservation created successfully');
-            }
-
-            return response;
-        } catch (err: any) {
-            // API error response handle kora
-            if (err.response?.data) {
-                const apiResponse = err.response.data;
-                if (apiResponse.message) {
-                    showError(apiResponse.message);
-                }
-            }
+            const result = await store.create(payload);
+            showSuccess('Reservation created successfully');
+            return result;
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Failed to create reservation'));
             throw err;
         } finally {
             stopSaving();
         }
     }
 
-    async function update(id: number, data: Partial<PMS.Reservation>): Promise<any> {
+    async function update(id: number, payload: UpdateReservationDto): Promise<ApiResponse<Reservation>> {
         startSaving();
         clearError();
-
         try {
-            const response = await store.update(id, data);
+            const result = await store.update(id, payload);
             showSuccess('Reservation updated successfully');
-            return response;
-        } catch (err: any) {
-            showError(err.response?.data?.message || 'Failed to update reservation');
+            return result;
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Failed to update reservation'));
             throw err;
         } finally {
             stopSaving();
@@ -160,12 +136,11 @@ export function useReservations(options: UseReservationOptions = {}) {
     async function cancel(id: number): Promise<void> {
         startSaving();
         clearError();
-
         try {
             await store.cancel(id);
             showSuccess('Reservation cancelled successfully');
-        } catch (err: any) {
-            showError(err.response?.data?.message || 'Failed to cancel reservation');
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Failed to cancel reservation'));
             throw err;
         } finally {
             stopSaving();
@@ -175,12 +150,11 @@ export function useReservations(options: UseReservationOptions = {}) {
     async function deleteReservation(id: number): Promise<void> {
         startSaving();
         clearError();
-
         try {
             await store.delete(id);
             showSuccess('Reservation deleted successfully');
-        } catch (err: any) {
-            showError(err.response?.data?.message || 'Failed to delete reservation');
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Failed to delete reservation'));
             throw err;
         } finally {
             stopSaving();
@@ -190,42 +164,60 @@ export function useReservations(options: UseReservationOptions = {}) {
     async function checkIn(id: number): Promise<void> {
         startSaving();
         clearError();
-
         try {
             await store.checkIn(id);
             showSuccess('Guest checked in successfully');
-        } catch (err: any) {
-            showError(err.response?.data?.message || 'Check in failed');
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Check in failed'));
             throw err;
         } finally {
             stopSaving();
         }
     }
 
-    async function checkOut(id: number, paymentData?: any): Promise<void> {
+    async function checkOut(id: number, paymentData?: CheckOutPaymentDto): Promise<void> {
         startSaving();
         clearError();
-
         try {
             await store.checkOut(id, paymentData);
             showSuccess('Guest checked out successfully');
-        } catch (err: any) {
-            showError(err.response?.data?.message || 'Check out failed');
+        } catch (err: unknown) {
+            showError(getApiError(err, 'Check out failed'));
             throw err;
         } finally {
             stopSaving();
         }
     }
 
-    function setFilters(newFilters: ReservationFilters): void {
-        store.setFilters(newFilters);
+    function setFilters(filters: Partial<ReservationFilters>): void {
+        store.setFilters(filters);
     }
 
     function resetFilters(): void {
         store.resetFilters();
     }
 
-    // ─── Public API ──────────────────────────────────────
+    // ─── Lifecycle ───────────────────────────────────────
+
+    if (autoFetch) {
+        onMounted(() => {
+            if (Object.keys(initialFilters).length > 0) {
+                store.setFilters(initialFilters);
+            }
+            fetchAll();
+            startPolling();
+        });
+
+        onUnmounted(() => {
+            stopPolling();
+        });
+    }
+
+    // ─────────────────────────────────────────────────────
+    // Public API
+    // ✅ Fix: store expose করা হয়নি — encapsulation বজায় আছে
+    // ✅ Fix: showError internal — expose করা হয়নি
+    // ─────────────────────────────────────────────────────
 
     return {
         // State
@@ -237,16 +229,22 @@ export function useReservations(options: UseReservationOptions = {}) {
         successMessage,
         error,
 
-        // Computed
+        // Derived
         pendingCount,
         confirmedCount,
         checkedInCount,
+        checkedOutCount,
+        cancelledCount,
         todayCheckIns,
+        todayCheckOuts,
+        totalRevenue,
+        pendingRevenue,
 
         // Actions
         fetchAll,
         fetchById,
         create,
+        update,
         cancel,
         deleteReservation,
         checkIn,
@@ -255,6 +253,5 @@ export function useReservations(options: UseReservationOptions = {}) {
         resetFilters,
         clearError,
         clearSuccess,
-        showError,
     };
 }

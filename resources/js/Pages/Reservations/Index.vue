@@ -17,7 +17,7 @@
         </div>
 
         <!-- ─── Stats Cards ────────────────────────────────────── -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
                 <div class="text-sm text-slate-500">Pending</div>
                 <div class="text-2xl font-bold text-slate-800">{{ pendingCount }}</div>
@@ -37,7 +37,7 @@
         </div>
 
         <!-- ─── Filters ────────────────────────────────────────── -->
-        <div class="bg-white p-4 rounded-lg shadow">
+        <div class="bg-white p-4 rounded-lg shadow mb-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
                 <!-- Search -->
@@ -119,8 +119,7 @@
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-slate-200">
                     <thead class="bg-slate-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Reference</th>
+                        <tr> 
                             <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Guest</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Room</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Check-in</th>
@@ -154,19 +153,23 @@
                             class="hover:bg-slate-50 transition"
                         >
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-medium text-blue-600">{{ res.reference }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-slate-900">{{ res.guest?.name || 'N/A' }}</div>
+                                <div class="text-sm font-medium text-slate-900">
+                                    {{ res.guest?.first_name && res.guest?.last_name 
+                                        ? res.guest.first_name + ' ' + res.guest.last_name 
+                                        : 'N/A' 
+                                    }}
+                                </div>
                                 <div class="text-sm text-slate-500">{{ res.guest?.email || '' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-2 py-1 text-xs font-medium bg-slate-100 text-slate-800 rounded">
-                                    {{ res.room?.number || 'N/A' }}
-                                </span>
+                                <div class="text-sm font-medium text-slate-900">
+                                    Room {{ res.room?.number || 'N/A' }}
+                                </div>
+                                <div class="text-xs text-slate-500">{{ res.room?.type || '' }}</div>
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                {{ formatDate(res.check_in_date) }}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-slate-600">{{ formatDate(res.check_in_date) }}</div>
+                                <div class="text-xs text-slate-500">{{ res.hotel?.name || '' }}</div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
                                 {{ formatDate(res.check_out_date) }}
@@ -213,10 +216,30 @@
                 v-if="pagination.last_page > 1"
                 class="px-6 py-4 border-t border-slate-200 flex justify-between items-center"
             >
-                <div class="text-sm text-slate-500">
-                    Page {{ pagination.current_page }} of {{ pagination.last_page }}
-                    ({{ pagination.total }} total)
+                <div class="flex items-center gap-4">
+                    <!-- Per Page -->
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-500">Per Page:</label>
+                        <select
+                            v-model="perPage"
+                            @change="changePerPage"
+                            class="px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option :value="5">5</option>
+                            <option :value="15">15</option>
+                            <option :value="25">25</option>
+                            <option :value="50">50</option>
+                            <option :value="100">100</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Page Info -->
+                    <div class="text-sm text-slate-500">
+                        Page {{ pagination.current_page }} of {{ pagination.last_page }}
+                        ({{ pagination.total }} total)
+                    </div>
                 </div>
+                
                 <div class="flex gap-2">
                     <button
                         @click="changePage(pagination.current_page - 1)"
@@ -272,6 +295,7 @@ const {
 // ─── Local State ─────────────────────────────────────────
 
 const searchQuery = ref('');
+const perPage = ref(15);  // ✅ Per page items
 const localFilters = reactive({
     status: '',
     check_in_date: '',
@@ -282,16 +306,21 @@ let searchTimeout: ReturnType<typeof setTimeout>;
 
 // ─── Functions ───────────────────────────────────────────
 
+function changePerPage() {
+    setFilters({ per_page: perPage.value });
+    fetchAll(1, { per_page: perPage.value });  // ✅ Reset to page 1
+}
+
 function debouncedSearch() {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
-        setFilters({ search: searchQuery.value });
+        setFilters({ ...localFilters, search: searchQuery.value });
         fetchAll(1);
     }, 500);
 }
 
 function applyFilters() {
-    setFilters(localFilters);
+    setFilters({ ...localFilters, search: searchQuery.value });
     fetchAll(1);
 }
 

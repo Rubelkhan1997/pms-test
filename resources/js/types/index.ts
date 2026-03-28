@@ -1,13 +1,33 @@
 /**
  * Types Barrel Export
  * Central export file for all TypeScript types
+ * 
+ * Usage:
+ *   // Direct import (recommended for stores & components)
+ *   import type { Reservation, ReservationStatus } from '@/types';
+ * 
+ *   // Global namespace (for template hints)
+ *   const res: PMS.Reservation = null;
  */
 
 // Common types
 export type { User, UserRole } from './common';
+export type {
+    ApiResponse,
+    PaginatedResponse,
+    PaginationParams,
+    BaseResource,
+    SelectOption,
+    TablePagination
+} from './common';
 
 // API types
-export type { ApiResponse, PaginatedResponse } from './api';
+export type {
+    ApiError,
+    ApiSuccess,
+    ListRequestParams,
+    UploadResponse
+} from './api';
 
 // Payment types
 export type { Payment, PaymentMethod, PaymentStatus } from './payment';
@@ -17,7 +37,12 @@ export type {
     Reservation,
     ReservationStatus,
     Guest,
-    Room
+    Room,
+    ReservationFilters,
+    ReservationPagination,
+    CreateReservationDto,
+    UpdateReservationDto,
+    CheckOutPaymentDto
 } from './FrontDesk/reservation';
 
 export type { RoomStatus, RoomType } from './FrontDesk/room';
@@ -27,36 +52,6 @@ export type { GuestProfile, GuestType } from './FrontDesk/guest';
 export type { HousekeepingTask, TaskStatus, TaskPriority } from './Housekeeping/task';
 
 // ============================================================================
-// Global PMS Namespace (for backward compatibility & template type hints)
+// Note: Global PMS namespace moved to global.d.ts
+// This file only handles explicit exports for direct imports
 // ============================================================================
-declare global {
-    namespace PMS {
-        // Common types (use type alias, not export)
-        type User = import('./common').User;
-        type UserRole = import('./common').UserRole;
-        type ApiResponse = import('./api').ApiResponse;
-        type PaginatedResponse = import('./api').PaginatedResponse;
-
-        // FrontDesk types
-        type Reservation = import('./FrontDesk/reservation').Reservation;
-        type ReservationStatus = import('./FrontDesk/reservation').ReservationStatus;
-        type ReservationGuest = import('./FrontDesk/reservation').Guest;
-        type ReservationRoom = import('./FrontDesk/reservation').Room;
-
-        // POS types
-        interface PosOrder {
-            id: number;
-            reference: string;
-            status: string;
-            outlet: string;
-        }
-
-        // HR types
-        interface Employee {
-            id: number;
-            reference: string;
-            department: string;
-            status: string;
-        }
-    }
-}
