@@ -279,7 +279,6 @@
 
             // Check API response status
             if (result.status === 1) {
-                toast.success(result.message);
                 router.visit('/reservations');
             } else {
                 toast.error(result.message);

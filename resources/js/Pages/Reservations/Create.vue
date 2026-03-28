@@ -227,7 +227,7 @@
 
 <script setup lang="ts">
     import { computed, watch, inject } from 'vue';
-    import { useForm } from '@inertiajs/vue3';
+    import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import type { ReservationStatus, HotelOption, GuestOption, RoomOption } from '@/types/FrontDesk/reservation';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
@@ -300,10 +300,7 @@
 
             // Check API response status
             if (result.status === 1) {
-                // // Reset form
-                // form.reset();
-                
-                toast.success(result.message);
+                form.reset();
                 router.visit('/reservations');
             } else {
                 toast.error(result.message || 'Failed to create reservation');

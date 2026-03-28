@@ -1,7 +1,7 @@
 <template>
     <Head title="Reservations" />
     <!-- <AppLayout class="space-y-6"> -->
-        <div class="max-w-4xl mx-auto">
+        <div class="max-w-6xl mx-auto">
             <!-- ─── Header ─────────────────────────────────────────── -->
             <div class="flex justify-between items-center">
                 <div>
@@ -186,7 +186,7 @@
                                         }"
                                         class="px-2 py-1 text-xs font-medium rounded"
                                     >
-                                        {{ res.status.replace('_', ' ').toUpperCase() }}
+                                        {{ formatStatus(res.status) }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
@@ -266,6 +266,8 @@
 import { ref, reactive, onMounted } from 'vue';
 import { useReservations } from '@/Composables/FrontDesk/useReservations';
 import type { ReservationFilters } from '@/types/FrontDesk/reservation';
+import { formatDate } from '@/Utils/date';
+import { formatStatus } from '@/Utils/format';
 
 const {
     reservations,
@@ -322,11 +324,6 @@ function handleResetFilters() {
     localFilters.search = '';
     resetFilters();
     fetchAll(1);
-}
-
-function formatDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
 async function handleDelete(res: PMS.Reservation) {

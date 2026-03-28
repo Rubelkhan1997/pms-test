@@ -111,6 +111,13 @@ export function formatRoomNumber(number: string | number, digits: number = 3): s
 }
 
 /**
+ * Format reservation status to human readable
+ */
+export function formatStatus(status: string): string {
+    return status.replace('_', ' ').toUpperCase();
+}
+
+/**
  * Parse and format currency string to number
  */
 export function parseCurrency(value: string): number {

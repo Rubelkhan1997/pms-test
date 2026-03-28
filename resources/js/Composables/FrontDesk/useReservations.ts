@@ -1,6 +1,7 @@
 import { computed, onMounted, onUnmounted } from 'vue';
 import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
-import { useLoading, useMessage, getApiError, usePolling } from '@/Helpers';
+import { useLoading, useMessage, usePolling } from '@/Helpers';
+import { getApiError } from '@/Utils';
 import type { ApiResponse } from '@/types/api';
 import type {
     Reservation,

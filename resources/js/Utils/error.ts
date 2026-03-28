@@ -1,4 +1,9 @@
 /**
+ * Error Utility Functions
+ * Extract and format error messages
+ */
+
+/**
  * Extract error message from API errors
  *
  * @param err - Unknown error object

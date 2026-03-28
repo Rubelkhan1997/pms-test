@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import apiClient from '@/Services/apiClient';
-import { getErrorMessage } from '@/Helpers';
+import { getErrorMessage } from '@/Utils';
 import type { ApiResponse } from '@/types/api';
 import type {
     Reservation,

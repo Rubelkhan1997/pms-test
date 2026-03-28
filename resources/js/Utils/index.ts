@@ -9,6 +9,9 @@ export * from './date';
 // Format utilities
 export * from './format';
 
+// Error utilities
+export * from './error';
+
 // Validation utilities
 export * from './validation';
 

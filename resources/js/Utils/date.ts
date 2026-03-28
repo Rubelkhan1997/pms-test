@@ -129,3 +129,22 @@ export function endOfDay(date: Date | string = new Date()): Date {
     const d = typeof date === 'string' ? new Date(date) : date;
     return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 }
+
+/**
+ * Calculate number of nights between check-in and check-out dates
+ *
+ * @param checkIn - Check-in date
+ * @param checkOut - Check-out date
+ * @returns Number of nights
+ */
+export function calculateNights(checkIn: Date | string, checkOut: Date | string): number {
+    const d1 = typeof checkIn === 'string' ? new Date(checkIn) : checkIn;
+    const d2 = typeof checkOut === 'string' ? new Date(checkOut) : checkOut;
+
+    if (isNaN(d1.getTime()) || isNaN(d2.getTime())) {
+        return 0;
+    }
+
+    const diffTime = Math.abs(d2.getTime() - d1.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+}

@@ -8,4 +8,3 @@
 export { useLoading } from './useLoading';
 export { useMessage } from './useMessage';
 export { usePolling } from './usePolling';
-export { getErrorMessage, getApiError } from './getError';
