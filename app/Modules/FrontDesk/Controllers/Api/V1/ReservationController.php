@@ -32,6 +32,7 @@ class ReservationController extends Controller
         );
 
         return response()->json([
+            'status' => 1,
             'data' => ReservationResource::collection($paginator),
             'current_page' => $paginator->currentPage(),
             'per_page' => $paginator->perPage(),

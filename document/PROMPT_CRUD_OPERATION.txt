@@ -1,0 +1,79 @@
+Create a complete CRUD module for [MODULE_NAME].
+
+### Project Architecture:
+- Pages: Inertia (web routes)
+- CRUD: REST API — axios + Sanctum session (withCredentials: true)
+- Auth: Already done (session-based)
+
+### Reference — Existing Patterns to Follow Exactly:
+- Controller: app/Modules/FrontDesk/Controllers/Api/V1/ReservationController.php
+- Service: app/Modules/FrontDesk/Services/ReservationService.php
+- Store: resources/js/Stores/FrontDesk/reservationStore.ts
+- Composable: resources/js/Composables/FrontDesk/useReservations.ts
+- Page: resources/js/Pages/FrontDesk/Reservations/Index.vue
+- Types: resources/js/Types/FrontDesk/reservation.ts
+
+### Module Info:
+- Module Name: [MODULE_NAME]
+- Table: [TABLE_NAME]
+- Fields: [FIELD_LIST]
+- Relationships: [RELATIONSHIPS]
+- Status Enum: [STATUS_VALUES]
+
+### Backend (Laravel 12):
+1. Model: app/Modules/[Module]/Models/[Model].php
+   - declare(strict_types=1)
+   - fillable, relationships, casts
+2. Controller: app/Modules/[Module]/Controllers/Api/V1/[Controller].php
+   - Response: { status: 1|0, data: ..., message: string }
+   - Methods: index, show, store, update, destroy
+3. Service: app/Modules/[Module]/Services/[Service].php
+   - paginate(filters), find(id), create(dto), update(id, dto), delete(id)
+4. Requests:
+   - Store[Model]Request.php
+   - Update[Model]Request.php
+5. Resource: [Model]Resource.php
+6. Routes: routes/api.php
+   - Prefix: api/v1/[slug]
+   - Middleware: auth:sanctum
+
+### Frontend (Vue 3 + TypeScript + Inertia):
+
+1. Types: resources/js/Types/[Module]/[module].ts
+   - [Model]Interface
+   - Create[Model]Dto, Update[Model]Dto
+   - [Model]Filters
+
+2. Pinia Store: resources/js/Stores/[Module]/[module]Store.ts
+   - State: items, selectedItem, loading, loadingList, error, pagination
+   - Actions: fetchAll, fetchById, create, update, delete
+   - Store বাইরে expose করবে না
+
+3. Composable: resources/js/Composables/[Module]/use[Module].ts
+   - useLoading() — loading, saving আলাদা
+   - inject('toast') as typeof toastUtil
+   - inject('confirm') as typeof confirmUtil
+   - autoFetch, initialFilters, pollingInterval support
+   - Delete এ confirm.show({ variant: 'danger' }) দিয়ে confirm নেবে
+   - Store encapsulate করবে
+
+4. Pages:
+   - Pages/[Module]/Index.vue  — table, filters, pagination
+   - Pages/[Module]/Create.vue — form
+   - Pages/[Module]/Edit.vue   — pre-filled form
+   - Pages/[Module]/Show.vue   — detail view
+
+5. Delete Pattern (composable-এ):
+   const ok = await confirm.show({
+       title: 'Delete [Model]?',
+       message: 'This cannot be undone.',
+       variant: 'danger',
+       confirmText: 'Delete',
+   });
+   if (!ok) return;
+
+### Testing (Pest PHP):
+- tests/Feature/[Module]/[Module]Test.php
+  - index, show, store, update, destroy
+  - validation error cases
+  - unauthenticated → 401
