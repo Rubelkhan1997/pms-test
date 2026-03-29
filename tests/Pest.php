@@ -12,7 +12,6 @@
 */
 
 pest()->extend(Tests\TestCase::class)
-    ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
 /*
@@ -35,6 +34,14 @@ expect()->extend('toBeValidJson', function () {
     json_decode($this->value);
     return $this->toBeString()
         ->and(json_last_error())->toBe(JSON_ERROR_NONE);
+});
+
+expect()->extend('toBeFuture', function () {
+    return $this->value->isFuture();
+});
+
+expect()->extend('toBePast', function () {
+    return $this->value->isPast();
 });
 
 /*

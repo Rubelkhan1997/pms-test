@@ -9,6 +9,9 @@ use Illuminate\Support\Facades\Schema;
 /**
  * Create users table for tenant database.
  * This MUST run first before any migrations that reference users.
+ *
+ * Note: Additional user fields are added in follow-up migrations, including
+ * the account activation flag.
  */
 return new class extends Migration
 {
@@ -28,10 +31,18 @@ return new class extends Migration
 
             $table->index(['hotel_id', 'email']);
         });
+
+        // Password reset tokens (tenant-specific)
+        Schema::create('password_resets', function (Blueprint $table) {
+            $table->string('email')->index();
+            $table->string('token');
+            $table->timestamp('created_at')->nullable();
+        });
     }
 
     public function down(): void
     {
+        Schema::dropIfExists('password_resets');
         Schema::dropIfExists('users');
     }
 };

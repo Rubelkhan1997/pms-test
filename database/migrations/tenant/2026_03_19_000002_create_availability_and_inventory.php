@@ -10,9 +10,14 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Guests (Master Guest Profile)
-        Schema::create('guests', function (Blueprint $table) {
+        // Guest Profiles (Master Guest Profile)
+        Schema::create('guest_profiles', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('hotel_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('agent_id')->nullable();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->string('reference')->nullable();
+            $table->string('status')->default('active');
             $table->string('first_name');
             $table->string('last_name')->nullable();
             $table->string('email')->nullable();
@@ -28,24 +33,34 @@ return new class extends Migration
             $table->string('zip_code')->nullable();
             $table->string('country')->nullable();
             $table->boolean('is_vip')->default(false);
-            $table->text('preferences')->nullable(); // json
+            $table->json('preferences')->nullable();
             $table->text('remarks')->nullable();
+            $table->timestamp('scheduled_at')->nullable();
+            $table->json('meta')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
+            $table->index(['hotel_id', 'status']);
             $table->index(['email', 'phone']);
+            $table->index(['reference']);
         });
 
         // Reservations (Master Record)
         Schema::create('reservations', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('hotel_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('room_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('room_type_id')->nullable()->constrained()->nullOnDelete();
 
             // Identification
             $table->string('reservation_number')->unique();
+            $table->string('reference')->nullable();
             $table->string('external_reference')->nullable(); // OTA ID
 
             // Source
+            $table->string('channel')->nullable();
             $table->string('source')->default('direct'); // direct, booking_com, agoda, expedia, walk_in, gds
+            $table->string('market_segment')->nullable();
             $table->string('channel_id')->nullable();
 
             // Status lifecycle
@@ -75,9 +90,9 @@ return new class extends Migration
             $table->string('payment_status')->default('unpaid'); // unpaid, partial, paid, refunded
 
             // Links
-            $table->foreignId('guest_id')->nullable()->constrained()->nullOnDelete(); // primary guest
+            $table->foreignId('guest_profile_id')->nullable()->constrained('guest_profiles')->nullOnDelete(); // primary guest
             $table->foreignId('rate_plan_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('agent_id')->nullable()->constrained('guests')->nullOnDelete(); // travel agent
+            $table->foreignId('agent_id')->nullable()->constrained('guest_profiles')->nullOnDelete(); // travel agent
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('confirmed_by')->nullable()->constrained('users')->nullOnDelete();
 
@@ -85,6 +100,7 @@ return new class extends Migration
             $table->text('remarks')->nullable();
             $table->text('internal_notes')->nullable();
             $table->json('special_requests')->nullable();
+            $table->json('meta')->nullable();
 
             // Cancellation
             $table->timestamp('cancelled_at')->nullable();
@@ -97,6 +113,7 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
+            $table->index(['hotel_id', 'status']);
             $table->index(['status', 'check_in_date']);
             $table->index(['check_in_date', 'check_out_date']);
             $table->index(['reservation_number']);
@@ -136,68 +153,66 @@ return new class extends Migration
         Schema::create('reservation_guests', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reservation_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('guest_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('guest_profile_id')->constrained('guest_profiles')->cascadeOnDelete();
             $table->boolean('is_primary')->default(false);
             $table->timestamps();
-            $table->unique(['reservation_id', 'guest_id']);
+            $table->unique(['reservation_id', 'guest_profile_id']);
         });
 
         // Folios (Financial Ledger)
         Schema::create('folios', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('hotel_id')->nullable()->constrained()->cascadeOnDelete();
             $table->foreignId('reservation_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('guest_profile_id')->nullable()->constrained('guest_profiles')->nullOnDelete();
             $table->string('folio_number')->unique();
             $table->decimal('total_charges', 12, 2)->default(0);
             $table->decimal('total_payments', 12, 2)->default(0);
             $table->decimal('balance', 12, 2)->default(0);
             $table->string('status')->default('open'); // open, closed, void
+            $table->json('meta')->nullable();
             $table->timestamps();
 
+            $table->index(['hotel_id', 'status']);
             $table->index(['reservation_id', 'status']);
-        });
-
-        // Folio Transactions (Ledger Entries)
-        Schema::create('folio_transactions', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('folio_id')->constrained()->cascadeOnDelete();
-            $table->string('type'); // room_charge, service_charge, tax, discount, payment, refund
-            $table->decimal('amount', 12, 2);
-            $table->string('description')->nullable();
-            $table->date('transaction_date');
-            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('reference_type')->nullable(); // payment_id, adjustment_id
-            $table->unsignedBigInteger('reference_id')->nullable();
-            $table->json('metadata')->nullable();
-            $table->timestamps();
-
-            $table->index(['folio_id', 'transaction_date']);
         });
 
         // Payments
         Schema::create('payments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('reservation_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('hotel_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('reservation_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('folio_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('invoice_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('payment_method_id')->nullable()->constrained('payment_methods')->nullOnDelete();
+            $table->string('payment_number')->unique();
             $table->decimal('amount', 12, 2);
-            $table->string('method')->default('cash'); // cash, card, bank_transfer, online, mobile
-            $table->string('status')->default('completed'); // pending, completed, failed, refunded
+            $table->string('method')->default('cash');
+            $table->string('status')->default('completed');
+            $table->string('transaction_id')->nullable();
+            $table->string('reference_number')->nullable();
             $table->string('transaction_reference')->nullable();
-            $table->string('payment_gateway')->nullable(); // stripe, paypal, etc.
+            $table->string('payment_gateway')->nullable();
             $table->json('payment_details')->nullable();
+            $table->json('metadata')->nullable();
+            $table->timestamp('payment_date')->nullable();
             $table->timestamp('paid_at')->nullable();
             $table->foreignId('processed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->text('notes')->nullable();
             $table->timestamps();
 
+            $table->index(['hotel_id', 'status']);
             $table->index(['reservation_id', 'status']);
+            $table->index(['folio_id', 'invoice_id']);
         });
 
         // Reservation Logs (Audit Trail)
         Schema::create('reservation_logs', function (Blueprint $table) {
             $table->id();
             $table->foreignId('reservation_id')->constrained()->cascadeOnDelete();
-            $table->string('action'); // created, updated, confirmed, cancelled, checked_in, checked_out, no_show
+            $table->string('action');
             $table->text('description')->nullable();
-            $table->json('changes')->nullable(); // before/after snapshot
+            $table->json('changes')->nullable();
             $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete();
             $table->string('ip_address')->nullable();
             $table->timestamps();
@@ -243,10 +258,96 @@ return new class extends Migration
         Schema::table('promotion_uses', function (Blueprint $table) {
             $table->foreign('reservation_id')->references('id')->on('reservations')->cascadeOnDelete();
         });
+
+        Schema::table('guest_profiles', function (Blueprint $table) {
+            $table->foreign('agent_id')->references('id')->on('guest_profiles')->nullOnDelete();
+        });
+
+        Schema::table('stored_credit_cards', function (Blueprint $table) {
+            $table->foreign('guest_profile_id')->references('id')->on('guest_profiles')->nullOnDelete();
+        });
+
+        Schema::table('invoices', function (Blueprint $table) {
+            $table->foreign('reservation_id')->references('id')->on('reservations')->nullOnDelete();
+            $table->foreign('folio_id')->references('id')->on('folios')->nullOnDelete();
+            $table->foreign('guest_profile_id')->references('id')->on('guest_profiles')->nullOnDelete();
+        });
+
+        Schema::table('refunds', function (Blueprint $table) {
+            $table->foreign('payment_id')->references('id')->on('payments')->nullOnDelete();
+            $table->foreign('invoice_id')->references('id')->on('invoices')->nullOnDelete();
+            $table->foreign('folio_id')->references('id')->on('folios')->nullOnDelete();
+        });
+
+        Schema::table('adjustments', function (Blueprint $table) {
+            $table->foreign('reservation_id')->references('id')->on('reservations')->nullOnDelete();
+            $table->foreign('folio_id')->references('id')->on('folios')->nullOnDelete();
+            $table->foreign('invoice_id')->references('id')->on('invoices')->nullOnDelete();
+        });
+
+        Schema::table('invoice_items', function (Blueprint $table) {
+            $table->foreign('invoice_id')->references('id')->on('invoices')->cascadeOnDelete();
+            $table->foreign('room_id')->references('id')->on('rooms')->nullOnDelete();
+            $table->foreign('reservation_id')->references('id')->on('reservations')->nullOnDelete();
+        });
+
+        Schema::table('folio_transactions', function (Blueprint $table) {
+            $table->foreign('folio_id')->references('id')->on('folios')->cascadeOnDelete();
+            $table->foreign('reservation_id')->references('id')->on('reservations')->nullOnDelete();
+            $table->foreign('room_id')->references('id')->on('rooms')->nullOnDelete();
+        });
+
+        Schema::table('ledger_entries', function (Blueprint $table) {
+            $table->foreign('folio_transaction_id')->references('id')->on('folio_transactions')->nullOnDelete();
+            $table->foreign('reservation_id')->references('id')->on('reservations')->nullOnDelete();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('ledger_entries', function (Blueprint $table) {
+            $table->dropForeign(['folio_transaction_id']);
+            $table->dropForeign(['reservation_id']);
+        });
+
+        Schema::table('folio_transactions', function (Blueprint $table) {
+            $table->dropForeign(['folio_id']);
+            $table->dropForeign(['reservation_id']);
+            $table->dropForeign(['room_id']);
+        });
+
+        Schema::table('invoice_items', function (Blueprint $table) {
+            $table->dropForeign(['invoice_id']);
+            $table->dropForeign(['room_id']);
+            $table->dropForeign(['reservation_id']);
+        });
+
+        Schema::table('adjustments', function (Blueprint $table) {
+            $table->dropForeign(['reservation_id']);
+            $table->dropForeign(['folio_id']);
+            $table->dropForeign(['invoice_id']);
+        });
+
+        Schema::table('refunds', function (Blueprint $table) {
+            $table->dropForeign(['payment_id']);
+            $table->dropForeign(['invoice_id']);
+            $table->dropForeign(['folio_id']);
+        });
+
+        Schema::table('invoices', function (Blueprint $table) {
+            $table->dropForeign(['reservation_id']);
+            $table->dropForeign(['folio_id']);
+            $table->dropForeign(['guest_profile_id']);
+        });
+
+        Schema::table('stored_credit_cards', function (Blueprint $table) {
+            $table->dropForeign(['guest_profile_id']);
+        });
+
+        Schema::table('guest_profiles', function (Blueprint $table) {
+            $table->dropForeign(['agent_id']);
+        });
+
         Schema::table('promotion_uses', function (Blueprint $table) {
             $table->dropForeign(['reservation_id']);
         });
@@ -256,11 +357,10 @@ return new class extends Migration
         Schema::dropIfExists('checkin_logs');
         Schema::dropIfExists('reservation_logs');
         Schema::dropIfExists('payments');
-        Schema::dropIfExists('folio_transactions');
         Schema::dropIfExists('folios');
         Schema::dropIfExists('reservation_guests');
         Schema::dropIfExists('reservation_rooms');
         Schema::dropIfExists('reservations');
-        Schema::dropIfExists('guests');
+        Schema::dropIfExists('guest_profiles');
     }
 };

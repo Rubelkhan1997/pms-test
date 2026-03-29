@@ -121,7 +121,7 @@ return new class extends Migration
             $table->string('location_found')->nullable();
             $table->string('status')->default('stored'); // stored, claimed, discarded, donated
             $table->date('claimed_at')->nullable();
-            $table->foreignId('claimed_by')->nullable()->constrained('guests')->nullOnDelete();
+            $table->foreignId('claimed_by')->nullable()->constrained('guest_profiles')->nullOnDelete();
             $table->text('disposition_notes')->nullable();
             $table->timestamps();
 
