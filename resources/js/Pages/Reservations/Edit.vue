@@ -18,16 +18,6 @@
 
             <!-- Reservation Form -->
             <div class="bg-white rounded-lg shadow p-6">
-                
-                <!-- API/Composable Error Banner -->
-                <div
-                    v-if="error"
-                    class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center"
-                >
-                    <span class="text-red-800">{{ error }}</span>
-                    <button @click="clearError" class="text-red-500 hover:text-red-700">✕</button>
-                </div>
-                
                 <form @submit.prevent="submit" class="space-y-6">
                     <!-- Hotel Selection (Read-only - can't change hotel) -->
                     <div>
@@ -203,14 +193,11 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, inject, watch } from 'vue';
+    import { computed, watch } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import type { Reservation, HotelOption, GuestOption, RoomOption } from '@/types/FrontDesk/reservation';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
-
-    // ─── Inject Toast ─────────────────────────────────────
-    const toast = inject('toast') as any;
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
@@ -221,7 +208,7 @@
     }>();
 
     // ─── Composable ──────────────────────────────────────────
-    const { update: updateReservation, saving, error, clearError } = useReservations();
+    const { update: updateReservation, saving, error } = useReservations();
 
     // ─── Available Rooms ─────────────────────────────────────
     const availableRooms = computed(() =>
@@ -255,7 +242,6 @@
     // ─── Submit ──────────────────────────────────────────────
 
     async function submit(): Promise<void> {
-        clearError();
         form.clearErrors();
 
         if (!validateForm()) {
@@ -277,12 +263,11 @@
                 notes:          form.notes || undefined,
             });
 
-            // Check API response status
+            // Check API response status - toast already shown by composable
             if (result.status === 1) {
                 router.visit('/reservations');
-            } else {
-                toast.error(result.message);
             }
+            // If status === 0, error toast already shown by composable
 
         } catch (err: unknown) {
             // Backend Laravel validation errors
@@ -294,10 +279,6 @@
                     form.setError(key as any, messages[0]);
                 });
                 scrollToFirstError();
-            } else {
-                // Show error toast for general errors
-                const message = apiErr?.response?.data?.message || 'Failed to update reservation';
-                toast.error(message);
             }
         }
     }

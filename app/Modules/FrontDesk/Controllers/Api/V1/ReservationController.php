@@ -10,7 +10,6 @@ use App\Modules\FrontDesk\Resources\ReservationResource;
 use App\Modules\FrontDesk\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class ReservationController extends Controller
 {

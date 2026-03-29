@@ -1,6 +1,6 @@
-import { computed, onMounted, onUnmounted } from 'vue';
+import { computed, onMounted, onUnmounted, inject } from 'vue';
 import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
-import { useLoading, useMessage, usePolling } from '@/Helpers';
+import { useLoading, usePolling } from '@/Helpers';
 import { getApiError } from '@/Utils';
 import type { ApiResponse } from '@/types/api';
 import type {
@@ -35,11 +35,12 @@ export function useReservations(options: UseReservationOptions = {}) {
     // ─── Store (internal — expose করা হবে না) ────────────
     const store = useReservationsStore();
 
+    // ─── Inject Toast ────────────────────────────────────
+    const toast = inject('toast') as any;
+
     // ─── UI Helpers ──────────────────────────────────────
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
-    const { message: _success, showMessage: showSuccess, clearMessage: clearSuccess } = useMessage();
-    const { message: _error, showMessage: showError, clearMessage: clearError } = useMessage();
 
     // ─── Polling ─────────────────────────────────────────
     const { start: startPolling, stop: stopPolling } = usePolling(
@@ -58,8 +59,7 @@ export function useReservations(options: UseReservationOptions = {}) {
 
     const loading = computed(() => _loading.value || store.loadingList);
     const saving = computed(() => _saving.value || store.loading);
-    const successMessage = computed(() => _success.value); 
-    const error = computed(() => _error.value || store.error);
+    const error = computed(() => store.error);
 
     // ─── Derived (Store Getters) ──────────────────────────
     const pendingCount = computed(() => store.pendingCount);
@@ -74,12 +74,11 @@ export function useReservations(options: UseReservationOptions = {}) {
 
     async function fetchAll(page = 1, params?: Partial<ReservationFilters>): Promise<void> {
         startLoading();
-        clearError();
         if (params) store.setFilters(params);
         try {
             await store.fetchAll(page);
         } catch (err: unknown) {
-            showError(getApiError(err, 'Failed to fetch reservations'));
+            toast.error(getApiError(err, 'Failed to fetch reservations'));
             throw err;
         } finally {
             stopLoading();
@@ -88,26 +87,29 @@ export function useReservations(options: UseReservationOptions = {}) {
 
     async function fetchById(id: number): Promise<void> {
         startLoading();
-        clearError();
         try {
             await store.fetchById(id);
         } catch (err: unknown) {
-            showError(getApiError(err, 'Failed to fetch reservation'));
+            toast.error(getApiError(err, 'Failed to fetch reservation'));
             throw err;
         } finally {
             stopLoading();
         }
     }
- 
+
     async function create(payload: CreateReservationDto): Promise<ApiResponse<Reservation>> {
         startSaving();
-        clearError();
         try {
             const result = await store.create(payload);
-            showSuccess('Reservation created successfully');
+            // Show toast based on API response status
+            if (result.status === 1) {
+                toast.success(result.message);
+            } else {
+                toast.error(result.message);
+            }
             return result;
         } catch (err: unknown) {
-            showError(getApiError(err, 'Failed to create reservation'));
+            toast.error(getApiError(err, 'Failed to create reservation'));
             throw err;
         } finally {
             stopSaving();
@@ -116,41 +118,55 @@ export function useReservations(options: UseReservationOptions = {}) {
 
     async function update(id: number, payload: UpdateReservationDto): Promise<ApiResponse<Reservation>> {
         startSaving();
-        clearError();
         try {
             const result = await store.update(id, payload);
-            showSuccess('Reservation updated successfully');
+            // Show toast based on API response status
+            if (result.status === 1) {
+                toast.success(result.message);
+            } else {
+                toast.error(result.message);
+            }
             return result;
         } catch (err: unknown) {
-            showError(getApiError(err, 'Failed to update reservation'));
+            toast.error(getApiError(err, 'Failed to update reservation'));
             throw err;
         } finally {
             stopSaving();
         }
     }
 
-    async function cancel(id: number): Promise<void> {
+    async function cancel(id: number): Promise<ApiResponse<void>> {
         startSaving();
-        clearError();
         try {
-            await store.cancel(id);
-            showSuccess('Reservation cancelled successfully');
+            const result = await store.cancel(id);
+            // Show toast based on API response status
+            if (result.status === 1) {
+                toast.success(result.message || 'Reservation cancelled successfully');
+            } else {
+                toast.error(result.message || 'Failed to cancel reservation');
+            }
+            return result;
         } catch (err: unknown) {
-            showError(getApiError(err, 'Failed to cancel reservation'));
+            toast.error(getApiError(err, 'Failed to cancel reservation'));
             throw err;
         } finally {
             stopSaving();
         }
     }
 
-    async function deleteReservation(id: number): Promise<void> {
+    async function deleteReservation(id: number): Promise<ApiResponse<void>> {
         startSaving();
-        clearError();
         try {
-            await store.delete(id);
-            showSuccess('Reservation deleted successfully');
+            const result = await store.delete(id);
+            // Show toast based on API response status
+            if (result.status === 1) {
+                toast.success(result.message || 'Reservation deleted successfully');
+            } else {
+                toast.error(result.message || 'Failed to delete reservation');
+            }
+            return result;
         } catch (err: unknown) {
-            showError(getApiError(err, 'Failed to delete reservation'));
+            toast.error(getApiError(err, 'Failed to delete reservation'));
             throw err;
         } finally {
             stopSaving();
@@ -184,7 +200,7 @@ export function useReservations(options: UseReservationOptions = {}) {
     // ─────────────────────────────────────────────────────
     // Public API
     // ✅ Fix: store expose করা হয়নি — encapsulation বজায় আছে
-    // ✅ Fix: showError internal — expose করা হয়নি
+    // ✅ Fix: All errors now show as toast notifications
     // ─────────────────────────────────────────────────────
 
     return {
@@ -194,14 +210,13 @@ export function useReservations(options: UseReservationOptions = {}) {
         pagination,
         loading,
         saving,
-        successMessage,
         error,
 
         // Derived
         pendingCount,
         confirmedCount,
-        checkedInCount, 
-        todayCheckIns, 
+        checkedInCount,
+        todayCheckIns,
 
         // Actions
         fetchAll,
@@ -209,10 +224,8 @@ export function useReservations(options: UseReservationOptions = {}) {
         create,
         update,
         cancel,
-        deleteReservation, 
+        deleteReservation,
         setFilters,
         resetFilters,
-        clearError,
-        clearSuccess,
     };
 }

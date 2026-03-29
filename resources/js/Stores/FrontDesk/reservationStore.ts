@@ -152,12 +152,19 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
  
-        async cancel(id: number): Promise<void> {
+        async cancel(id: number): Promise<ApiResponse<void>> {
             this.loading = true;
             this.error = null;
             try {
-                await apiClient.v1.patch(`/front-desk/reservations/${id}/cancel`);
-                this.updateReservation(id, { status: 'cancelled' });
+                const { data } = await apiClient.v1.patch(`/front-desk/reservations/${id}/cancel`);
+                const response = data as ApiResponse<void>;
+                
+                // Update store only if successful
+                if (response.status === 1) {
+                    this.updateReservation(id, { status: 'cancelled' });
+                }
+                
+                return response;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to cancel reservation');
                 throw err;
@@ -166,12 +173,19 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        async delete(id: number): Promise<void> {
+        async delete(id: number): Promise<ApiResponse<void>> {
             this.loading = true;
             this.error = null;
             try {
-                await apiClient.v1.delete(`/front-desk/reservations/${id}`);
-                this.removeReservation(id);
+                const { data } = await apiClient.v1.delete(`/front-desk/reservations/${id}`);
+                const response = data as ApiResponse<void>;
+                
+                // Update store only if successful
+                if (response.status === 1) {
+                    this.removeReservation(id);
+                }
+                
+                return response;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to delete reservation');
                 throw err;
