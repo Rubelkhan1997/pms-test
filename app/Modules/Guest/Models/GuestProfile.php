@@ -78,7 +78,7 @@ class GuestProfile extends Model
      */
     public function reservations(): HasMany
     {
-        return $this->hasMany(\App\Modules\FrontDesk\Models\Reservation::class, 'guest_profile_id');
+        return $this->hasMany(\App\Modules\FrontDesk\Models\Reservation::class, 'guest_id');
     }
 
     /**

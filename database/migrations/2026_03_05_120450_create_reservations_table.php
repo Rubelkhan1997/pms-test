@@ -18,7 +18,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('hotel_id')->constrained()->cascadeOnDelete();
             $table->foreignId('room_id')->nullable()->constrained('rooms')->nullOnDelete();
-            $table->foreignId('guest_profile_id')->nullable()->constrained('guest_profiles')->nullOnDelete();
+            $table->foreignId('guest_id')->nullable()->constrained('guest_profiles')->nullOnDelete();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->string('reference')->nullable();
             $table->enum('status', array_map(static fn (ReservationStatus $item): string => $item->value, ReservationStatus::cases()))

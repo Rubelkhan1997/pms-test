@@ -69,7 +69,7 @@ class ReservationController extends Controller
      */
     public function create(): Response
     {
-        try {
+        // try {
             $hotels = Hotel::all();
             $guests = \App\Modules\Guest\Models\GuestProfile::orderBy('first_name')->get();
             $rooms = \App\Modules\FrontDesk\Models\Room::where('status', 'available')->orderBy('number')->get();
@@ -79,10 +79,10 @@ class ReservationController extends Controller
                 'guests' => $guests,
                 'rooms' => $rooms,
             ]);
-        } catch (Throwable $e) {
-            logger()->error('Error loading create form: ' . $e->getMessage());
-            abort(500, 'Failed to load form');
-        }
+        // } catch (Throwable $e) {
+        //     logger()->error('Error loading create form: ' . $e->getMessage());
+        //     abort(500, 'Failed to load form');
+        // }
     }
 
     /**

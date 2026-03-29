@@ -78,8 +78,6 @@ class DatabaseSeeder extends Seeder
         // Seed sample reservations
         $this->seedReservations($hotel, $superAdmin, $employeeUser);
 
-        // Seed other modules
-        $this->seedOtherModules($hotel, $superAdmin);
 
         $this->command->info('🎉 Database seeding completed!');
         $this->command->info('');
@@ -240,7 +238,7 @@ class DatabaseSeeder extends Seeder
             Reservation::query()->create([
                 'hotel_id' => $hotel->id,
                 'room_id' => $room->id,
-                'guest_profile_id' => $guest->id,
+                'guest_id' => $guest->id,
                 'created_by' => $employee->id,
                 'reference' => 'RES-' . $referenceCounter++,
                 'status' => $resData['status'],
@@ -255,69 +253,5 @@ class DatabaseSeeder extends Seeder
         $this->command->info('✅ Created ' . count($reservations) . ' reservations');
     }
 
-    /**
-     * Seed other module data.
-     */
-    private function seedOtherModules(Hotel $hotel, User $createdBy): void
-    {
-        // OtaSync
-        OtaSync::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $createdBy->id,
-            'reference' => 'OTA-1001',
-            'provider' => 'Booking.com',
-            'status' => \App\Enums\PaymentStatus::Pending,
-        ]);
 
-        // HousekeepingTask
-        HousekeepingTask::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $createdBy->id,
-            'reference' => 'HK-1001',
-            'status' => HousekeepingStatus::Pending,
-            'scheduled_at' => now()->addHour(),
-        ]);
-
-        // PosOrder
-        PosOrder::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $createdBy->id,
-            'reference' => 'POS-1001',
-            'outlet' => 'Restaurant',
-            'status' => POSOrderStatus::Submitted,
-            'scheduled_at' => now(),
-        ]);
-
-        // ReportSnapshot
-        ReportSnapshot::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $createdBy->id,
-            'reference' => 'RPT-1001',
-            'status' => 'ready',
-            'report_type' => 'occupancy',
-            'report_date' => now()->toDateString(),
-        ]);
-
-        // MobileTask
-        MobileTask::query()->create([
-            'hotel_id' => $hotel->id,
-            'created_by' => $createdBy->id,
-            'reference' => 'MBL-1001',
-            'status' => 'pending',
-            'scheduled_at' => now()->addMinutes(30),
-        ]);
-
-        // Employee
-        Employee::query()->create([
-            'hotel_id' => $hotel->id,
-            'user_id' => User::where('email', 'frontdesk@pms.test')->first()?->id,
-            'created_by' => $createdBy->id,
-            'reference' => 'EMP-1001',
-            'status' => 'active',
-            'department' => 'Front Desk',
-            'scheduled_at' => now(),
-        ]);
-
-        $this->command->info('✅ Created other module data (OTA, Housekeeping, POS, Reports, Mobile, HR)');
-    }
 }
