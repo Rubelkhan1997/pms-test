@@ -1,18 +1,17 @@
+
+
 /**
  * Plugins Barrel Export
- * Central export file for all Vue plugins
  */
 
-// Toast plugin (optional - uncomment if needed)
-export { toast, ToastContainer, install as installToast } from './toast';
-export type { ToastOptions, Toast } from './toast';
+// ── Plugin objects (app.use() এর জন্য) ──
+export { default as toast } from './toast';
+export { default as confirm } from './confirm';
 
-// Confirm plugin (optional - uncomment if needed)
-export { confirm, ConfirmDialogComponent, install as installConfirm } from './confirm';
-export type { ConfirmOptions } from './confirm';
+// // ── Utilities (composable হিসেবে ব্যবহারের জন্য) ──
+// export { toast as toastType } from './toast';
+// export { confirm as confirmType } from './confirm';
 
-// Directives
-export * from './directives';
-
-// Note: For initial project, plugins are optional.
-// Enable only when you need toast notifications or confirmation dialogs.
+// // ── Types ──
+// export type { ToastOptions, Toast } from './toast';
+// export type { ConfirmOptions } from './confirm';

@@ -108,7 +108,7 @@
                 <div class="overflow-x-auto">
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="bg-slate-50">
-                            <tr> 
+                            <tr>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Guest</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Room</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Check-in</th>
@@ -120,82 +120,92 @@
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
 
-                            <!-- Loading -->
+                            <!-- Loading - Full Table Overlay -->
                             <tr v-if="loading">
-                                <td colspan="8" class="px-6 py-8 text-center">
-                                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-                                    <p class="mt-2 text-slate-500">Loading reservations...</p>
+                                <td colspan="8" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-cyan-600 mb-4"></div>
+                                        <p class="text-lg font-medium text-slate-700">Loading reservations...</p>
+                                        <p class="text-sm text-slate-500 mt-1">Please wait</p>
+                                    </div>
                                 </td>
                             </tr>
 
                             <!-- Empty -->
                             <tr v-else-if="reservations.length === 0">
-                                <td colspan="8" class="px-6 py-8 text-center text-slate-500">
-                                    No reservations found
+                                <td colspan="8" class="px-6 py-16 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <svg class="w-16 h-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                        </svg>
+                                        <p class="text-lg font-medium text-slate-700">No reservations found</p>
+                                        <p class="text-sm text-slate-500 mt-1">Create a new reservation to get started</p>
+                                    </div>
                                 </td>
                             </tr>
 
                             <!-- Rows -->
-                            <tr
-                                v-for="res in reservations"
-                                :key="res.id"
-                                class="hover:bg-slate-50 transition"
-                            >
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-slate-900">
-                                        {{ res.guest?.first_name && res.guest?.last_name 
-                                            ? res.guest.first_name + ' ' + res.guest.last_name 
-                                            : 'N/A' 
-                                        }}
-                                    </div>
-                                    <div class="text-sm text-slate-500">{{ res.guest?.email || '' }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-slate-900">
-                                        Room {{ res.room?.number || 'N/A' }}
-                                    </div>
-                                    <div class="text-xs text-slate-500">{{ res.room?.type || '' }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-slate-600">{{ formatDate(res.check_in_date) }}</div>
-                                    <div class="text-xs text-slate-500">{{ res.hotel?.name || '' }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                    {{ formatDate(res.check_out_date) }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        :class="{
-                                            'bg-yellow-100 text-yellow-800': res.status === 'pending',
-                                            'bg-green-100 text-green-800':  res.status === 'confirmed',
-                                            'bg-blue-100 text-blue-800':    res.status === 'checked_in',
-                                            'bg-purple-100 text-purple-800':res.status === 'checked_out',
-                                            'bg-red-100 text-red-800':      res.status === 'cancelled',
-                                            'bg-slate-100 text-slate-800':  res.status === 'no_show',
-                                        }"
-                                        class="px-2 py-1 text-xs font-medium rounded"
-                                    >
-                                        {{ formatStatus(res.status) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                    ৳{{ res.total_amount?.toLocaleString() || '0' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <div class="flex justify-end gap-2">
-                                        <Link :href="`/reservations/${res.id}/edit`" class="text-blue-600 hover:text-blue-900">
-                                            Edit
-                                        </Link>
-                                        <Link :href="`/reservations/${res.id}`" class="text-green-600 hover:text-green-900">
-                                            View
-                                        </Link>
-                                        <button @click="handleDelete(res)" class="text-red-600 hover:text-red-900">
-                                            Delete
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-
+                            <template v-else>
+                                <tr
+                                    v-for="res in reservations"
+                                    :key="res.id"
+                                    class="hover:bg-slate-50 transition"
+                                >
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-slate-900">
+                                            {{ res.guest?.first_name && res.guest?.last_name 
+                                                ? res.guest.first_name + ' ' + res.guest.last_name 
+                                                : 'N/A' 
+                                            }}
+                                        </div>
+                                        <div class="text-sm text-slate-500">{{ res.guest?.email || '' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm font-medium text-slate-900">
+                                            Room {{ res.room?.number || 'N/A' }}
+                                        </div>
+                                        <div class="text-xs text-slate-500">{{ res.room?.type || '' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="text-sm text-slate-600">{{ formatDate(res.check_in_date) }}</div>
+                                        <div class="text-xs text-slate-500">{{ res.hotel?.name || '' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+                                        {{ formatDate(res.check_out_date) }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span
+                                            :class="{
+                                                'bg-yellow-100 text-yellow-800': res.status === 'pending',
+                                                'bg-green-100 text-green-800':  res.status === 'confirmed',
+                                                'bg-blue-100 text-blue-800':    res.status === 'checked_in',
+                                                'bg-purple-100 text-purple-800':res.status === 'checked_out',
+                                                'bg-red-100 text-red-800':      res.status === 'cancelled',
+                                                'bg-slate-100 text-slate-800':  res.status === 'no_show',
+                                            }"
+                                            class="px-2 py-1 text-xs font-medium rounded"
+                                        >
+                                            {{ formatStatus(res.status) }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
+                                        ৳{{ res.total_amount?.toLocaleString() || '0' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                        <div class="flex justify-end gap-2">
+                                            <Link :href="`/reservations/${res.id}/edit`" class="text-blue-600 hover:text-blue-900">
+                                                Edit
+                                            </Link>
+                                            <Link :href="`/reservations/${res.id}`" class="text-green-600 hover:text-green-900">
+                                                View
+                                            </Link>
+                                            <button @click="handleDelete(res)" class="text-red-600 hover:text-red-900">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </template>
                         </tbody>
                     </table>
                 </div>
@@ -252,85 +262,106 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue';
-import { useReservations } from '@/Composables/FrontDesk/useReservations';
-import type { ReservationFilters, Reservation } from '@/Types/FrontDesk/reservation';
-import { formatDate } from '@/Utils/date';
-import { formatStatus } from '@/Utils/format';
+    import { ref, reactive, onMounted, inject } from 'vue';
 
-const {
-    reservations,
-    loading, 
-    pagination,
-    pendingCount,
-    confirmedCount,
-    checkedInCount,
-    todayCheckIns,
-    
-    fetchAll,
-    deleteReservation,
-    setFilters,
-    resetFilters,
-} = useReservations();
+    // Composables import
+    import { useReservations } from '@/Composables/FrontDesk/useReservations';
 
-const searchQuery = ref('');
-const perPage = ref(15);
-const localFilters = reactive<ReservationFilters>({
-    status: '',
-    check_in_date: '',
-    check_out_date: '',
-    search: '',
-    per_page: 15,
-});
+    // Utils  import
+    import { formatStatus } from '@/Utils/format';
+    import { formatDate } from '@/Utils/date';
 
-let searchTimeout: ReturnType<typeof setTimeout>;
+    // Types import
+    import type { confirm as ConfirmType } from '@/Plugins/confirm';
+    import type { ReservationFilters, Reservation } from '@/Types/FrontDesk/reservation';
 
-function changePerPage() {
-    setFilters({ per_page: perPage.value });
-    fetchAll(1, { per_page: perPage.value });
-}
+    // ─── Inject Confirm ─────────────────────────────────────
+    const confirm = inject('confirm') as typeof ConfirmType;
 
-function debouncedSearch() {
-    clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => {
+    const {
+        // State
+        reservations,
+        loading,
+        pagination,
+        pendingCount,
+        confirmedCount,
+        checkedInCount,
+        todayCheckIns,
+
+        // Actions
+        fetchAll,
+        deleteReservation,
+        setFilters,
+        resetFilters,
+    } = useReservations();
+
+    const searchQuery = ref('');
+    const perPage = ref(15);
+    const localFilters = reactive<ReservationFilters>({
+        status: '',
+        check_in_date: '',
+        check_out_date: '',
+        search: '',
+        per_page: 15,
+    });
+
+    let searchTimeout: ReturnType<typeof setTimeout>;
+
+    function changePerPage() {
+        setFilters({ per_page: perPage.value });
+        fetchAll(1, { per_page: perPage.value });
+    }
+
+    function debouncedSearch() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            setFilters({ ...localFilters, search: searchQuery.value });
+            fetchAll(1);
+        }, 500);
+    }
+
+    function applyFilters() {
         setFilters({ ...localFilters, search: searchQuery.value });
         fetchAll(1);
-    }, 500);
-}
-
-function applyFilters() {
-    setFilters({ ...localFilters, search: searchQuery.value });
-    fetchAll(1);
-}
-
-function handleResetFilters() {
-    localFilters.status = '';
-    localFilters.check_in_date = '';
-    localFilters.check_out_date = '';
-    localFilters.search = '';
-    resetFilters();
-    fetchAll(1);
-}
-
-async function handleDelete(res: Reservation) {
-    if (!confirm(`Delete reservation: ${res.reference}? This cannot be undone.`)) return;
-    try {
-        await deleteReservation(res.id);
-        const targetPage = reservations.value.length === 0 && pagination.value.current_page > 1
-            ? pagination.value.current_page - 1
-            : pagination.value.current_page;
-        await fetchAll(targetPage);
-    } catch (e) {
-        console.error('Delete failed:', e);
     }
-}
 
-function changePage(page: number) {
-    if (page < 1 || page > pagination.value.last_page) return;
-    fetchAll(page);
-}
+    function handleResetFilters() {
+        localFilters.status = '';
+        localFilters.check_in_date = '';
+        localFilters.check_out_date = '';
+        localFilters.search = '';
+        resetFilters();
+        fetchAll(1);
+    }
 
-onMounted(() => {
-    fetchAll(1);
-});
+    async function handleDelete(res: Reservation) { 
+        const confirmed = await confirm.show({
+            title: 'Delete Reservation?',
+            message: `Reservation ${res.reference} permanently removed. This cannot be undone.`,
+            confirmText: 'Delete',
+            cancelText: 'Cancel',
+            variant: 'danger',  
+        });
+
+        if (!confirmed) return;
+
+        try {
+            await deleteReservation(res.id);
+            const targetPage = reservations.value.length === 0 && pagination.value.current_page > 1
+                ? pagination.value.current_page - 1
+                : pagination.value.current_page;
+            await fetchAll(targetPage);
+        } catch (e) {
+            console.error('Delete failed:', e);
+        }
+    }
+
+    function changePage(page: number) {
+        if (page < 1 || page > pagination.value.last_page) return;
+        fetchAll(page);
+    }
+
+    onMounted(() => {
+        fetchAll(1);
+    });
 </script>

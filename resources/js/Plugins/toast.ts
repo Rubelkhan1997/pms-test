@@ -1,8 +1,3 @@
-/**
- * Toast Notification Plugin
- * Simple toast notification system for Vue 3
- */
-
 import { App, ref, readonly, h, createVNode, render } from 'vue';
 
 export interface ToastOptions {

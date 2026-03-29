@@ -159,12 +159,22 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, onMounted } from 'vue';
+    import { computed, onMounted, inject } from 'vue';
     import { router } from '@inertiajs/vue3';
     import { HotelLayout } from '@/Layouts';
+
+    // Composables import
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
+
+    // Utils  import
     import { formatDate, calculateNights } from '@/Utils/date';
     import { formatStatus } from '@/Utils/format';
+
+    // Types import
+    import type { confirm as ConfirmType } from '@/Plugins/confirm';
+
+    // ─── Inject Confirm ─────────────────────────────────────
+    const confirm = inject('confirm') as typeof ConfirmType;
    
     const { reservation, loading, error, fetchById, cancel: cancelAction} = useReservations();
 
@@ -178,12 +188,23 @@
 
     // Handle Cancel
     async function handleCancel() {
-        if (!confirm('Are you sure you want to cancel this reservation?')) return;
+        const confirmed = await confirm.show({
+            title: 'Cancel Reservation?',
+            message: `Reservation ${reservation.value?.reference } will be cancelled. This cannot be undone.`,
+            confirmText: 'Cancel',
+            cancelText: 'Keep',
+            variant: 'danger',  
+        });
 
-        if (reservation.value) {
-            await cancelAction(reservation.value.id);
-            router.reload();
-            // Toast already shown in composable
+        if (!confirmed) return;
+
+        try {
+            if (reservation.value) {
+                await cancelAction(reservation.value.id);
+                router.reload();
+            }
+        } catch (e) {
+            console.error('Delete failed:', e);
         }
     }
 

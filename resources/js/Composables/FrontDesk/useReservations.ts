@@ -3,6 +3,7 @@ import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
 import { useLoading, usePolling } from '@/Helpers';
 import { getApiError } from '@/Utils';
 import type { ApiResponse } from '@/Types/api';
+import type { toast as ToastType } from '@/Plugins/toast';
 import type {
     Reservation,
     ReservationFilters,
@@ -36,7 +37,7 @@ export function useReservations(options: UseReservationOptions = {}) {
     const store = useReservationsStore();
 
     // ─── Inject Toast ────────────────────────────────────
-    const toast = inject('toast') as any;
+    const toast = inject('toast') as typeof ToastType;
 
     // ─── UI Helpers ──────────────────────────────────────
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
