@@ -12,7 +12,8 @@
         "paths": {
             "@/*": ["./resources/js/*"]
         },
-        "baseUrl": "."
+        "baseUrl": ".",
+        "skipLibCheck": true
     },
     "include": ["resources/js/**/*.ts", "resources/js/**/*.d.ts", "resources/js/**/*.vue"],
     "exclude": ["node_modules"]

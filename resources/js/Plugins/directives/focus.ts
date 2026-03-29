@@ -26,7 +26,7 @@ const defaultOptions: FocusOptions = {
  * Focus element with options
  */
 function focusElement(el: HTMLElement, options: FocusOptions): void {
-    const { delay, select, preventScroll } = { ...defaultOptions, ...options };
+    const { delay = 0, select = false, preventScroll = false } = { ...defaultOptions, ...options };
 
     const doFocus = () => {
         if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {

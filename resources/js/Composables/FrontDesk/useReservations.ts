@@ -2,13 +2,13 @@ import { computed, onMounted, onUnmounted, inject } from 'vue';
 import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
 import { useLoading, usePolling } from '@/Helpers';
 import { getApiError } from '@/Utils';
-import type { ApiResponse } from '@/types/api';
+import type { ApiResponse } from '@/Types/api';
 import type {
     Reservation,
     ReservationFilters,
     CreateReservationDto,
     UpdateReservationDto,
-} from '@/types/FrontDesk/reservation';
+} from '@/Types/FrontDesk/reservation';
 
 // ─────────────────────────────────────────────────────────
 // Types

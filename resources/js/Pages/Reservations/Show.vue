@@ -31,12 +31,6 @@
                 </span>
             </div>
 
-            <!-- Error Banner -->
-            <div v-if="error" class="p-4 bg-red-50 border border-red-200 rounded-lg flex justify-between items-center">
-                <span class="text-red-800">{{ error }}</span>
-                <button @click="clearError" class="text-red-500 hover:text-red-700">✕</button>
-            </div>
-
             <!-- Loading State -->
             <div v-if="loading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
@@ -172,7 +166,7 @@
     import { formatDate, calculateNights } from '@/Utils/date';
     import { formatStatus } from '@/Utils/format';
    
-    const { reservation, loading, error, clearError, fetchById, cancel: cancelAction, checkOut: checkOutAction } = useReservations();
+    const { reservation, loading, error, fetchById, cancel: cancelAction} = useReservations();
 
     // Calculate number of nights (reusable function from Utils)
     const nights = computed(() => {

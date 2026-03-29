@@ -42,14 +42,13 @@ export type {
     ReservationPagination,
     CreateReservationDto,
     UpdateReservationDto,
-    CheckOutPaymentDto
 } from './FrontDesk/reservation';
 
-export type { RoomStatus, RoomType } from './FrontDesk/room';
-export type { GuestProfile, GuestType } from './FrontDesk/guest';
+// export type { RoomStatus, RoomType } from './FrontDesk/room';
+// export type { GuestProfile, GuestType } from './FrontDesk/guest';
 
 // Housekeeping module types
-export type { HousekeepingTask, TaskStatus, TaskPriority } from './Housekeeping/task';
+// export type { HousekeepingTask, TaskStatus, TaskPriority } from './Housekeeping/task';
 
 // ============================================================================
 // Note: Global PMS namespace moved to global.d.ts

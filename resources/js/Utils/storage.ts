@@ -97,7 +97,7 @@ export function clearStorage(options: StorageOptions = {}): void {
 
     try {
         const keys = storage.keys();
-        keys.forEach(key => {
+        keys.forEach((key: string) => {
             if (key.startsWith(prefix)) {
                 storage.removeItem(key);
             }

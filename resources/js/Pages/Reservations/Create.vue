@@ -220,7 +220,7 @@
     import { computed, watch } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
-    import type { ReservationStatus, HotelOption, GuestOption, RoomOption } from '@/types/FrontDesk/reservation';
+    import type { ReservationStatus, HotelOption, GuestOption, RoomOption } from '@/Types/FrontDesk/reservation';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
 
     // ─── Props ───────────────────────────────────────────────

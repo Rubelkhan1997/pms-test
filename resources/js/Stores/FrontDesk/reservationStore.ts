@@ -1,14 +1,32 @@
 import { defineStore } from 'pinia';
 import apiClient from '@/Services/apiClient';
 import { getErrorMessage } from '@/Utils';
-import type { ApiResponse } from '@/types/api';
+import type { ApiResponse } from '@/Types/api';
 import type {
     Reservation,
     ReservationFilters,
     ReservationPagination,
     CreateReservationDto,
     UpdateReservationDto,
-} from '@/types/FrontDesk/reservation';
+} from '@/Types/FrontDesk/reservation';
+
+// ─────────────────────────────────────────────────────────
+// Constants
+// ─────────────────────────────────────────────────────────
+const DEFAULT_PAGINATION: ReservationPagination = {
+    current_page: 1,
+    per_page: 15,
+    total: 0,
+    last_page: 1,
+};
+
+const DEFAULT_FILTERS: ReservationFilters = {
+    status: '',
+    check_in_date: '',
+    check_out_date: '',
+    search: '',
+    per_page: 15,
+};
 
 // ─────────────────────────────────────────────────────────
 // Store
@@ -22,19 +40,8 @@ export const useReservationsStore = defineStore('reservations', {
         loadingList: false,
         loadingDetail: false,
         error: null as string | null,
-        filters: {
-            status: '',
-            check_in_date: '',
-            check_out_date: '',
-            search: '',
-            per_page: 5,
-        } as ReservationFilters,
-        pagination: {
-            current_page: 1,
-            per_page: 5,
-            total: 0,
-            last_page: 1,
-        } as ReservationPagination,
+        filters: { ...DEFAULT_FILTERS } as ReservationFilters,
+        pagination: { ...DEFAULT_PAGINATION } as ReservationPagination,
     }),
 
     // ─────────────────────────────────────────────────────
@@ -60,13 +67,7 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         resetFilters(): void {
-            this.filters = {
-                status: '',
-                check_in_date: '',
-                check_out_date: '',
-                search: '',
-                per_page: this.filters.per_page || 15,  // ✅ Keep current per_page
-            } as ReservationFilters;
+            this.filters = { ...DEFAULT_FILTERS };
         },
 
         async fetchAll(page: number = 1): Promise<void> {
@@ -77,7 +78,7 @@ export const useReservationsStore = defineStore('reservations', {
                     params: { 
                         ...this.filters, 
                         page,
-                        per_page: this.filters.per_page || 15 
+                        per_page: this.filters.per_page 
                     },
                 });
                 this.reservations = data.data as Reservation[];
@@ -231,8 +232,8 @@ export const useReservationsStore = defineStore('reservations', {
                 loadingList: false,
                 loadingDetail: false,
                 error: null,
-                filters: { status: '', check_in_date: '', check_out_date: '', search: '', per_page: 15 },
-                pagination: { current_page: 1, per_page: 15, total: 0, last_page: 1 },
+                filters: { ...DEFAULT_FILTERS },
+                pagination: { ...DEFAULT_PAGINATION },
             });
         },
     },

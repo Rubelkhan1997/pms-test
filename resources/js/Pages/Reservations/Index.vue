@@ -103,17 +103,6 @@
                 </div>
             </div>
 
-            <!-- ─── Messages ───────────────────────────────────────── -->
-            <div v-if="successMessage" class="p-4 bg-green-100 text-green-800 rounded-lg flex justify-between">
-                <span>{{ successMessage }}</span>
-                <button @click="clearSuccess" class="text-green-600 hover:text-green-800">✕</button>
-            </div>
-
-            <div v-if="error" class="p-4 bg-red-100 text-red-800 rounded-lg flex justify-between">
-                <span>{{ error }}</span>
-                <button @click="clearError" class="text-red-600 hover:text-red-800">✕</button>
-            </div>
-
             <!-- ─── Table ──────────────────────────────────────────── -->
             <div class="bg-white rounded-lg shadow overflow-hidden">
                 <div class="overflow-x-auto">
@@ -265,26 +254,23 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useReservations } from '@/Composables/FrontDesk/useReservations';
-import type { ReservationFilters } from '@/types/FrontDesk/reservation';
+import type { ReservationFilters, Reservation } from '@/Types/FrontDesk/reservation';
 import { formatDate } from '@/Utils/date';
 import { formatStatus } from '@/Utils/format';
 
 const {
     reservations,
-    loading,
-    successMessage,
-    error,
+    loading, 
     pagination,
     pendingCount,
     confirmedCount,
     checkedInCount,
     todayCheckIns,
+    
     fetchAll,
     deleteReservation,
     setFilters,
     resetFilters,
-    clearError,
-    clearSuccess,
 } = useReservations();
 
 const searchQuery = ref('');
@@ -326,7 +312,7 @@ function handleResetFilters() {
     fetchAll(1);
 }
 
-async function handleDelete(res: PMS.Reservation) {
+async function handleDelete(res: Reservation) {
     if (!confirm(`Delete reservation: ${res.reference}? This cannot be undone.`)) return;
     try {
         await deleteReservation(res.id);

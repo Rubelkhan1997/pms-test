@@ -3,6 +3,8 @@
  * Number, currency, and string formatting
  */
 
+import { formatDate } from './date';
+
 /**
  * Format number with thousand separators
  */
