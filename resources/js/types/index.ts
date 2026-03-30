@@ -11,7 +11,11 @@
  */
 
 // Common types
-export type { User, UserRole } from './common';
+export type { 
+    User, 
+    UserRole 
+} from './common';
+
 export type {
     ApiResponse,
     PaginatedResponse,
@@ -30,7 +34,11 @@ export type {
 } from './api';
 
 // Payment types
-export type { Payment, PaymentMethod, PaymentStatus } from './payment';
+export type { 
+    Payment, 
+    PaymentMethod, 
+    PaymentStatus 
+} from './payment';
 
 // FrontDesk module types
 export type {
@@ -44,8 +52,15 @@ export type {
     UpdateReservationDto,
 } from './FrontDesk/reservation';
 
-// export type { RoomStatus, RoomType } from './FrontDesk/room';
-// export type { GuestProfile, GuestType } from './FrontDesk/guest';
+// FrontDesk module types
+export type {
+    LoginDto,
+    RegisterDto,
+    AuthState,
+    AuthResponse,
+} from './Auth/auth';
+
+
 
 // Housekeeping module types
 // export type { HousekeepingTask, TaskStatus, TaskPriority } from './Housekeeping/task';

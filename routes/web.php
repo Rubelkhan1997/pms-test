@@ -1,8 +1,11 @@
 <?php
 
 declare(strict_types=1);
- 
-use App\Modules\FrontDesk\Controllers\Web\ReservationController as FrontDeskController; 
+
+use App\Modules\Auth\Controllers\AuthController;
+use App\Modules\Auth\Middleware\Authenticate;
+use App\Modules\Auth\Middleware\RedirectIfAuthenticated;
+use App\Modules\FrontDesk\Controllers\Web\ReservationController as FrontDeskController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -18,10 +21,25 @@ Route::get('/dashboard', function () {
 })->name('dashboard');
 
 // ─────────────────────────────────────────────────────────
+// Authentication Routes
+// ─────────────────────────────────────────────────────────
+Route::middleware(RedirectIfAuthenticated::class)->group(function (): void {
+    // Login routes
+    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [AuthController::class, 'login']);
+
+    // Register routes
+    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
+    Route::post('/register', [AuthController::class, 'register']);
+});
+
+// Logout route (requires auth)
+Route::middleware(Authenticate::class)->post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+// ─────────────────────────────────────────────────────────
 // Reservations Routes (FrontDesk) - WEB ONLY (Page Views)
 // ─────────────────────────────────────────────────────────
-// middleware(['web', 'auth'])->
-Route::prefix('reservations')->name('reservations.')->group(function (): void {
+Route::middleware(Authenticate::class)->prefix('reservations')->name('reservations.')->group(function (): void {
     // List all reservations (page view)
     Route::get('/', [FrontDeskController::class, 'index'])->name('index');
 

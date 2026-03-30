@@ -18,11 +18,17 @@ createInertiaApp({
 
     resolve: (name) => {
         const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
-        const page = pages[`./Pages/${name}.vue`] as DefineComponent;
+        const pageModule = pages[`./Pages/${name}.vue`];
+
+        if (!pageModule) {
+            throw new Error(`Page "${name}" not found`);
+        }
+
+        const page = pageModule.default || pageModule;
 
         // Set default layout if not defined on the page
-        if (!page.default.layout) {
-            page.default.layout = AppLayout;
+        if (!page.layout) {
+            page.layout = AppLayout;
         }
 
         return page;
