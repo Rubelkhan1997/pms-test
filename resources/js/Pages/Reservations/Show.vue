@@ -162,15 +162,9 @@
     import { computed, onMounted, inject } from 'vue';
     import { router } from '@inertiajs/vue3';
     import { HotelLayout } from '@/Layouts';
-
-    // Composables import
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
-
-    // Utils  import
     import { formatDate, calculateNights } from '@/Utils/date';
     import { formatStatus } from '@/Utils/format';
-
-    // Types import
     import type { confirm as ConfirmType } from '@/Plugins/confirm';
 
     // ─── Inject Confirm ─────────────────────────────────────

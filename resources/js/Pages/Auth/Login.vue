@@ -103,18 +103,18 @@
 
 <script setup lang="ts">
     import { computed } from 'vue';
-    import { useForm, usePage, router } from '@inertiajs/vue3';
+    import { useForm, router } from '@inertiajs/vue3';
     import { useAuth } from '@/Composables/Auth/useAuth';
+    import { hasToken } from '@/Helpers/auth';
     import { required, email as emailRule, validateInertiaForm } from '@/Utils/validation';
-    import type { LoginDto } from '@/Types/Auth';
+    import type { LoginDto } from '@/Types/Auth/auth';
 
     // ─── Layout ──────────────────────────────────────────────
     defineOptions({ layout: null });
 
-    // ─── Guard: already authenticated ────────────────────────
-    const page = usePage();
-    if ((page.props as any).auth?.user) {
-        router.visit('/dashboard', { replace: true });
+    // ─── Guard: already authenticated (check token) ──────────
+    if (hasToken()) {
+        router.visit('/dashboard');
     }
 
     // ─── Composable ──────────────────────────────────────────
@@ -140,8 +140,12 @@
         }
 
         try {
-            await login({ email: form.email, password: form.password, remember: form.remember });
-            router.visit('/dashboard');
+            const result = await login({ email: form.email, password: form.password, remember: form.remember });
+            
+            // Redirect to dashboard on successful registration
+            if (result?.status == 1) {
+                router.visit('/dashboard');
+            } 
         } catch (err: unknown) {
             const apiErr = err as Record<string, any>;
 

@@ -1,10 +1,12 @@
 /**
- * Helper Functions - Laravel Style
+ * Helper Functions - Pure JavaScript/TypeScript
  *
- * Common composable helpers for reusability across the application.
- * Follows Laravel helper pattern - centralized, reusable utilities.
+ * Non-Vue helper functions for reusability across the application.
+ * These are pure functions with no Vue dependencies.
  */
 
-export { useLoading } from './useLoading';
-export { useMessage } from './useMessage';
-export { usePolling } from './usePolling';
+// Auth helpers
+export * from './auth';
+
+// Error helpers
+export * from './error';

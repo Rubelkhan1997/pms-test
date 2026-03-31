@@ -263,15 +263,9 @@
 
 <script setup lang="ts">
     import { ref, reactive, onMounted, inject } from 'vue';
-
-    // Composables import
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
-
-    // Utils  import
     import { formatStatus } from '@/Utils/format';
     import { formatDate } from '@/Utils/date';
-
-    // Types import
     import type { confirm as ConfirmType } from '@/Plugins/confirm';
     import type { ReservationFilters, Reservation } from '@/Types/FrontDesk/reservation';
 

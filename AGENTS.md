@@ -13,6 +13,11 @@
 4. API response format always: { status: 1|0, data: ..., message: string }
 5. No new libraries unless explicitly asked
 6. snake_case for PHP, camelCase for TypeScript/JS
+7. Helpers/ = Pure JavaScript/TypeScript functions
+8. Composables/ = Vue dependent (reactive)
+9. Utils/ = Utility functions
+10. Plugins/ = Vue plugins
+
 
 ## Reference Files (Always Follow These Patterns)
 - Controller: app/Modules/FrontDesk/Controllers/Api/V1/ReservationController.php
@@ -27,5 +32,7 @@
 - One file at a time
 - Start each file with: `// FILE: path/to/file`
 ```
+
+
 
 Follow the rules in AGENTS.md and analyze the reference files before writing.

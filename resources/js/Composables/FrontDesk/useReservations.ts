@@ -1,7 +1,7 @@
 import { computed, onMounted, onUnmounted, inject } from 'vue';
 import { useReservationsStore } from '@/Stores/FrontDesk/reservationStore';
-import { useLoading, usePolling } from '@/Helpers';
-import { getApiError } from '@/Utils';
+import { useLoading, usePolling } from '@/Composables';
+import { getApiError } from '@/Helpers/error';
 import type { ApiResponse } from '@/Types/api';
 import type { toast as ToastType } from '@/Plugins/toast';
 import type {

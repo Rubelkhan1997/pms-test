@@ -128,18 +128,18 @@
 
 <script setup lang="ts">
     import { computed } from 'vue';
-    import { useForm, usePage, router } from '@inertiajs/vue3';
+    import { useForm, router } from '@inertiajs/vue3';
     import { useAuth } from '@/Composables/Auth/useAuth';
+    import { hasToken } from '@/Helpers/auth';
     import { required, email as emailRule, minLength, confirmed, validateInertiaForm } from '@/Utils/validation';
-    import type { RegisterDto } from '@/Types/Auth';
+    import type { RegisterDto } from '@/Types/Auth/auth';
 
     // ─── Layout ──────────────────────────────────────────────
     defineOptions({ layout: null });
 
-    // ─── Guard: already authenticated ────────────────────────
-    const page = usePage();
-    if ((page.props as any).auth?.user) {
-        router.visit('/dashboard', { replace: true });
+    // ─── Guard: already authenticated (check token) ──────────
+    if (hasToken()) {
+        router.visit('/dashboard');
     }
 
     // ─── Composable ──────────────────────────────────────────
@@ -172,12 +172,11 @@
                 role:                  form.role,
             });
 
-            // Persist token for web middleware if returned
-            if (result?.token) {
-                document.cookie = `auth_token=${result.token}; path=/; max-age=${60 * 60 * 24}`;
+            // Redirect to dashboard on successful registration
+            if (result?.status == 1) {
+                router.visit('/dashboard');
             }
 
-            router.visit('/dashboard');
         } catch (err: unknown) {
             const apiErr = err as Record<string, any>;
 

@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
-      "Bash(php *)"
+      "Bash(php *)",
+      "Bash(move *)"
     ]
   },
   "$version": 3

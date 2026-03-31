@@ -1,10 +1,10 @@
 import { computed, onMounted, onUnmounted, inject } from 'vue';
 import { useAuthStore } from '@/Stores/Auth/authStore';
-import { useLoading } from '@/Helpers';
-import { getApiError } from '@/Utils';
+import { useLoading } from '@/Composables/useLoading';
+import { getApiError } from '@/Helpers/error';
 import type { ApiResponse } from '@/Types/api';
 import type { toast as ToastType } from '@/Plugins/toast';
-import type { LoginDto, RegisterDto, User, LoginResponse, RegisterResponse } from '@/Types/Auth';
+import type { LoginDto, RegisterDto, User, LoginResponse, RegisterResponse } from '@/Types/Auth/auth';
 
 // ─────────────────────────────────────────────────────────
 // Types
@@ -68,9 +68,9 @@ export function useAuth(options: UseAuthOptions = {}) {
             const result = await store.login(dto);
             // Show toast based on API response status
             if (result.status === 1) {
-                toast.success(result.message || 'Welcome back!');
+                toast.success(result.message);
             } else {
-                toast.error(result.message || 'Login failed');
+                toast.error(result.message);
             }
             return result;
         } catch (err: unknown) {
@@ -90,9 +90,9 @@ export function useAuth(options: UseAuthOptions = {}) {
             const result = await store.register(dto);
             // Show toast based on API response status
             if (result.status === 1) {
-                toast.success(result.message || 'Account created successfully!');
+                toast.success(result.message);
             } else {
-                toast.error(result.message || 'Registration failed');
+                toast.error(result.message);
             }
             return result;
         } catch (err: unknown) {
@@ -112,9 +112,9 @@ export function useAuth(options: UseAuthOptions = {}) {
             const result = await store.logout();
             // Show toast based on API response status
             if (result.status === 1) {
-                toast.success(result.message || 'Logged out successfully');
+                toast.success(result.message);
             } else {
-                toast.error(result.message || 'Logout failed');
+                toast.error(result.message);
             }
             return result;
         } catch (err: unknown) {

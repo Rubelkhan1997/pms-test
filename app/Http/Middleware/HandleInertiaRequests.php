@@ -39,13 +39,7 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
 
             'auth' => [
-                'user' => $request->user() ? [
-                    'id' => $request->user()->id,
-                    'name' => $request->user()->name,
-                    'email' => $request->user()->email,
-                    'role' => $request->user()->role ?? 'staff',
-                    'email_verified_at' => $request->user()->email_verified_at,
-                ] : null,
+                'user' => $this->getUserFromToken($request),
             ],
 
             'flash' => [
@@ -53,5 +47,44 @@ class HandleInertiaRequests extends Middleware
                 'error' => session('error'),
             ],
         ];
+    }
+
+    /**
+     * Get user from token cookie or session
+     */
+    private function getUserFromToken(Request $request): ?array
+    {
+        // Try to get token from cookie
+        $token = $request->cookie('auth_token');
+
+        if ($token) {
+            // Find user by token using Sanctum
+            $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+            
+            if ($accessToken && $accessToken->tokenable instanceof \App\Models\User) {
+                $user = $accessToken->tokenable;
+                
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role ?? 'staff',
+                    'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+                ];
+            }
+        }
+
+        // Fallback to session-based auth
+        if ($request->user()) {
+            return [
+                'id' => $request->user()->id,
+                'name' => $request->user()->name,
+                'email' => $request->user()->email,
+                'role' => $request->user()->role ?? 'staff',
+                'email_verified_at' => $request->user()->email_verified_at?->toIso8601String(),
+            ];
+        }
+
+        return null;
     }
 }
