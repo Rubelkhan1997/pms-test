@@ -106,10 +106,8 @@
     const page = usePage();
     
     onMounted(() => {
-        // Initialize auth state from Inertia shared props
+        // Initialize auth state from Inertia shared props (HandleInertiaRequests)
         const authUser = (page.props as any).auth?.user ?? null;
-        
-            console.log(authUser);
 
         if (authUser) {
             initializeFromInertia(authUser);
