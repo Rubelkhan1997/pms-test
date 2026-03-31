@@ -2,6 +2,8 @@
  * Auth Types
  */
 
+import type { ApiResponse } from '@/Types/api';
+
 // ============================================================================
 // User Types
 // ============================================================================
@@ -41,14 +43,19 @@ export interface AuthState {
     user: User | null;
     isAuthenticated: boolean;
     loading: boolean;
+    loadingAuth: boolean;
     error: string | null;
 }
 
 // ============================================================================
-// API Response Types
+// Auth Response Types
 // ============================================================================
-export interface AuthResponse {
-    success: boolean;
-    user?: User;
-    message?: string;
+export interface AuthUserResponse {
+    user: User;
+    token: string;
 }
+
+export type LoginResponse = ApiResponse<AuthUserResponse>;
+export type RegisterResponse = ApiResponse<AuthUserResponse>;
+export type MeResponse = ApiResponse<User>;
+export type LogoutResponse = ApiResponse<void>;

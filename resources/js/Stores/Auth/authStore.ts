@@ -1,5 +1,16 @@
 import { defineStore } from 'pinia';
-import type { User, AuthState } from '@/Types/Auth';
+import apiClient from '@/Services/apiClient';
+import { getErrorMessage } from '@/Utils';
+import type {
+    User,
+    AuthState,
+    LoginDto,
+    RegisterDto,
+    LoginResponse,
+    RegisterResponse,
+    MeResponse,
+    LogoutResponse,
+} from '@/Types/Auth';
 
 // ─────────────────────────────────────────────────────────
 // Initial State
@@ -8,6 +19,7 @@ const createInitialState = (): AuthState => ({
     user: null,
     isAuthenticated: false,
     loading: false,
+    loadingAuth: false,
     error: null,
 });
 
@@ -49,6 +61,9 @@ export const useAuthStore = defineStore('auth', {
          * Clear user data (logout)
          */
         clearUser(): void {
+            // Remove token from localStorage
+            localStorage.removeItem('auth_token');
+            
             this.$patch({
                 user: null,
                 isAuthenticated: false,
@@ -64,6 +79,13 @@ export const useAuthStore = defineStore('auth', {
         },
 
         /**
+         * Set auth loading state
+         */
+        setLoadingAuth(loading: boolean): void {
+            this.loadingAuth = loading;
+        },
+
+        /**
          * Set error
          */
         setError(error: string | null): void {
@@ -75,6 +97,109 @@ export const useAuthStore = defineStore('auth', {
          */
         clearError(): void {
             this.error = null;
+        },
+
+        /**
+         * Login user
+         */
+        async login(dto: LoginDto): Promise<LoginResponse> {
+            this.loadingAuth = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.post('/auth/login', dto);
+                const response = data as LoginResponse;
+
+                if (response.status === 1 && response.data) {
+                    this.setUser(response.data.user);
+                    // Save token to localStorage
+                    if (response.data.token) {
+                        localStorage.setItem('auth_token', response.data.token);
+                    }
+                }
+
+                return response;
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Login failed');
+                throw err;
+            } finally {
+                this.loadingAuth = false;
+            }
+        },
+
+        /**
+         * Register new user
+         */
+        async register(dto: RegisterDto): Promise<RegisterResponse> {
+            this.loadingAuth = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.post('/auth/register', dto);
+                const response = data as RegisterResponse;
+
+                if (response.status === 1 && response.data) {
+                    this.setUser(response.data.user);
+                    // Save token to localStorage
+                    if (response.data.token) {
+                        localStorage.setItem('auth_token', response.data.token);
+                    }
+                }
+
+                return response;
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Registration failed');
+                throw err;
+            } finally {
+                this.loadingAuth = false;
+            }
+        },
+
+        /**
+         * Logout user
+         */
+        async logout(): Promise<LogoutResponse> {
+            this.loading = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.post('/auth/logout');
+                const response = data as LogoutResponse;
+
+                if (response.status === 1) {
+                    this.clearUser();
+                }
+
+                return response;
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Logout failed');
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        /**
+         * Fetch current user
+         */
+        async fetchUser(): Promise<MeResponse> {
+            this.loading = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.get('/auth/me');
+                const response = data as MeResponse;
+
+                if (response.status === 1 && response.data) {
+                    this.setUser(response.data);
+                } else {
+                    this.clearUser();
+                }
+
+                return response;
+            } catch (err: unknown) {
+                this.clearUser();
+                this.error = getErrorMessage(err, 'Failed to fetch user');
+                throw err;
+            } finally {
+                this.loading = false;
+            }
         },
 
         /**

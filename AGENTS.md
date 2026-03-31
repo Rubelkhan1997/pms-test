@@ -1,0 +1,31 @@
+# AI Coding Rules
+
+## Stack
+- Laravel 12, PHP 8.3
+- Vue 3 + TypeScript + Inertia.js v2
+- Pinia, Tailwind CSS
+- Sanctum session auth
+
+## Rules
+1. Always analyze existing code before writing anything new
+2. Match exact coding style, naming, and patterns from existing files
+3. Follow Module structure: app/Modules/[Module]/Controllers/Api/V1/
+4. API response format always: { status: 1|0, data: ..., message: string }
+5. No new libraries unless explicitly asked
+6. snake_case for PHP, camelCase for TypeScript/JS
+
+## Reference Files (Always Follow These Patterns)
+- Controller: app/Modules/FrontDesk/Controllers/Api/V1/ReservationController.php
+- Service: app/Modules/FrontDesk/Services/ReservationService.php
+- Store: resources/js/Stores/FrontDesk/reservationStore.ts
+- Composable: resources/js/Composables/FrontDesk/useReservations.ts
+- Page: resources/js/Pages/FrontDesk/Reservations/Index.vue
+- Types: resources/js/Types/FrontDesk/reservation.ts
+
+## Output Rules
+- Code only — no unnecessary explanation
+- One file at a time
+- Start each file with: `// FILE: path/to/file`
+```
+
+Follow the rules in AGENTS.md and analyze the reference files before writing.

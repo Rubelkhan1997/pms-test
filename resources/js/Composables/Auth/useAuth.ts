@@ -1,15 +1,30 @@
-import { computed, inject } from 'vue';
+import { computed, onMounted, onUnmounted, inject } from 'vue';
 import { useAuthStore } from '@/Stores/Auth/authStore';
-import { useForm } from '@inertiajs/vue3';
 import { useLoading } from '@/Helpers';
+import { getApiError } from '@/Utils';
+import type { ApiResponse } from '@/Types/api';
 import type { toast as ToastType } from '@/Plugins/toast';
-import type { LoginDto, RegisterDto, User } from '@/Types/Auth/auth';
+import type { LoginDto, RegisterDto, User, LoginResponse, RegisterResponse } from '@/Types/Auth';
+
+// ─────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────
+
+export interface UseAuthOptions {
+    autoFetch?: boolean;
+    pollingInterval?: number;
+}
 
 // ─────────────────────────────────────────────────────────
 // Composable
 // ─────────────────────────────────────────────────────────
 
-export function useAuth() {
+export function useAuth(options: UseAuthOptions = {}) {
+
+    const {
+        autoFetch = false,
+        pollingInterval = 0,
+    } = options;
 
     // ─── Store (internal) ────────────────────────────────
     const store = useAuthStore();
@@ -18,22 +33,8 @@ export function useAuth() {
     const toast = inject('toast') as typeof ToastType;
 
     // ─── UI Helpers ──────────────────────────────────────
-    const { loading, start, stop } = useLoading();
-
-    // ─── Inertia Forms ───────────────────────────────────
-    const loginForm = useForm<LoginDto>({
-        email: '',
-        password: '',
-        remember: false,
-    });
-
-    const registerForm = useForm<RegisterDto>({
-        name: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
-        role: 'staff',
-    });
+    const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
+    const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
 
     // ─────────────────────────────────────────────────────
     // Reactive State
@@ -42,6 +43,9 @@ export function useAuth() {
     const user = computed(() => store.user);
     const isAuthenticated = computed(() => store.isAuthenticated);
     const error = computed(() => store.error);
+
+    const loading = computed(() => _loading.value || store.loading);
+    const loadingAuth = computed(() => _saving.value || store.loadingAuth);
 
     // ─── Derived (Store Getters) ─────────────────────────
     const isAdmin = computed(() => store.isAdmin);
@@ -58,75 +62,83 @@ export function useAuth() {
     /**
      * Login user
      */
-    async function login(dto: LoginDto): Promise<void> {
-        start();
+    async function login(dto: LoginDto): Promise<LoginResponse> {
+        startSaving();
         try {
-            await new Promise<void>((resolve, reject) => {
-                loginForm.post('/login', {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        toast.success('Welcome back!');
-                        resolve();
-                    },
-                    onError: (errors) => {
-                        toast.error(errors.email || 'Login failed. Please check your credentials.');
-                        reject(new Error('Login failed'));
-                    },
-                    onFinish: () => {
-                        stop();
-                    },
-                });
-            });
-        } catch {
-            // Error handled in onError
+            const result = await store.login(dto);
+            // Show toast based on API response status
+            if (result.status === 1) {
+                toast.success(result.message || 'Welcome back!');
+            } else {
+                toast.error(result.message || 'Login failed');
+            }
+            return result;
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Login failed'));
+            throw err;
+        } finally {
+            stopSaving();
         }
     }
 
     /**
      * Register new user
      */
-    async function register(dto: RegisterDto): Promise<void> {
-        start();
+    async function register(dto: RegisterDto): Promise<RegisterResponse> {
+        startSaving();
         try {
-            await new Promise<void>((resolve, reject) => {
-                registerForm.post('/register', {
-                    preserveScroll: true,
-                    onSuccess: () => {
-                        toast.success('Account created successfully!');
-                        resolve();
-                    },
-                    onError: (errors) => {
-                        const firstError = Object.values(errors)[0] || 'Registration failed.';
-                        toast.error(firstError as string);
-                        reject(new Error('Registration failed'));
-                    },
-                    onFinish: () => {
-                        stop();
-                    },
-                });
-            });
-        } catch {
-            // Error handled in onError
+            const result = await store.register(dto);
+            // Show toast based on API response status
+            if (result.status === 1) {
+                toast.success(result.message || 'Account created successfully!');
+            } else {
+                toast.error(result.message || 'Registration failed');
+            }
+            return result;
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Registration failed'));
+            throw err;
+        } finally {
+            stopSaving();
         }
     }
 
     /**
      * Logout user
      */
-    function logout(): void {
-        start();
-        registerForm.post('/logout', {
-            preserveScroll: true,
-            onSuccess: () => {
-                toast.success('Logged out successfully.');
-            },
-            onError: () => {
-                toast.error('Logout failed.');
-            },
-            onFinish: () => {
-                stop();
-            },
-        });
+    async function logout(): Promise<ApiResponse<void>> {
+        startLoading();
+        try {
+            const result = await store.logout();
+            // Show toast based on API response status
+            if (result.status === 1) {
+                toast.success(result.message || 'Logged out successfully');
+            } else {
+                toast.error(result.message || 'Logout failed');
+            }
+            return result;
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Logout failed'));
+            throw err;
+        } finally {
+            stopLoading();
+        }
+    }
+
+    /**
+     * Fetch current user
+     */
+    async function fetchUser(): Promise<ApiResponse<User>> {
+        startLoading();
+        try {
+            const result = await store.fetchUser();
+            return result;
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Failed to fetch user'));
+            throw err;
+        } finally {
+            stopLoading();
+        }
     }
 
     /**
@@ -151,29 +163,22 @@ export function useAuth() {
     }
 
     /**
-     * Clear login form errors
+     * Clear error
      */
-    function clearLoginErrors(): void {
-        loginForm.clearErrors();
+    function clearError(): void {
         store.clearError();
     }
 
-    /**
-     * Clear register form errors
-     */
-    function clearRegisterErrors(): void {
-        registerForm.clearErrors();
-        store.clearError();
-    }
+    // ─── Lifecycle ───────────────────────────────────────
 
-    /**
-     * Reset forms
-     */
-    function resetForms(): void {
-        loginForm.reset();
-        registerForm.reset();
-        clearLoginErrors();
-        clearRegisterErrors();
+    if (autoFetch) {
+        onMounted(() => {
+            fetchUser();
+        });
+
+        onUnmounted(() => {
+            // Cleanup if needed
+        });
     }
 
     // ─────────────────────────────────────────────────────
@@ -185,11 +190,8 @@ export function useAuth() {
         user,
         isAuthenticated,
         loading,
+        loadingAuth,
         error,
-
-        // Forms
-        loginForm,
-        registerForm,
 
         // Derived
         isAdmin,
@@ -203,11 +205,10 @@ export function useAuth() {
         login,
         register,
         logout,
+        fetchUser,
         hasRole,
         hasAnyRole,
         initializeFromInertia,
-        clearLoginErrors,
-        clearRegisterErrors,
-        resetForms,
+        clearError,
     };
 }

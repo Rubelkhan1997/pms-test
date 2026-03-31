@@ -1,110 +1,115 @@
 <template>
-    <div class="flex min-h-screen items-center justify-center bg-gradient-to-b from-cyan-50 to-white px-4 py-12">
+    <Head title="Register" />
+    <div class="min-h-screen bg-gradient-to-b from-cyan-50 to-white flex items-center justify-center px-4 py-12">
         <div class="w-full max-w-md">
+
             <!-- Logo / Title -->
             <div class="mb-8 text-center">
-                <h1 class="mb-2 text-3xl font-bold text-gray-800">PMS</h1>
-                <p class="text-gray-600">Property Management System</p>
+                <h1 class="mb-2 text-3xl font-bold text-slate-800">PMS</h1>
+                <p class="text-slate-600">Property Management System</p>
             </div>
 
             <!-- Register Card -->
-            <div class="rounded-2xl bg-white p-8 shadow-xl">
-                <h2 class="mb-6 text-2xl font-semibold text-gray-800">Create Account</h2>
+            <div class="bg-white rounded-lg shadow-lg p-8">
+                <h2 class="mb-6 text-2xl font-semibold text-slate-800">Create Account</h2>
 
-                <form @submit.prevent="handleSubmit">
+                <form @submit.prevent="submit" class="space-y-6">
+
                     <!-- Name -->
-                    <div class="mb-4">
-                        <label for="name" class="mb-2 block text-sm font-medium text-gray-700">
+                    <div>
+                        <label for="name" class="block text-sm font-medium text-slate-700 mb-2">
                             Full Name
                         </label>
                         <input
                             id="name"
                             v-model="form.name"
                             type="text"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
                             placeholder="John Doe"
                             autocomplete="name"
                             :class="{ 'border-red-500': form.errors.name }"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                         />
-                        <p v-if="form.errors.name" class="mt-1 text-sm text-red-600">
+                        <p v-if="form.errors.name" class="mt-1 text-sm text-red-500">
                             {{ form.errors.name }}
                         </p>
                     </div>
 
                     <!-- Email -->
-                    <div class="mb-4">
-                        <label for="email" class="mb-2 block text-sm font-medium text-gray-700">
+                    <div>
+                        <label for="email" class="block text-sm font-medium text-slate-700 mb-2">
                             Email Address
                         </label>
                         <input
                             id="email"
                             v-model="form.email"
                             type="email"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
                             placeholder="you@example.com"
                             autocomplete="email"
                             :class="{ 'border-red-500': form.errors.email }"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                         />
-                        <p v-if="form.errors.email" class="mt-1 text-sm text-red-600">
+                        <p v-if="form.errors.email" class="mt-1 text-sm text-red-500">
                             {{ form.errors.email }}
                         </p>
                     </div>
 
                     <!-- Password -->
-                    <div class="mb-4">
-                        <label for="password" class="mb-2 block text-sm font-medium text-gray-700">
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-slate-700 mb-2">
                             Password
                         </label>
                         <input
                             id="password"
                             v-model="form.password"
                             type="password"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
                             placeholder="••••••••"
                             autocomplete="new-password"
                             :class="{ 'border-red-500': form.errors.password }"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                         />
-                        <p v-if="form.errors.password" class="mt-1 text-sm text-red-600">
+                        <p v-if="form.errors.password" class="mt-1 text-sm text-red-500">
                             {{ form.errors.password }}
                         </p>
                     </div>
 
                     <!-- Confirm Password -->
-                    <div class="mb-6">
-                        <label for="password_confirmation" class="mb-2 block text-sm font-medium text-gray-700">
+                    <div>
+                        <label for="password_confirmation" class="block text-sm font-medium text-slate-700 mb-2">
                             Confirm Password
                         </label>
                         <input
                             id="password_confirmation"
                             v-model="form.password_confirmation"
                             type="password"
-                            class="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-800 placeholder-gray-400 transition-colors focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-200"
                             placeholder="••••••••"
                             autocomplete="new-password"
                             :class="{ 'border-red-500': form.errors.password_confirmation }"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                         />
-                        <p v-if="form.errors.password_confirmation" class="mt-1 text-sm text-red-600">
+                        <p v-if="form.errors.password_confirmation" class="mt-1 text-sm text-red-500">
                             {{ form.errors.password_confirmation }}
                         </p>
                     </div>
 
-                    <!-- Submit Button -->
-                    <button
-                        type="submit"
-                        class="w-full rounded-lg bg-cyan-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:bg-gray-400"
-                        :disabled="form.processing || loading"
-                    >
-                        <span v-if="form.processing || loading">Creating account...</span>
-                        <span v-else>Create Account</span>
-                    </button>
+                    <!-- Submit -->
+                    <div>
+                        <button
+                            type="submit"
+                            :disabled="isLoading"
+                            class="w-full px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {{ submitLabel }}
+                        </button>
+                    </div>
+
                 </form>
 
                 <!-- Login Link -->
                 <div class="mt-6 text-center">
-                    <p class="text-sm text-gray-600">
+                    <p class="text-sm text-slate-600">
                         Already have an account?
                         <Link
-                            :href="route('login')"
+                            href="/login"
                             class="font-medium text-cyan-600 hover:text-cyan-700 hover:underline"
                         >
                             Sign in
@@ -114,7 +119,7 @@
             </div>
 
             <!-- Footer -->
-            <p class="mt-8 text-center text-xs text-gray-500">
+            <p class="mt-8 text-center text-xs text-slate-500">
                 &copy; {{ new Date().getFullYear() }} PMS. All rights reserved.
             </p>
         </div>
@@ -122,90 +127,76 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, watch } from 'vue';
-import { Link, useForm, usePage } from '@inertiajs/vue3';
-import { inject } from 'vue';
-import type { toast as ToastType } from '@/Plugins/toast';
+    import { computed } from 'vue';
+    import { useForm, usePage, router } from '@inertiajs/vue3';
+    import { useAuth } from '@/Composables/Auth/useAuth';
+    import { required, email as emailRule, minLength, confirmed, validateInertiaForm } from '@/Utils/validation';
+    import type { RegisterDto } from '@/Types/Auth';
 
-// ─────────────────────────────────────────────────────────
-// Inject Toast
-// ─────────────────────────────────────────────────────────
-const toast = inject('toast') as typeof ToastType;
+    // ─── Layout ──────────────────────────────────────────────
+    defineOptions({ layout: null });
 
-// ─────────────────────────────────────────────────────────
-// Inertia Form
-// ─────────────────────────────────────────────────────────
-const form = useForm({
-    name: '',
-    email: '',
-    password: '',
-    password_confirmation: '',
-    role: 'staff',
-});
+    // ─── Guard: already authenticated ────────────────────────
+    const page = usePage();
+    if ((page.props as any).auth?.user) {
+        router.visit('/dashboard', { replace: true });
+    }
 
-// ─────────────────────────────────────────────────────────
-// Loading state (computed from form.processing)
-// ─────────────────────────────────────────────────────────
-const loading = computed(() => form.processing);
+    // ─── Composable ──────────────────────────────────────────
+    const { register, loadingAuth } = useAuth();
 
-// ─────────────────────────────────────────────────────────
-// Check for flash messages from Inertia
-// ─────────────────────────────────────────────────────────
-const page = usePage();
+    // ─── Form ────────────────────────────────────────────────
+    const form = useForm<RegisterDto>({
+        name:                  '',
+        email:                 '',
+        password:              '',
+        password_confirmation: '',
+        role:                  'staff',
+    });
 
-watch(
-    () => page.props.errors,
-    (errors) => {
-        if (errors && Object.keys(errors).length > 0) {
-            const firstError = Object.values(errors)[0];
-            if (firstError) {
-                toast.error(firstError as string);
+    const isLoading   = computed(() => form.processing || loadingAuth.value);
+    const submitLabel = computed(() => isLoading.value ? 'Creating account...' : 'Create Account');
+
+    // ─── Submit ──────────────────────────────────────────────
+    async function submit(): Promise<void> {
+        form.clearErrors();
+
+        if (!validateForm()) return;
+
+        try {
+            const result = await register({
+                name:                  form.name,
+                email:                 form.email,
+                password:              form.password,
+                password_confirmation: form.password_confirmation,
+                role:                  form.role,
+            });
+
+            // Persist token for web middleware if returned
+            if (result?.token) {
+                document.cookie = `auth_token=${result.token}; path=/; max-age=${60 * 60 * 24}`;
+            }
+
+            router.visit('/dashboard');
+        } catch (err: unknown) {
+            const apiErr = err as Record<string, any>;
+
+            if (apiErr?.response?.status === 422) {
+                const backendErrors: Record<string, string[]> = apiErr.response.data?.errors ?? {};
+                Object.entries(backendErrors).forEach(([key, messages]) => {
+                    form.setError(key as any, messages[0]);
+                });
             }
         }
-    },
-    { immediate: true }
-);
-
-// Check for flash success message
-watch(
-    () => page.props.flash?.success,
-    (success) => {
-        if (success) {
-            toast.success(success as string);
-        }
-    },
-    { immediate: true }
-);
-
-// ─────────────────────────────────────────────────────────
-// Redirect if already authenticated
-// ─────────────────────────────────────────────────────────
-onMounted(() => {
-    const props = page.props as any;
-    if (props.auth?.user) {
-        window.location.href = '/dashboard';
     }
-});
 
-// ─────────────────────────────────────────────────────────
-// Handle Form Submit
-// ─────────────────────────────────────────────────────────
-function handleSubmit() {
-    form.post('/register', {
-        preserveScroll: true,
-        onSuccess: () => {
-            toast.success('Account created successfully!');
-        },
-    });
-}
-
-// ─────────────────────────────────────────────────────────
-// Route helper
-// ─────────────────────────────────────────────────────────
-function route(name: string, ...params: any[]): string {
-    const routes = (window as any).Ziggy?.routes || {};
-    const routeConfig = routes[name];
-    if (!routeConfig) return `/${name}`;
-    return routeConfig.uri;
-}
+    // ─── Validation ──────────────────────────────────────────
+    function validateForm(): boolean {
+        return validateInertiaForm(form, {
+            name:                  [required],
+            email:                 [required, emailRule],
+            password:              [required, minLength(8)],
+            password_confirmation: [required, confirmed(() => form.password)],
+        });
+    }
 </script>

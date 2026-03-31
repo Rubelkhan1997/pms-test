@@ -82,6 +82,25 @@ export function maxLength(length: number) {
     });
 }
 
+/**
+ * Validate that a value matches another field's current value.
+ *
+ * Takes a getter so it always reads the live value at validation time,
+ * not a stale snapshot captured when the rule is defined.
+ *
+ * @param getTarget - A function that returns the value to match against
+ * @param message   - Optional custom error message
+ *
+ * @example
+ * password_confirmation: [required, confirmed(() => form.password)],
+ */
+export function confirmed(getTarget: () => string, message = 'Passwords do not match') {
+    return (value: string): ValidationResult => ({
+        valid: value === getTarget(),
+        message,
+    });
+}
+
 // ============================================================================
 // NUMBER VALIDATORS
 // ============================================================================
@@ -250,7 +269,7 @@ export function validateInertiaForm<T extends Record<string, any>>(
 
     for (const [field, validators] of Object.entries(rules)) {
         const value = form[field as keyof T];
-        
+
         for (const validator of validators as Array<(value: any) => ValidationResult>) {
             const result = validator(value);
             if (!result.valid) {

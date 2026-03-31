@@ -251,12 +251,11 @@
         status:         'pending' as ReservationStatus,
         notes:          '',
     });
-
-    // ✅ Fix: template logic → computed-এ রাখা হয়েছে
+ 
     const isSaving    = computed(() => form.processing || saving.value);
     const submitLabel = computed(() => isSaving.value ? 'Creating...' : 'Create Reservation');
 
-    // ✅ Fix: check_in_date বদলালে check_out_date re-validate হবে
+    // check_in_date বদলালে check_out_date re-validate হবে
     watch(() => form.check_in_date, () => {
         if (form.check_out_date) validateCheckOutDate();
     });

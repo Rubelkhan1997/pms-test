@@ -45,7 +45,7 @@ export const useReservationsStore = defineStore('reservations', {
     }),
 
     // ─────────────────────────────────────────────────────
-    // Getters — explicit return type দেওয়া হয়েছে
+    // Getters
     // ─────────────────────────────────────────────────────
     getters: {
         pendingCount: (state): number => state.reservations.filter(r => r.status === 'pending').length,

@@ -27,7 +27,8 @@ createInertiaApp({
         const page = pageModule.default || pageModule;
 
         // Set default layout if not defined on the page
-        if (!page.layout) {
+        // Pages can set layout: null to disable layout (e.g., Login, Register)
+        if (page.layout === undefined) {
             page.layout = AppLayout;
         }
 

@@ -13,11 +13,14 @@ use Illuminate\Support\Facades\Hash;
 class AuthService
 {
     /**
-     * Attempt to authenticate user
+     * Login user with email and password
      */
-    public function attempt(array $credentials, bool $remember = false): bool
+    public function login(string $email, string $password, bool $remember = false): bool
     {
-        return Auth::attempt($credentials, $remember);
+        return Auth::attempt([
+            'email' => $email,
+            'password' => $password,
+        ], $remember);
     }
 
     /**
