@@ -183,6 +183,7 @@ Route::middleware('auth')
 - Setup store
 - API calls via `@/Services/apiClient.ts`
 - Use mapper functions to convert API ↔ UI shapes
+- For list fetch, handle `data.items` + `data.pagination` (and guard with `Array.isArray` before map/filter)
 - State shape:
 ```ts
 items: [MODEL_NAME][]
