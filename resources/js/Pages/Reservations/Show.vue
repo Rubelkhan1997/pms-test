@@ -45,8 +45,8 @@
                         <div>
                             <label class="text-sm text-slate-500">Name</label>
                             <p class="text-slate-800 font-medium">
-                                {{ reservation.guest?.first_name && reservation.guest?.last_name
-                                    ? `${reservation.guest.first_name} ${reservation.guest.last_name}`
+                                {{ reservation.guest?.firstName && reservation.guest?.lastName
+                                    ? `${reservation.guest.firstName} ${reservation.guest.lastName}`
                                     : 'N/A'
                                 }}
                             </p>
@@ -87,11 +87,11 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm text-slate-500">Check-in</label>
-                            <p class="text-slate-800 font-medium">{{ reservation.check_in_date ? formatDate(reservation.check_in_date) : 'N/A' }}</p>
+                            <p class="text-slate-800 font-medium">{{ reservation.checkInDate ? formatDate(reservation.checkInDate) : 'N/A' }}</p>
                         </div>
                         <div>
                             <label class="text-sm text-slate-500">Check-out</label>
-                            <p class="text-slate-800 font-medium">{{ reservation.check_out_date ? formatDate(reservation.check_out_date) : 'N/A' }}</p>
+                            <p class="text-slate-800 font-medium">{{ reservation.checkOutDate ? formatDate(reservation.checkOutDate) : 'N/A' }}</p>
                         </div>
                         <div>
                             <label class="text-sm text-slate-500">Duration</label>
@@ -106,7 +106,7 @@
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm text-slate-500">Total Amount</label>
-                            <p class="text-slate-800 font-medium text-lg">৳{{ reservation.total_amount?.toLocaleString() }}</p>
+                            <p class="text-slate-800 font-medium text-lg">৳{{ reservation.totalAmount?.toLocaleString() }}</p>
                         </div>
                        
                       
@@ -127,7 +127,7 @@
                         </div>
                         <div>
                             <label class="text-sm text-slate-500">Created At</label>
-                            <p class="text-slate-800">{{ reservation.created_at ? formatDate(reservation.created_at) : 'N/A' }}</p>
+                            <p class="text-slate-800">{{ reservation.createdAt ? formatDate(reservation.createdAt) : 'N/A' }}</p>
                         </div>
                         <div v-if="reservation.notes" class="md:col-span-3">
                             <label class="text-sm text-slate-500">Notes</label>
@@ -174,10 +174,10 @@
 
     // Calculate number of nights (reusable function from Utils)
     const nights = computed(() => {
-        if (!reservation.value || !reservation.value.check_in_date || !reservation.value.check_out_date) {
+        if (!reservation.value || !reservation.value.checkInDate || !reservation.value.checkOutDate) {
             return 0;
         }
-        return calculateNights(reservation.value.check_in_date, reservation.value.check_out_date);
+        return calculateNights(reservation.value.checkInDate, reservation.value.checkOutDate);
     });
 
     // Handle Cancel

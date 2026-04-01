@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import apiClient from '@/Services/apiClient';
 import { getErrorMessage } from '@/Helpers/error';
+import { removeToken, setToken } from '@/Utils/authToken';
 import type {
     User,
     AuthState,
@@ -10,7 +11,7 @@ import type {
     RegisterResponse,
     MeResponse,
     LogoutResponse,
-} from '@/Types/Auth/';
+} from '@/Types/Auth/auth';
 
 // ─────────────────────────────────────────────────────────
 // Initial State
@@ -61,10 +62,7 @@ export const useAuthStore = defineStore('auth', {
          * Clear user data (logout)
          */
         clearUser(): void {
-            // Remove token from localStorage
-            localStorage.removeItem('auth_token');
-            // Remove cookie by setting expired date
-            document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+            removeToken();
             
             this.$patch({
                 user: null,
@@ -115,10 +113,7 @@ export const useAuthStore = defineStore('auth', {
                     this.setUser(response.data.user);
                     // Save token to localStorage AND cookie
                     if (response.data.token) {
-                        const token = response.data.token;
-                        localStorage.setItem('auth_token', token);
-                        // Save to cookie for web middleware (24 hours)
-                        document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax`;
+                        setToken(response.data.token, 1);
                     }
                 }
 
@@ -145,10 +140,7 @@ export const useAuthStore = defineStore('auth', {
                     this.setUser(response.data.user);
                     // Save token to localStorage AND cookie
                     if (response.data.token) {
-                        const token = response.data.token;
-                        localStorage.setItem('auth_token', token);
-                        // Save to cookie for web middleware (24 hours)
-                        document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax`;
+                        setToken(response.data.token, 1);
                     }
                 }
 

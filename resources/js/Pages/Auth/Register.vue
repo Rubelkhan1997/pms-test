@@ -130,7 +130,7 @@
     import { computed } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useAuth } from '@/Composables/Auth/useAuth';
-    import { hasToken } from '@/Helpers/auth';
+    import { hasToken } from '@/Utils/authToken';
     import { required, email as emailRule, minLength, confirmed, validateInertiaForm } from '@/Utils/validation';
     import type { RegisterDto } from '@/Types/Auth/auth';
 

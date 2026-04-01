@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Modules\FrontDesk\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Modules\FrontDesk\Requests\CheckOutReservationRequest;
 use App\Modules\FrontDesk\Requests\StoreReservationRequest;
 use App\Modules\FrontDesk\Resources\ReservationResource;
 use App\Modules\FrontDesk\Services\ReservationService;
@@ -33,11 +34,16 @@ class ReservationController extends Controller
 
         return response()->json([
             'status' => 1,
-            'data' => ReservationResource::collection($paginator),
-            'current_page' => $paginator->currentPage(),
-            'per_page' => $paginator->perPage(),
-            'total' => $paginator->total(),
-            'last_page' => $paginator->lastPage(),
+            'data' => [
+                'items' => ReservationResource::collection($paginator),
+                'pagination' => [
+                    'current_page' => $paginator->currentPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'last_page' => $paginator->lastPage(),
+                ],
+            ],
+            'message' => 'Reservations fetched successfully',
         ]);
     }
 
@@ -51,6 +57,7 @@ class ReservationController extends Controller
         if (!$reservation) {
             return response()->json([
                 'status' => 0,
+                'data' => null,
                 'message' => 'Reservation not found',
             ], 404);
         }
@@ -58,6 +65,7 @@ class ReservationController extends Controller
         return response()->json([
             'status' => 1,
             'data' => new ReservationResource($reservation),
+            'message' => 'Reservation fetched successfully',
         ]);
     }
 
@@ -88,6 +96,7 @@ class ReservationController extends Controller
         if (!$reservation) {
             return response()->json([
                 'status' => 0,
+                'data' => null,
                 'message'  => 'Reservation not found',
             ], 404);
         }
@@ -109,12 +118,14 @@ class ReservationController extends Controller
         if (!$deleted) {
             return response()->json([
                 'status' => 0,
+                'data' => null,
                 'message' => 'Reservation not found',
             ], 404);
         }
 
         return response()->json([
             'status' => 1,
+            'data' => null,
             'message' => 'Reservation deleted successfully',
         ]);
     }
@@ -129,6 +140,7 @@ class ReservationController extends Controller
         if (!$reservation) {
             return response()->json([
                 'status' => 0,
+                'data' => null,
                 'message' => 'Failed to check in guest',
             ], 422);
         }
@@ -143,13 +155,14 @@ class ReservationController extends Controller
     /**
      * Check out guest.
      */
-    public function checkOut(int $id, Request $request): JsonResponse
+    public function checkOut(int $id, CheckOutReservationRequest $request): JsonResponse
     {
-        $reservation = $this->service->checkOut($id, $request->only(['paid_amount', 'payment_method']));
+        $reservation = $this->service->checkOut($id, $request->validated());
 
         if (!$reservation) {
             return response()->json([
                 'status' => 0,
+                'data' => null,
                 'message' => 'Failed to check out guest',
             ], 422);
         }
@@ -171,6 +184,7 @@ class ReservationController extends Controller
         if (!$reservation) {
             return response()->json([
                 'status' => 0,
+                'data' => null,
                 'message' => 'Failed to cancel reservation',
             ], 422);
         }
@@ -182,5 +196,3 @@ class ReservationController extends Controller
         ]);
     }
 }
-
-

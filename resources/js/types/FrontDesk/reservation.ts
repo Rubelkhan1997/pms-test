@@ -11,19 +11,19 @@ export type ReservationStatus =
 
 export interface Reservation {
     id: number;
-    hotel_id: number;
-    guest_id: number;
-    room_id: number;
+    hotelId: number;
+    guestId: number;
+    roomId: number;
     reference?: string;
-    check_in_date: string;
-    check_out_date: string;
-    total_amount: number;
+    checkInDate: string;
+    checkOutDate: string;
+    totalAmount: number;
     status: ReservationStatus;
     notes?: string;
     adults?: number;
     children?: number;
     meta?: Record<string, any>;
-    created_at?: string;
+    createdAt?: string;
     
     // ✅ Relations (optional - loaded separately)
     hotel?: HotelOption;
@@ -53,29 +53,29 @@ export interface Room {
 // ============================================================================
 export interface ReservationFilters {
     status: ReservationStatus | '';
-    check_in_date: string;
-    check_out_date: string;
+    checkInDate: string;
+    checkOutDate: string;
     search: string;
-    per_page?: number;  // ✅ Add per_page filter
+    perPage?: number;
 }
 
 export interface ReservationPagination {
-    current_page: number;
-    per_page: number;
+    currentPage: number;
+    perPage: number;
     total: number;
-    last_page: number;
+    lastPage: number;
 }
 
 // ============================================================================
 // DTO Types (API Payload)
 // ============================================================================
 export interface CreateReservationDto {
-    hotel_id: number;
-    guest_id: number;        
-    room_id: number;
-    check_in_date: string;
-    check_out_date: string;
-    total_amount: number;
+    hotelId: number;
+    guestId: number;        
+    roomId: number;
+    checkInDate: string;
+    checkOutDate: string;
+    totalAmount: number;
     adults?: number;
     children?: number;
     status?: ReservationStatus;
@@ -83,12 +83,12 @@ export interface CreateReservationDto {
 }
  
 export interface UpdateReservationDto {
-    hotel_id: number;
-    guest_id: number;
-    room_id: number;
-    check_in_date?: string;
-    check_out_date?: string;
-    total_amount?: number;
+    hotelId: number;
+    guestId: number;
+    roomId: number;
+    checkInDate?: string;
+    checkOutDate?: string;
+    totalAmount?: number;
     status?: ReservationStatus;
     adults?: number;
     children?: number;
@@ -106,8 +106,8 @@ export interface HotelOption {
 
 export interface GuestOption {
     id: number;
-    first_name: string;
-    last_name: string;
+    firstName: string;
+    lastName: string;
     email?: string;
     phone?: string;
 }

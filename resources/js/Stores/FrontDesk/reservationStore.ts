@@ -1,3 +1,4 @@
+// FILE: resources/js/Stores/FrontDesk/reservationStore.ts
 import { defineStore } from 'pinia';
 import apiClient from '@/Services/apiClient';
 import { getErrorMessage } from '@/Helpers/error';
@@ -9,23 +10,35 @@ import type {
     CreateReservationDto,
     UpdateReservationDto,
 } from '@/Types/FrontDesk/reservation';
+import {
+    mapCreateReservationToApi,
+    mapReservationApiToReservation,
+    mapReservationFiltersToApi,
+    mapReservationPaginationApiToPagination,
+    mapUpdateReservationToApi,
+} from '@/Utils/Mappers/reservation';
+
+const normalizeReservations = (value: unknown): Reservation[] => (
+    Array.isArray(value) ? value : []
+);
+
 
 // ─────────────────────────────────────────────────────────
 // Constants
 // ─────────────────────────────────────────────────────────
 const DEFAULT_PAGINATION: ReservationPagination = {
-    current_page: 1,
-    per_page: 15,
+    currentPage: 1,
+    perPage: 15,
     total: 0,
-    last_page: 1,
+    lastPage: 1,
 };
 
 const DEFAULT_FILTERS: ReservationFilters = {
     status: '',
-    check_in_date: '',
-    check_out_date: '',
+    checkInDate: '',
+    checkOutDate: '',
     search: '',
-    per_page: 15,
+    perPage: 15,
 };
 
 // ─────────────────────────────────────────────────────────
@@ -48,12 +61,12 @@ export const useReservationsStore = defineStore('reservations', {
     // Getters
     // ─────────────────────────────────────────────────────
     getters: {
-        pendingCount: (state): number => state.reservations.filter(r => r.status === 'pending').length,
-        confirmedCount: (state): number => state.reservations.filter(r => r.status === 'confirmed').length,
-        checkedInCount: (state): number => state.reservations.filter(r => r.status === 'checked_in').length,
+        pendingCount: (state): number => normalizeReservations(state.reservations).filter(r => r.status === 'pending').length,
+        confirmedCount: (state): number => normalizeReservations(state.reservations).filter(r => r.status === 'confirmed').length,
+        checkedInCount: (state): number => normalizeReservations(state.reservations).filter(r => r.status === 'checked_in').length,
         todayCheckIns: (state): Reservation[] => {
             const today = new Date().toISOString().split('T')[0];
-            return state.reservations.filter(r => r.check_in_date === today);
+            return normalizeReservations(state.reservations).filter(r => r.checkInDate === today);
         },
     },
 
@@ -75,19 +88,18 @@ export const useReservationsStore = defineStore('reservations', {
             this.error = null;
             try {
                 const { data } = await apiClient.v1.get('/front-desk/reservations', {
-                    params: { 
-                        ...this.filters, 
+                    params: {
+                        ...mapReservationFiltersToApi(this.filters),
                         page,
-                        per_page: this.filters.per_page 
+                        per_page: this.filters.perPage,
                     },
                 });
-                this.reservations = data.data as Reservation[];
-                this.pagination = {
-                    current_page: data.current_page,
-                    per_page: data.per_page,
-                    total: data.total,
-                    last_page: data.last_page,
-                };
+                const payload = data?.data ?? {};
+                const items = Array.isArray(payload.items)? payload.items : Array.isArray(payload.data) ? payload.data : [];
+                const pagination = payload.pagination ?? payload.meta ?? {};
+
+                this.reservations = normalizeReservations(items).map(mapReservationApiToReservation);
+                this.pagination = mapReservationPaginationApiToPagination(pagination);
 
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch reservations');
@@ -102,7 +114,9 @@ export const useReservationsStore = defineStore('reservations', {
             this.error = null;
             try {
                 const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
-                this.selectedReservation = data.data as Reservation;
+                this.selectedReservation = data.data
+                    ? mapReservationApiToReservation(data.data)
+                    : null;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch reservation');
                 throw err;
@@ -115,15 +129,21 @@ export const useReservationsStore = defineStore('reservations', {
             this.loading = true;
             this.error = null;
             try {
-                const { data } = await apiClient.v1.post('/front-desk/reservations', payload);
-                const response = data as ApiResponse<Reservation>;
-                
+                const { data } = await apiClient.v1.post(
+                    '/front-desk/reservations',
+                    mapCreateReservationToApi(payload)
+                );
+                const response = data as ApiResponse<Record<string, any>>;
+
                 // Add to store
-                if (response.status === 1 && response.data) {
-                    this.addReservation(response.data);
+                if (Number(response.status) === 1 && response.data) {
+                    this.addReservation(mapReservationApiToReservation(response.data));
                 }
-                
-                return response;
+
+                return {
+                    ...response,
+                    data: response.data ? mapReservationApiToReservation(response.data) : null,
+                };
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to create reservation');
                 throw err;
@@ -131,20 +151,26 @@ export const useReservationsStore = defineStore('reservations', {
                 this.loading = false;
             }
         },
- 
+
         async update(id: number, payload: UpdateReservationDto): Promise<ApiResponse<Reservation>> {
             this.loading = true;
             this.error = null;
             try {
-                const { data } = await apiClient.v1.put(`/front-desk/reservations/${id}`, payload);
-                const response = data as ApiResponse<Reservation>;
-                
+                const { data } = await apiClient.v1.put(
+                    `/front-desk/reservations/${id}`,
+                    mapUpdateReservationToApi(payload)
+                );
+                const response = data as ApiResponse<Record<string, any>>;
+
                 // Update store
-                if (response.status === 1 && response.data) {
-                    this.updateReservation(id, response.data);
+                if (Number(response.status) === 1 && response.data) {
+                    this.updateReservation(id, mapReservationApiToReservation(response.data));
                 }
-                
-                return response;
+
+                return {
+                    ...response,
+                    data: response.data ? mapReservationApiToReservation(response.data) : null,
+                };
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to update reservation');
                 throw err;
@@ -152,19 +178,19 @@ export const useReservationsStore = defineStore('reservations', {
                 this.loading = false;
             }
         },
- 
+
         async cancel(id: number): Promise<ApiResponse<void>> {
             this.loading = true;
             this.error = null;
             try {
                 const { data } = await apiClient.v1.patch(`/front-desk/reservations/${id}/cancel`);
                 const response = data as ApiResponse<void>;
-                
+
                 // Update store only if successful
-                if (response.status === 1) {
-                    this.updateReservation(id, { status: 'cancelled' });
+                if (Number(response.status) === 1) {
+                    this.updateReservation(id, { status: 'cancelled' } as Partial<Reservation>);
                 }
-                
+
                 return response;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to cancel reservation');
@@ -180,12 +206,12 @@ export const useReservationsStore = defineStore('reservations', {
             try {
                 const { data } = await apiClient.v1.delete(`/front-desk/reservations/${id}`);
                 const response = data as ApiResponse<void>;
-                
+
                 // Update store only if successful
-                if (response.status === 1) {
+                if (Number(response.status) === 1) {
                     this.removeReservation(id);
                 }
-                
+
                 return response;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to delete reservation');
@@ -198,11 +224,13 @@ export const useReservationsStore = defineStore('reservations', {
         // ── Helpers (internal) ───────────────────────────
 
         addReservation(reservation: Reservation): void {
+            this.reservations = normalizeReservations(this.reservations);
             this.reservations.unshift(reservation);
             this.pagination.total++;
         },
 
         updateReservation(id: number, data: Partial<Reservation>): void {
+            this.reservations = normalizeReservations(this.reservations);
             const index = this.reservations.findIndex(r => r.id === id);
             if (index !== -1) {
                 this.reservations[index] = { ...this.reservations[index], ...data };
@@ -213,6 +241,7 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         removeReservation(id: number): void {
+            this.reservations = normalizeReservations(this.reservations);
             const index = this.reservations.findIndex(r => r.id === id);
             if (index !== -1) {
                 this.reservations.splice(index, 1);

@@ -74,7 +74,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Check-in From</label>
                         <input
-                            v-model="localFilters.check_in_date"
+                            v-model="localFilters.checkInDate"
                             @change="applyFilters"
                             type="date"
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -85,7 +85,7 @@
                     <div>
                         <label class="block text-sm font-medium text-slate-700 mb-1">Check-out To</label>
                         <input
-                            v-model="localFilters.check_out_date"
+                            v-model="localFilters.checkOutDate"
                             @change="applyFilters"
                             type="date"
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
@@ -153,8 +153,8 @@
                                 >
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-slate-900">
-                                            {{ res.guest?.first_name && res.guest?.last_name 
-                                                ? res.guest.first_name + ' ' + res.guest.last_name 
+                                            {{ res.guest?.firstName && res.guest?.lastName 
+                                                ? res.guest.firstName + ' ' + res.guest.lastName 
                                                 : 'N/A' 
                                             }}
                                         </div>
@@ -167,11 +167,11 @@
                                         <div class="text-xs text-slate-500">{{ res.room?.type || '' }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm text-slate-600">{{ formatDate(res.check_in_date) }}</div>
+                                        <div class="text-sm text-slate-600">{{ formatDate(res.checkInDate) }}</div>
                                         <div class="text-xs text-slate-500">{{ res.hotel?.name || '' }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                                        {{ formatDate(res.check_out_date) }}
+                                        {{ formatDate(res.checkOutDate) }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <span
@@ -189,7 +189,7 @@
                                         </span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                                        ৳{{ res.total_amount?.toLocaleString() || '0' }}
+                                        ৳{{ res.totalAmount?.toLocaleString() || '0' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end gap-2">
@@ -212,7 +212,7 @@
 
                 <!-- ─── Pagination ─────────────────────────────────── -->
                 <div
-                    v-if="pagination.last_page > 1"
+                    v-if="pagination.lastPage > 1"
                     class="px-6 py-4 border-t border-slate-200 flex justify-between items-center"
                 >
                     <div class="flex items-center gap-4">
@@ -220,10 +220,10 @@
                         <div class="flex items-center gap-2">
                             <label class="text-sm text-slate-500">Per Page:</label>
                             <select
-                                v-model="perPage"
-                                @change="changePerPage"
-                                class="px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
-                            >
+                            v-model="perPage"
+                            @change="changePerPage"
+                            class="px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
+                        >
                                 <option :value="5">5</option>
                                 <option :value="15">15</option>
                                 <option :value="25">25</option>
@@ -234,22 +234,22 @@
                         
                         <!-- Page Info -->
                         <div class="text-sm text-slate-500">
-                            Page {{ pagination.current_page }} of {{ pagination.last_page }}
+                            Page {{ pagination.currentPage }} of {{ pagination.lastPage }}
                             ({{ pagination.total }} total)
                         </div>
                     </div>
                     
                     <div class="flex gap-2">
                         <button
-                            @click="changePage(pagination.current_page - 1)"
-                            :disabled="pagination.current_page === 1"
+                            @click="changePage(pagination.currentPage - 1)"
+                            :disabled="pagination.currentPage === 1"
                             class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                         >
                             Previous
                         </button>
                         <button
-                            @click="changePage(pagination.current_page + 1)"
-                            :disabled="pagination.current_page === pagination.last_page"
+                            @click="changePage(pagination.currentPage + 1)"
+                            :disabled="pagination.currentPage === pagination.lastPage"
                             class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                         >
                             Next
@@ -293,17 +293,17 @@
     const perPage = ref(15);
     const localFilters = reactive<ReservationFilters>({
         status: '',
-        check_in_date: '',
-        check_out_date: '',
+        checkInDate: '',
+        checkOutDate: '',
         search: '',
-        per_page: 15,
+        perPage: 15,
     });
 
     let searchTimeout: ReturnType<typeof setTimeout>;
 
     function changePerPage() {
-        setFilters({ per_page: perPage.value });
-        fetchAll(1, { per_page: perPage.value });
+        setFilters({ perPage: perPage.value });
+        fetchAll(1, { perPage: perPage.value });
     }
 
     function debouncedSearch() {
@@ -321,8 +321,8 @@
 
     function handleResetFilters() {
         localFilters.status = '';
-        localFilters.check_in_date = '';
-        localFilters.check_out_date = '';
+        localFilters.checkInDate = '';
+        localFilters.checkOutDate = '';
         localFilters.search = '';
         resetFilters();
         fetchAll(1);
@@ -341,9 +341,9 @@
 
         try {
             await deleteReservation(res.id);
-            const targetPage = reservations.value.length === 0 && pagination.value.current_page > 1
-                ? pagination.value.current_page - 1
-                : pagination.value.current_page;
+            const targetPage = reservations.value.length === 0 && pagination.value.currentPage > 1
+                ? pagination.value.currentPage - 1
+                : pagination.value.currentPage;
             await fetchAll(targetPage);
         } catch (e) {
             console.error('Delete failed:', e);
@@ -351,7 +351,7 @@
     }
 
     function changePage(page: number) {
-        if (page < 1 || page > pagination.value.last_page) return;
+        if (page < 1 || page > pagination.value.lastPage) return;
         fetchAll(page);
     }
 

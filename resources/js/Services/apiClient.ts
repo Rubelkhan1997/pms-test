@@ -4,6 +4,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { getToken, removeToken } from '@/Utils/authToken';
 
 // Create base axios instance with default config
 function createApiClient(baseURL: string): AxiosInstance {
@@ -20,7 +21,7 @@ function createApiClient(baseURL: string): AxiosInstance {
     // Request interceptor - Add auth token
     apiClient.interceptors.request.use(
         (config) => {
-            const token = localStorage.getItem('auth_token');
+            const token = getToken();
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
@@ -36,7 +37,7 @@ function createApiClient(baseURL: string): AxiosInstance {
         (response) => response,
         (error) => {
             if (error.response?.status === 401) {
-                localStorage.removeItem('auth_token');
+                removeToken();
                 window.location.href = '/login';
             }
             return Promise.reject(error);

@@ -1,44 +1,26 @@
 /**
- * Authentication Helper Functions
+ * Authentication Helper Functions (Pure)
  */
 
 /**
- * Check if user has authentication token
- * Checks both localStorage and cookies
+ * Check if cookie string contains a token.
  */
-export function hasToken(): boolean {
-    // Check localStorage
-    if (localStorage.getItem('auth_token')) return true;
-    
-    // Check cookie
-    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('auth_token='));
-    if (cookie) return true;
-    
-    return false;
+export function hasTokenInCookie(cookieString: string, tokenKey = 'auth_token'): boolean {
+    if (!cookieString) return false;
+    return cookieString
+        .split(';')
+        .some((part) => part.trim().startsWith(`${tokenKey}=`));
 }
 
 /**
- * Get authentication token from localStorage or cookie
+ * Extract token value from cookie string.
  */
-export function getToken(): string | null {
-    // Check localStorage first
-    const localToken = localStorage.getItem('auth_token');
-    if (localToken) return localToken;
-    
-    // Check cookie
-    const cookie = document.cookie.split(';').find(c => c.trim().startsWith('auth_token='));
-    if (cookie) {
-        return cookie.split('=')[1];
-    }
-    
-    return null;
-}
+export function getTokenFromCookie(cookieString: string, tokenKey = 'auth_token'): string | null {
+    if (!cookieString) return null;
+    const cookie = cookieString
+        .split(';')
+        .find((part) => part.trim().startsWith(`${tokenKey}=`));
 
-/**
- * Remove authentication token
- */
-export function removeToken(): void {
-    localStorage.removeItem('auth_token');
-    // Remove cookie by setting expired date
-    document.cookie = 'auth_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+    if (!cookie) return null;
+    return cookie.split('=')[1] ?? null;
 }

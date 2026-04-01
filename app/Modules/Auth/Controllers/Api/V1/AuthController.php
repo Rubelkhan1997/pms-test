@@ -42,6 +42,7 @@ class AuthController extends Controller
             if (!$user) {
                 return response()->json([
                     'status' => 0,
+                    'data' => null,
                     'message' => 'Authentication failed',
                 ], 401);
             }
@@ -73,6 +74,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => 0,
+            'data' => null,
             'message' => 'Invalid credentials',
         ], 401);
     }
@@ -124,6 +126,7 @@ class AuthController extends Controller
 
         return response()->json([
             'status' => 1,
+            'data' => null,
             'message' => 'Logout successful',
         ])->withCookie(cookie()->forget('auth_token'));
     }
@@ -138,6 +141,7 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json([
                 'status' => 0,
+                'data' => null,
                 'message' => 'Unauthenticated',
             ], 401);
         }
@@ -145,6 +149,7 @@ class AuthController extends Controller
         return response()->json([
             'status' => 1,
             'data' => new UserResource($user),
+            'message' => 'User fetched successfully',
         ]);
     }
 }

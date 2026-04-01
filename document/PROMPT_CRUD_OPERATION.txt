@@ -1,79 +1,244 @@
-Create a complete CRUD module for [MODULE_NAME].
+# CRUD Module Generator
 
-### Project Architecture:
-- Pages: Inertia (web routes)
-- CRUD: REST API — axios + Sanctum session (withCredentials: true)
-- Auth: Already done (session-based)
+> Read ALL reference files before writing anything.
+> Replace every [PLACEHOLDER] before generating.
+> Generate files in the exact order listed. Wait for confirmation after each file.
 
-### Reference — Existing Patterns to Follow Exactly:
-- Controller: app/Modules/FrontDesk/Controllers/Api/V1/ReservationController.php
-- Service: app/Modules/FrontDesk/Services/ReservationService.php
-- Store: resources/js/Stores/FrontDesk/reservationStore.ts
-- Composable: resources/js/Composables/FrontDesk/useReservations.ts
-- Page: resources/js/Pages/FrontDesk/Reservations/Index.vue
-- Types: resources/js/Types/FrontDesk/reservation.ts
+---
 
-### Module Info:
-- Module Name: [MODULE_NAME]
-- Table: [TABLE_NAME]
-- Fields: [FIELD_LIST]
-- Relationships: [RELATIONSHIPS]
-- Status Enum: [STATUS_VALUES]
+## Module Info
+- Module Name:   [MODULE_NAME]      ← e.g. Housekeeping
+- Model Name:    [MODEL_NAME]       ← e.g. RoomTask
+- Table Name:    [TABLE_NAME]       ← e.g. room_tasks
+- Route Slug:    [ROUTE_SLUG]       ← e.g. room-tasks
+- Route Prefix:  [ROUTE_PREFIX]     ← e.g. housekeeping.room-tasks
+- Fields:        [FIELD_LIST]       ← e.g. title:string, room_id:foreignId, note:text|nullable
+- Relationships: [RELATIONSHIPS]    ← e.g. belongsTo Room
+- Status Enum:   [STATUS_VALUES]    ← e.g. pending, in_progress, done
+- Has Events/Jobs: [YES|NO]         ← generate Events, Listeners, Jobs if YES
 
-### Backend (Laravel 12):
-1. Model: app/Modules/[Module]/Models/[Model].php
-   - declare(strict_types=1)
-   - fillable, relationships, casts
-2. Controller: app/Modules/[Module]/Controllers/Api/V1/[Controller].php
-   - Response: { status: 1|0, data: ..., message: string }
-   - Methods: index, show, store, update, destroy
-3. Service: app/Modules/[Module]/Services/[Service].php
-   - paginate(filters), find(id), create(dto), update(id, dto), delete(id)
-4. Requests:
-   - Store[Model]Request.php
-   - Update[Model]Request.php
-5. Resource: [Model]Resource.php
-6. Routes: routes/api.php
-   - Prefix: api/v1/[slug]
-   - Middleware: auth:sanctum
+---
 
-### Frontend (Vue 3 + TypeScript + Inertia):
+## File Generation Order
+```
+Backend:
+1.  Migration
+2.  Enum ([MODEL_NAME]StatusEnum.php)
+3.  Model
+4.  Data/DTO ([MODEL_NAME]Data.php)
+5.  Store[MODEL_NAME]Request.php
+6.  Update[MODEL_NAME]Request.php
+7.  Resource ([MODEL_NAME]Resource.php)
+8.  Policy
+9.  Observer
+10. Action (Create[MODEL_NAME]Action.php)
+11. Service
+12. API Controller (Api/V1/)
+13. Web Controller (Web/) — Inertia responses only
+14. Routes (api.php + web.php)
+[If Has Events/Jobs = YES]
+15. Event ([MODEL_NAME]Created.php)
+16. Listener
+17. Job
 
-1. Types: resources/js/Types/[Module]/[module].ts
-   - [Model]Interface
-   - Create[Model]Dto, Update[Model]Dto
-   - [Model]Filters
+Frontend:
+18. Types (resources/js/Types/[MODULE_NAME]/[model_name].ts)
+19. Pinia Store
+20. Composable
+21. Index.vue   (resources/js/Pages/[MODEL_NAME_PLURAL]/)
+22. Create.vue
+23. Edit.vue
+24. Show.vue
 
-2. Pinia Store: resources/js/Stores/[Module]/[module]Store.ts
-   - State: items, selectedItem, loading, loadingList, error, pagination
-   - Actions: fetchAll, fetchById, create, update, delete
-   - Store বাইরে expose করবে না
+Tests:
+25. Feature Test (tests/Feature/[MODULE_NAME]/[MODEL_NAME]Test.php)
+```
 
-3. Composable: resources/js/Composables/[Module]/use[Module].ts
-   - useLoading() — loading, saving আলাদা
-   - inject('toast') as typeof toastUtil
-   - inject('confirm') as typeof confirmUtil
-   - autoFetch, initialFilters, pollingInterval support
-   - Delete এ confirm.show({ variant: 'danger' }) দিয়ে confirm নেবে
-   - Store encapsulate করবে
+---
 
-4. Pages:
-   - Pages/[Module]/Index.vue  — table, filters, pagination
-   - Pages/[Module]/Create.vue — form
-   - Pages/[Module]/Edit.vue   — pre-filled form
-   - Pages/[Module]/Show.vue   — detail view
+## Backend Specs
 
-5. Delete Pattern (composable-এ):
-   const ok = await confirm.show({
-       title: 'Delete [Model]?',
-       message: 'This cannot be undone.',
-       variant: 'danger',
-       confirmText: 'Delete',
-   });
-   if (!ok) return;
+### Migration
+- id, [FIELD_LIST], timestamps, softDeletes if needed
+- foreignId → constrained()
 
-### Testing (Pest PHP):
-- tests/Feature/[Module]/[Module]Test.php
-  - index, show, store, update, destroy
-  - validation error cases
-  - unauthenticated → 401
+### Enum
+```php
+<?php declare(strict_types=1);
+enum [MODEL_NAME]StatusEnum: string {
+    case Pending = 'pending';
+    // match [STATUS_VALUES]
+    public function label(): string { ... }
+}
+```
+
+### Model
+- `declare(strict_types=1)`
+- `$fillable`, `$casts` (enum cast for status), relationships typed
+- SoftDeletes if applicable
+
+### Data/DTO
+- Match pattern in `app/Modules/FrontDesk/Data/ReservationData.php`
+- Typed properties for all [FIELD_LIST]
+
+### Requests
+- `authorize()` → `$this->user()->can(...)`  
+- `rules()` fully typed  
+- UpdateRequest uses `sometimes` where appropriate
+
+### Resource
+Always output:
+```php
+'id'           => $this->id,
+'status'       => $this->status->value,
+'status_label' => $this->status->label(),
+'created_at'   => $this->created_at?->toISOString(),
+'updated_at'   => $this->updated_at?->toISOString(),
+// all [FIELD_LIST] fields
+```
+
+### Policy
+- viewAny, view, create, update, delete, restore, forceDelete
+
+### Observer
+- created, updated, deleted hooks
+- Dispatch events if [Has Events = YES]
+
+### Action
+- Single public `handle()` method
+- Receives Data object, returns Model
+
+### Service
+- `paginate(array $filters)` — filterable by [FIELD_LIST] searchable fields
+- `find(int $id): [MODEL_NAME]` — throws ModelNotFoundException
+- `create([MODEL_NAME]Data $data): [MODEL_NAME]` — uses Action
+- `update(int $id, [MODEL_NAME]Data $data): [MODEL_NAME]`
+- `delete(int $id): void`
+- DB::transaction() when writing multiple tables
+
+### API Controller
+- Thin — only: authorize, validate, call service, return response
+- Response format: `{ status: 1|0, data: ..., message: string }`
+- For pagination, return:
+```json
+{
+  "status": 1,
+  "data": {
+    "items": [],
+    "pagination": { "current_page": 1, "per_page": 15, "total": 0, "last_page": 1 }
+  },
+  "message": "..."
+}
+```
+- HTTP codes: 200/201/204/422/404
+
+### Web Controller
+- Returns Inertia responses only
+- `index()` → `Inertia::render('[MODEL_NAME_PLURAL]/Index')`
+- `create()` → `Inertia::render('[MODEL_NAME_PLURAL]/Create')`
+- `edit()` → `Inertia::render('[MODEL_NAME_PLURAL]/Edit', ['item' => ...])`
+- `show()` → `Inertia::render('[MODEL_NAME_PLURAL]/Show', ['item' => ...])`
+
+### Routes
+```php
+// api.php
+Route::middleware('auth:sanctum')
+    ->prefix('v1/[ROUTE_SLUG]')
+    ->name('[ROUTE_PREFIX].')
+    ->group(fn() => [
+        Route::get('/', [ApiController::class, 'index'])->name('index'),
+        Route::post('/', [ApiController::class, 'store'])->name('store'),
+        Route::get('/{id}', [ApiController::class, 'show'])->name('show'),
+        Route::put('/{id}', [ApiController::class, 'update'])->name('update'),
+        Route::delete('/{id}', [ApiController::class, 'destroy'])->name('destroy'),
+    ]);
+
+// web.php (Inertia)
+Route::middleware('auth')
+    ->prefix('[ROUTE_SLUG]')
+    ->name('[ROUTE_PREFIX].')
+    ->group(fn() => [
+        Route::get('/', [WebController::class, 'index'])->name('index'),
+        Route::get('/create', [WebController::class, 'create'])->name('create'),
+        Route::get('/{id}', [WebController::class, 'show'])->name('show'),
+        Route::get('/{id}/edit', [WebController::class, 'edit'])->name('edit'),
+    ]);
+```
+
+---
+
+## Frontend Specs
+
+### Types (`resources/js/Types/[MODULE_NAME]/[model_name].ts`)
+- Import `ApiResponse`, `PaginatedResponse` from `@/Types/api.ts`
+- Import shared types from `@/Types/common.ts`
+- Define: `[MODEL_NAME]`, `[MODEL_NAME]Status`, `Create[MODEL_NAME]Dto`, `Update[MODEL_NAME]Dto`, `[MODEL_NAME]Filters`
+- Use camelCase in all TS types (API is snake_case)
+
+### Mappers (`resources/js/Utils/mappers/[model_name].ts`)
+- Map API snake_case → UI camelCase (types)
+- Map UI camelCase → API snake_case (payloads)
+
+### Pinia Store (`resources/js/Stores/[MODULE_NAME]/[model_name]Store.ts`)
+- Setup store
+- API calls via `@/Services/apiClient.ts`
+- Use mapper functions to convert API ↔ UI shapes
+- State shape:
+```ts
+items: [MODEL_NAME][]
+selectedItem: [MODEL_NAME] | null
+loading: boolean       // save/delete operations
+loadingList: boolean   // fetch operations
+error: string | null
+pagination: { data: [MODEL_NAME][]; meta: { current_page, last_page, per_page, total } }
+```
+
+### Composable (`resources/js/Composables/[MODULE_NAME]/use[MODEL_NAME].ts`)
+- Use `useLoading` from `@/Composables/useLoading.ts`
+- Use `useMessage` from `@/Composables/useMessage.ts`
+- Use `usePolling` from `@/Composables/usePolling.ts` (if pollingInterval provided)
+- `inject('$toast')`, `inject('$confirm')`
+- `options?: { autoFetch?, initialFilters?, pollingInterval? }`
+- Delete confirms via `$confirm.show({ variant: 'danger', ... })`
+- Encapsulates store — never expose store directly
+
+### Pages (`resources/js/Pages/[MODEL_NAME_PLURAL]/`)
+- **Index.vue**: search, status filter, `<Table>` from `@/Components/Table/Table.vue`, pagination, edit/delete per row
+- **Create.vue**: typed form, submit → create → toast → router back
+- **Edit.vue**: receives `item` as Inertia prop, pre-filled form
+- **Show.vue**: read-only, back + edit buttons
+- All use `<AppLayout>` from `@/Layouts/`
+- All use `<AppButton>`, `<AppInput>` from `@/Components/Common/`
+
+---
+
+## Conventions
+- PHP uses snake_case for fields/arrays
+- TS/JS uses camelCase in UI/types
+- Helpers/ must be pure (no side effects)
+- Side effects (localStorage, cookies, DOM) must live in Utils/
+
+---
+
+## Auth Flow Note
+- Web (Inertia) uses session auth
+- Mobile/external API uses Sanctum tokens
+- Login/Register may accept `with_token` boolean to control token issuance
+
+---
+
+## Tests (`tests/Feature/[MODULE_NAME]/[MODEL_NAME]Test.php`)
+```
+✓ unauthenticated → 401 on all endpoints
+✓ index returns paginated list
+✓ index filters by status
+✓ show returns single item
+✓ show → 404 for missing id
+✓ store creates → 201 with correct structure
+✓ store → 422 on validation failure
+✓ update → 200
+✓ update → 404 for missing id
+✓ destroy → 204
+✓ destroy → 404 for missing id
+✓ unauthorized user → 403
+```

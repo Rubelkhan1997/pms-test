@@ -26,12 +26,12 @@
                         </label>
                         <select
                             id="hotel_id"
-                            v-model="form.hotel_id"
+                            v-model="form.hotelId"
                             disabled
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
                         >
                             <option value="">Select a hotel</option>
-                            <option v-for="hotel in hotels" :key="hotel.id" :value="hotel.id">
+                            <option v-for="hotel in hotelOptions" :key="hotel.id" :value="hotel.id">
                                 {{ hotel.name }} ({{ hotel.code }})
                             </option>
                         </select>
@@ -47,16 +47,16 @@
                             </label>
                             <select
                                 id="guest_id"
-                                v-model="form.guest_id"
-                                :class="{ 'border-red-500': form.errors.guest_id }"
+                            v-model="form.guestId"
+                            :class="{ 'border-red-500': form.errors.guestId }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="">Select a guest</option>
-                                <option v-for="guest in guests" :key="guest.id" :value="guest.id">
-                                    {{ guest.first_name }} {{ guest.last_name }} ({{ guest.email }})
-                                </option>
+                            <option v-for="guest in guestOptions" :key="guest.id" :value="guest.id">
+                                {{ guest.firstName }} {{ guest.lastName }} ({{ guest.email }})
+                            </option>
                             </select>
-                            <p v-if="form.errors.guest_id" class="mt-1 text-sm text-red-500">{{ form.errors.guest_id }}</p>
+                            <p v-if="form.errors.guestId" class="mt-1 text-sm text-red-500">{{ form.errors.guestId }}</p>
                         </div>
 
                         <!-- Room Selection -->
@@ -66,17 +66,17 @@
                             </label>
                             <select
                                 id="room_id"
-                                v-model="form.room_id"
-                                :class="{ 'border-red-500': form.errors.room_id }"
+                            v-model="form.roomId"
+                            :class="{ 'border-red-500': form.errors.roomId }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="">Select a room</option>
                                 <!-- ✅ Fix: base_rate → price -->
-                                <option v-for="room in availableRooms" :key="room.id" :value="room.id">
-                                    Room {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
-                                </option>
+                            <option v-for="room in availableRooms" :key="room.id" :value="room.id">
+                                Room {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
+                            </option>
                             </select>
-                            <p v-if="form.errors.room_id" class="mt-1 text-sm text-red-500">{{ form.errors.room_id }}</p>
+                            <p v-if="form.errors.roomId" class="mt-1 text-sm text-red-500">{{ form.errors.roomId }}</p>
                         </div>
                     </div>
 
@@ -90,11 +90,11 @@
                             <input
                                 id="check_in_date"
                                 type="date"
-                                v-model="form.check_in_date"
-                                :class="{ 'border-red-500': form.errors.check_in_date }"
+                            v-model="form.checkInDate"
+                            :class="{ 'border-red-500': form.errors.checkInDate }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
-                            <p v-if="form.errors.check_in_date" class="mt-1 text-sm text-red-500">{{ form.errors.check_in_date }}</p>
+                            <p v-if="form.errors.checkInDate" class="mt-1 text-sm text-red-500">{{ form.errors.checkInDate }}</p>
                         </div>
 
                         <!-- Check-out Date -->
@@ -105,11 +105,11 @@
                             <input
                                 id="check_out_date"
                                 type="date"
-                                v-model="form.check_out_date"
-                                :class="{ 'border-red-500': form.errors.check_out_date }"
+                            v-model="form.checkOutDate"
+                            :class="{ 'border-red-500': form.errors.checkOutDate }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             />
-                            <p v-if="form.errors.check_out_date" class="mt-1 text-sm text-red-500">{{ form.errors.check_out_date }}</p>
+                            <p v-if="form.errors.checkOutDate" class="mt-1 text-sm text-red-500">{{ form.errors.checkOutDate }}</p>
                         </div>
                     </div>
 
@@ -125,12 +125,12 @@
                                 type="number"
                                 step="0.01"
                                 min="1"
-                                v-model="form.total_amount"
-                                :class="{ 'border-red-500': form.errors.total_amount }"
+                            v-model="form.totalAmount"
+                            :class="{ 'border-red-500': form.errors.totalAmount }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="0.00"
                             />
-                            <p v-if="form.errors.total_amount" class="mt-1 text-sm text-red-500">{{ form.errors.total_amount }}</p>
+                            <p v-if="form.errors.totalAmount" class="mt-1 text-sm text-red-500">{{ form.errors.totalAmount }}</p>
                         </div>
 
                         <!-- Status -->
@@ -198,35 +198,50 @@
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import type { Reservation, HotelOption, GuestOption, RoomOption } from '@/Types/FrontDesk/reservation';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
+    import { mapGuestOptionApi, mapHotelOptionApi, mapReservationApiToReservation, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
-        reservation: Reservation
-        hotels: HotelOption[];
-        guests: GuestOption[];
-        rooms: RoomOption[];
+        reservation: Record<string, any>;
+        hotels: Array<Record<string, any>>;
+        guests: Array<Record<string, any>>;
+        rooms: Array<Record<string, any>>;
     }>();
 
     // ─── Composable ──────────────────────────────────────────
     const { update: updateReservation, saving, error } = useReservations();
 
     // ─── Available Rooms ─────────────────────────────────────
+    const hotelOptions = computed<HotelOption[]>(() =>
+        props.hotels.map(mapHotelOptionApi)
+    );
+
+    const guestOptions = computed<GuestOption[]>(() =>
+        props.guests.map(mapGuestOptionApi)
+    );
+
+    const roomOptions = computed<RoomOption[]>(() =>
+        props.rooms.map(mapRoomOptionApi)
+    );
+
     const availableRooms = computed(() =>
-        props.rooms.filter(room => room.status === 'available')
+        roomOptions.value.filter(room => room.status === 'available')
     );
 
     // ─── Form ────────────────────────────────────────────────
+    const reservationData: Reservation = mapReservationApiToReservation(props.reservation);
+
     const form = useForm({
-        hotel_id: props.reservation.hotel_id,
-        guest_id: props.reservation.guest_id,
-        room_id: props.reservation.room_id,
-        check_in_date: props.reservation.check_in_date,
-        check_out_date: props.reservation.check_out_date,
-        total_amount: props.reservation.total_amount.toString(),
-        adults: props.reservation.adults || 1,
-        children: props.reservation.children || 0,
-        status: props.reservation.status,
-        notes: props.reservation.notes || '',
+        hotelId: reservationData.hotelId,
+        guestId: reservationData.guestId,
+        roomId: reservationData.roomId,
+        checkInDate: reservationData.checkInDate,
+        checkOutDate: reservationData.checkOutDate,
+        totalAmount: reservationData.totalAmount.toString(),
+        adults: reservationData.adults || 1,
+        children: reservationData.children || 0,
+        status: reservationData.status,
+        notes: reservationData.notes || '',
     });
 
 
@@ -235,8 +250,8 @@
     const submitLabel = computed(() => isSaving.value ? 'Updating...' : 'Update Reservation');
 
     // check_in_date বদলালে check_out_date re-validate হবে
-    watch(() => form.check_in_date, () => {
-        if (form.check_out_date) validateCheckOutDate();
+    watch(() => form.checkInDate, () => {
+        if (form.checkOutDate) validateCheckOutDate();
     });
 
     // ─── Submit ──────────────────────────────────────────────
@@ -251,12 +266,12 @@
 
         try {
             const result = await updateReservation(props.reservation.id, {
-                hotel_id:       Number(form.hotel_id),
-                guest_id:       Number(form.guest_id),
-                room_id:        Number(form.room_id),
-                check_in_date:  form.check_in_date,
-                check_out_date: form.check_out_date,
-                total_amount:   parseFloat(form.total_amount as string),
+                hotelId:       Number(form.hotelId),
+                guestId:       Number(form.guestId),
+                roomId:        Number(form.roomId),
+                checkInDate:   form.checkInDate,
+                checkOutDate:  form.checkOutDate,
+                totalAmount:   parseFloat(form.totalAmount as string),
                 adults:         form.adults,
                 children:       form.children,
                 status:         form.status,
@@ -264,7 +279,7 @@
             });
 
             // Check API response status - toast already shown by composable
-            if (result.status === 1) {
+            if (Number(result.status) === 1) {
                 router.visit('/reservations');
             }
             // If status === 0, error toast already shown by composable
@@ -276,7 +291,8 @@
             if (apiErr?.response?.data?.errors) {
                 const backendErrors: Record<string, string[]> = apiErr.response.data.errors;
                 Object.entries(backendErrors).forEach(([key, messages]) => {
-                    form.setError(key as any, messages[0]);
+                    const mappedKey = mapBackendField(key);
+                    form.setError(mappedKey as any, messages[0]);
                 });
                 scrollToFirstError();
             }
@@ -287,24 +303,36 @@
 
     function validateForm(): boolean {
         return validateInertiaForm(form, {
-            hotel_id:       [required],
-            guest_id:       [required],
-            room_id:        [required],
-            check_in_date:  [required, checkInDate],
-            check_out_date: [required],
-            total_amount:   [required, minValue(0)],
+            hotelId:      [required],
+            guestId:      [required],
+            roomId:       [required],
+            checkInDate:  [required, checkInDate],
+            checkOutDate: [required],
+            totalAmount:  [required, minValue(0)],
         });
     }
 
     function validateCheckOutDate(): void {
-        if (form.check_out_date && form.check_in_date) {
-            const result = checkOutDate(form.check_out_date, form.check_in_date);
+        if (form.checkOutDate && form.checkInDate) {
+            const result = checkOutDate(form.checkOutDate, form.checkInDate);
             if (!result.valid) {
-                form.setError('check_out_date', result.message!);
+                form.setError('checkOutDate', result.message!);
             } else {
-                form.clearErrors('check_out_date');
+                form.clearErrors('checkOutDate');
             }
         }
+    }
+
+    function mapBackendField(field: string): string {
+        const map: Record<string, string> = {
+            hotel_id: 'hotelId',
+            guest_id: 'guestId',
+            room_id: 'roomId',
+            check_in_date: 'checkInDate',
+            check_out_date: 'checkOutDate',
+            total_amount: 'totalAmount',
+        };
+        return map[field] ?? field;
     }
 
     function scrollToFirstError(): void {

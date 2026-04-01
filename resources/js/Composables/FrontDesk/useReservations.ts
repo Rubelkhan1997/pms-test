@@ -102,11 +102,12 @@ export function useReservations(options: UseReservationOptions = {}) {
         startSaving();
         try {
             const result = await store.create(payload);
+            const isSuccess = Number(result.status) === 1;
             // Show toast based on API response status
-            if (result.status === 1) {
-                toast.success(result.message);
+            if (isSuccess) {
+                toast.success(result.message || 'Reservation created successfully');
             } else {
-                toast.error(result.message);
+                toast.error(result.message || 'Failed to create reservation');
             }
             return result;
         } catch (err: unknown) {
@@ -121,11 +122,12 @@ export function useReservations(options: UseReservationOptions = {}) {
         startSaving();
         try {
             const result = await store.update(id, payload);
+            const isSuccess = Number(result.status) === 1;
             // Show toast based on API response status
-            if (result.status === 1) {
-                toast.success(result.message);
+            if (isSuccess) {
+                toast.success(result.message || 'Reservation updated successfully');
             } else {
-                toast.error(result.message);
+                toast.error(result.message || 'Failed to update reservation');
             }
             return result;
         } catch (err: unknown) {
@@ -140,8 +142,9 @@ export function useReservations(options: UseReservationOptions = {}) {
         startSaving();
         try {
             const result = await store.cancel(id);
+            const isSuccess = Number(result.status) === 1;
             // Show toast based on API response status
-            if (result.status === 1) {
+            if (isSuccess) {
                 toast.success(result.message || 'Reservation cancelled successfully');
             } else {
                 toast.error(result.message || 'Failed to cancel reservation');
@@ -159,8 +162,9 @@ export function useReservations(options: UseReservationOptions = {}) {
         startSaving();
         try {
             const result = await store.delete(id);
+            const isSuccess = Number(result.status) === 1;
             // Show toast based on API response status
-            if (result.status === 1) {
+            if (isSuccess) {
                 toast.success(result.message || 'Reservation deleted successfully');
             } else {
                 toast.error(result.message || 'Failed to delete reservation');
