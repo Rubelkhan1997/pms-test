@@ -18,6 +18,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // API routes don't need CSRF (token-based auth)
         $middleware->alias([
             'auth.token' => \App\Modules\Auth\Middleware\AuthenticateByToken::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
+            'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
+            'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
         
         // Inertia middleware for sharing props

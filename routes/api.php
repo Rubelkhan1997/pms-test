@@ -20,9 +20,22 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/user', static fn (Request $request): mixed => $request->user());
 
         // Reservations API (Full CRUD)
-        Route::apiResource('front-desk/reservations', FrontDeskController::class);
-        Route::patch('front-desk/reservations/{reservation}/check-in', [FrontDeskController::class, 'checkIn']);
-        Route::patch('front-desk/reservations/{reservation}/check-out', [FrontDeskController::class, 'checkOut']);
-        Route::patch('front-desk/reservations/{reservation}/cancel', [FrontDeskController::class, 'cancel']);
+        Route::apiResource('front-desk/reservations', FrontDeskController::class)
+            ->only(['index', 'show'])
+            ->middleware('permission:view reservations');
+
+        Route::post('front-desk/reservations', [FrontDeskController::class, 'store'])
+            ->middleware('permission:create reservations');
+        Route::put('front-desk/reservations/{reservation}', [FrontDeskController::class, 'update'])
+            ->middleware('permission:edit reservations');
+        Route::delete('front-desk/reservations/{reservation}', [FrontDeskController::class, 'destroy'])
+            ->middleware('permission:delete reservations');
+
+        Route::patch('front-desk/reservations/{reservation}/check-in', [FrontDeskController::class, 'checkIn'])
+            ->middleware('permission:edit reservations');
+        Route::patch('front-desk/reservations/{reservation}/check-out', [FrontDeskController::class, 'checkOut'])
+            ->middleware('permission:edit reservations');
+        Route::patch('front-desk/reservations/{reservation}/cancel', [FrontDeskController::class, 'cancel'])
+            ->middleware('permission:edit reservations');
     });
 });

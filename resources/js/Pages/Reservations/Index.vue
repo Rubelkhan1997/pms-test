@@ -9,6 +9,7 @@
                     <p class="text-sm text-slate-500 mt-1">Manage all guest bookings</p>
                 </div>
                 <Link
+                    v-if="canCreate"
                     href="/reservations/create"
                     class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
                 >
@@ -193,13 +194,21 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                         <div class="flex justify-end gap-2">
-                                            <Link :href="`/reservations/${res.id}/edit`" class="text-blue-600 hover:text-blue-900">
+                                            <Link
+                                                v-if="canEdit"
+                                                :href="`/reservations/${res.id}/edit`"
+                                                class="text-blue-600 hover:text-blue-900"
+                                            >
                                                 Edit
                                             </Link>
                                             <Link :href="`/reservations/${res.id}`" class="text-green-600 hover:text-green-900">
                                                 View
                                             </Link>
-                                            <button @click="handleDelete(res)" class="text-red-600 hover:text-red-900">
+                                            <button
+                                                v-if="canDelete"
+                                                @click="handleDelete(res)"
+                                                class="text-red-600 hover:text-red-900"
+                                            >
                                                 Delete
                                             </button>
                                         </div>
@@ -262,10 +271,11 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, reactive, onMounted, inject } from 'vue';
+    import { ref, reactive, onMounted, inject, computed } from 'vue';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { formatStatus } from '@/Utils/format';
     import { formatDate } from '@/Utils/date';
+    import { usePermission } from '@/Plugins/directives/permission';
     import type { confirm as ConfirmType } from '@/Plugins/confirm';
     import type { ReservationFilters, Reservation } from '@/Types/FrontDesk/reservation';
 
@@ -288,6 +298,11 @@
         setFilters,
         resetFilters,
     } = useReservations();
+
+    const permission = usePermission();
+    const canCreate = computed(() => permission.check('create reservations'));
+    const canEdit = computed(() => permission.check('edit reservations'));
+    const canDelete = computed(() => permission.check('delete reservations'));
 
     const searchQuery = ref('');
     const perPage = ref(15);
@@ -329,6 +344,7 @@
     }
 
     async function handleDelete(res: Reservation) { 
+        if (!canDelete.value) return;
         const confirmed = await confirm.show({
             title: 'Delete Reservation?',
             message: `Reservation ${res.reference} permanently removed. This cannot be undone.`,

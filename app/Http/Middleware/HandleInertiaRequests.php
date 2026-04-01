@@ -62,29 +62,33 @@ class HandleInertiaRequests extends Middleware
             $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
             
             if ($accessToken && $accessToken->tokenable instanceof \App\Models\User) {
-                $user = $accessToken->tokenable;
-                
-                return [
-                    'id' => $user->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'role' => $user->role ?? 'staff',
-                    'email_verified_at' => $user->email_verified_at?->toIso8601String(),
-                ];
+                return $this->mapUser($accessToken->tokenable);
             }
         }
 
         // Fallback to session-based auth
         if ($request->user()) {
-            return [
-                'id' => $request->user()->id,
-                'name' => $request->user()->name,
-                'email' => $request->user()->email,
-                'role' => $request->user()->role ?? 'staff',
-                'email_verified_at' => $request->user()->email_verified_at?->toIso8601String(),
-            ];
+            return $this->mapUser($request->user());
         }
 
         return null;
+    }
+
+    /**
+     * Map user for Inertia shared props.
+     */
+    private function mapUser(\App\Models\User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'role' => $user->roles()->first()?->name,
+            'roles' => $user->getRoleNames()->values(),
+            'permissions' => $user->getAllPermissions()->pluck('name')->values(),
+            'email_verified_at' => $user->email_verified_at?->toIso8601String(),
+            'created_at' => $user->created_at?->toIso8601String(),
+            'updated_at' => $user->updated_at?->toIso8601String(),
+        ];
     }
 }

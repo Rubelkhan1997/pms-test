@@ -32,7 +32,7 @@ class RolePermissionSeeder extends Seeder
         $permissions = [];
 
         foreach ($resources as $resource) {
-            foreach (['view', 'create', 'edit'] as $action) {
+            foreach (['view', 'create', 'edit', 'delete'] as $action) {
                 $permissions[] = "$action $resource";
             }
         }

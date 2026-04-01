@@ -1,6 +1,6 @@
 <template>
     <Head :title="`Reservation #${reservation?.reference || 'Details'}`" />
-    <HotelLayout class="max-w-6xl mx-auto">
+    <HotelLayout v-if="canView" class="max-w-6xl mx-auto">
         <div class="space-y-6">
             <!-- Header with Back Button -->
             <div class="flex justify-between items-center">
@@ -141,19 +141,32 @@
             <div v-if="reservation" class="flex gap-4 pt-4">
                 
                 <button
-                    v-if="['pending', 'confirmed'].includes(reservation.status)"
+                    v-if="canCancel && ['pending', 'confirmed'].includes(reservation.status)"
                     @click="handleCancel"
                     class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
                 >
                     Cancel Reservation
                 </button>
                 <Link
+                    v-if="canEdit"
                     :href="`/reservations/${reservation.id}/edit`"
                     class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                 >
                     Edit Reservation
                 </Link>
             </div>
+        </div>
+    </HotelLayout>
+    <HotelLayout v-else class="max-w-6xl mx-auto">
+        <div class="bg-white p-6 rounded-lg shadow text-center">
+            <h1 class="text-xl font-semibold text-slate-800">Access Denied</h1>
+            <p class="text-sm text-slate-500 mt-2">You do not have permission to view reservations.</p>
+            <Link
+                href="/reservations"
+                class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+            >
+                Back to Reservations
+            </Link>
         </div>
     </HotelLayout>
 </template>
@@ -165,12 +178,17 @@
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { formatDate, calculateNights } from '@/Utils/date';
     import { formatStatus } from '@/Utils/format';
+    import { usePermission } from '@/Plugins/directives/permission';
     import type { confirm as ConfirmType } from '@/Plugins/confirm';
 
     // ─── Inject Confirm ─────────────────────────────────────
     const confirm = inject('confirm') as typeof ConfirmType;
    
     const { reservation, loading, error, fetchById, cancel: cancelAction} = useReservations();
+    const permission = usePermission();
+    const canView = computed(() => permission.check('view reservations'));
+    const canEdit = computed(() => permission.check('edit reservations'));
+    const canCancel = computed(() => permission.check('edit reservations'));
 
     // Calculate number of nights (reusable function from Utils)
     const nights = computed(() => {
@@ -204,6 +222,10 @@
 
     // Load reservation on mount
     onMounted(() => {
+        if (!canView.value) {
+            router.visit('/reservations');
+            return;
+        }
         const pathSegments = window.location.pathname.split('/');
         const reservationId = pathSegments[pathSegments.length - 1];
 

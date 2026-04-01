@@ -1,6 +1,6 @@
 <template>
     <Head title="Edit Reservation" /> 
-    <div class="max-w-4xl mx-auto">
+    <div v-if="canEdit" class="max-w-4xl mx-auto">
         <section class="space-y-6">
             <!-- Header -->
             <div class="flex justify-between items-center">
@@ -190,15 +190,28 @@
             </div>
         </section> 
     </div>
+    <div v-else class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+            <h1 class="text-xl font-semibold text-slate-800">Access Denied</h1>
+            <p class="text-sm text-slate-500 mt-2">You do not have permission to edit reservations.</p>
+            <Link
+                href="/reservations"
+                class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+            >
+                Back to Reservations
+            </Link>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
-    import { computed, watch } from 'vue';
+    import { computed, watch, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import type { Reservation, HotelOption, GuestOption, RoomOption } from '@/Types/FrontDesk/reservation';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
     import { mapGuestOptionApi, mapHotelOptionApi, mapReservationApiToReservation, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
+    import { usePermission } from '@/Plugins/directives/permission';
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
@@ -210,6 +223,8 @@
 
     // ─── Composable ──────────────────────────────────────────
     const { update: updateReservation, saving, error } = useReservations();
+    const permission = usePermission();
+    const canEdit = computed(() => permission.check('edit reservations'));
 
     // ─── Available Rooms ─────────────────────────────────────
     const hotelOptions = computed<HotelOption[]>(() =>
@@ -252,6 +267,12 @@
     // check_in_date বদলালে check_out_date re-validate হবে
     watch(() => form.checkInDate, () => {
         if (form.checkOutDate) validateCheckOutDate();
+    });
+
+    onMounted(() => {
+        if (!canEdit.value) {
+            router.visit('/reservations');
+        }
     });
 
     // ─── Submit ──────────────────────────────────────────────

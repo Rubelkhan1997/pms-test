@@ -32,15 +32,23 @@ Route::middleware(['guest'])->group(function (): void {
 // ─────────────────────────────────────────────────────────
 Route::middleware(['auth.token'])->prefix('reservations')->name('reservations.')->group(function (): void {
     // List all reservations (page view)
-    Route::get('/', [FrontDeskController::class, 'index'])->name('index');
+    Route::get('/', [FrontDeskController::class, 'index'])
+        ->middleware('permission:view reservations')
+        ->name('index');
 
     // Create reservation form (page view)
-    Route::get('/create', [FrontDeskController::class, 'create'])->name('create');
+    Route::get('/create', [FrontDeskController::class, 'create'])
+        ->middleware('permission:create reservations')
+        ->name('create');
 
     // View single reservation (page view)
-    Route::get('/{reservation}', [FrontDeskController::class, 'show'])->name('show');
+    Route::get('/{reservation}', [FrontDeskController::class, 'show'])
+        ->middleware('permission:view reservations')
+        ->name('show');
 
     // Edit reservation form (page view)
-    Route::get('/{reservation}/edit', [FrontDeskController::class, 'edit'])->name('edit');
+    Route::get('/{reservation}/edit', [FrontDeskController::class, 'edit'])
+        ->middleware('permission:edit reservations')
+        ->name('edit');
 });
  

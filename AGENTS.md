@@ -17,6 +17,9 @@
 8. Composables/ = Vue dependent (reactive)
 9. Utils/ = Utility functions
 10. Plugins/ = Vue plugins
+11. Enums live in app/Enums (not inside Modules)
+12. Pages live in resources/js/Pages/[FEATURE_NAME_PLURAL]/ (no module folder)
+13. Mappers live in resources/js/Utils/Mappers/ (Pascal folder)
 
 
 ## Reference Files (Always Follow These Patterns)
@@ -24,8 +27,9 @@
 - Service: app/Modules/FrontDesk/Services/ReservationService.php
 - Store: resources/js/Stores/FrontDesk/reservationStore.ts
 - Composable: resources/js/Composables/FrontDesk/useReservations.ts
-- Page: resources/js/Pages/FrontDesk/Reservations/Index.vue
+- Page: resources/js/Pages/Reservations/Index.vue
 - Types: resources/js/Types/FrontDesk/reservation.ts
+- Mappers: resources/js/Utils/Mappers/reservation.ts
 
 ## Output Rules
 - Code only — no unnecessary explanation

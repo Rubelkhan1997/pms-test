@@ -63,7 +63,7 @@ export const useAuthStore = defineStore('auth', {
          */
         clearUser(): void {
             removeToken();
-            
+             
             this.$patch({
                 user: null,
                 isAuthenticated: false,
@@ -112,8 +112,8 @@ export const useAuthStore = defineStore('auth', {
                 if (response.status === 1 && response.data) {
                     this.setUser(response.data.user);
                     // Save token to localStorage AND cookie
-                    if (response.data.token) {
-                        setToken(response.data.token, 1);
+                    if (response.data) {
+                        setToken(response.data, 1);
                     }
                 }
 
@@ -139,8 +139,8 @@ export const useAuthStore = defineStore('auth', {
                 if (response.status === 1 && response.data) {
                     this.setUser(response.data.user);
                     // Save token to localStorage AND cookie
-                    if (response.data.token) {
-                        setToken(response.data.token, 1);
+                    if (response.data) {
+                        setToken(response.data, 1);
                     }
                 }
 

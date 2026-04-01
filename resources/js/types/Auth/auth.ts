@@ -12,6 +12,8 @@ export interface User {
     name: string;
     email: string;
     role: UserRole;
+    roles?: string[];
+    permissions?: string[];
     email_verified_at?: string;
     created_at?: string;
     updated_at?: string;

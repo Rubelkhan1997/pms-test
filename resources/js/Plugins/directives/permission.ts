@@ -9,28 +9,41 @@
 
 import { App, Directive } from 'vue';
 
+const PMS_USER_KEY = 'pms_user';
+
 export interface PermissionOptions {
     getUserRoles?: () => string[];
+    getUserPermissions?: () => string[];
     onDenied?: (el: HTMLElement) => void;
 }
 
 const defaultOptions: Required<PermissionOptions> = {
     getUserRoles: () => {
-        const user = localStorage.getItem('pms_user');
-        if (user) {
-            try {
-                const userData = JSON.parse(user);
-                return userData.roles || [userData.role] || [];
-            } catch {
-                return [];
-            }
-        }
-        return [];
+        const userData = getUserData();
+        return userData?.roles || (userData?.role ? [userData.role] : []) || [];
+    },
+    getUserPermissions: () => {
+        const userData = getUserData();
+        return userData?.permissions || [];
     },
     onDenied: (el: HTMLElement) => {
         el.style.display = 'none';
     }
 };
+
+function getUserData(): Record<string, any> | null {
+    const user = localStorage.getItem(PMS_USER_KEY);
+    if (user) {
+        try {
+            return JSON.parse(user);
+        } catch {
+            return null;
+        }
+    }
+
+    const page = (window as any)?.__page;
+    return page?.props?.auth?.user ?? null;
+}
 
 let options = { ...defaultOptions };
 
@@ -39,14 +52,20 @@ let options = { ...defaultOptions };
  */
 function hasPermission(requiredRoles: string | string[]): boolean {
     const userRoles = options.getUserRoles();
+    const userPermissions = options.getUserPermissions();
 
-    if (!userRoles || userRoles.length === 0) {
+    if ((!userRoles || userRoles.length === 0) && (!userPermissions || userPermissions.length === 0)) {
         return false;
     }
 
     const roles = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
 
-    // Check if user has any of the required roles
+    const isPermissionCheck = roles.some(role => role.includes(' '));
+
+    if (isPermissionCheck) {
+        return roles.some(permission => userPermissions.includes(permission));
+    }
+
     return roles.some(role => userRoles.includes(role));
 }
 

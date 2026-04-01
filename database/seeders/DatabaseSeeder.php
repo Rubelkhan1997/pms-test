@@ -66,8 +66,20 @@ class DatabaseSeeder extends Seeder
                 'password' => Hash::make('password'),
             ]
         );
-        $employeeUser->assignRole('front_desk');
+        $employeeUser->syncRoles(['front_desk']);
+        $employeeUser->syncPermissions([]); // Ensure no direct delete permission
         $this->command->info('✅ Front desk user');
+
+        $viewerUser = User::query()->firstOrCreate(
+            ['email' => 'viewer@pms.test'],
+            [
+                'name' => 'View Only',
+                'password' => Hash::make('password'),
+            ]
+        );
+        $viewerUser->syncRoles([]);
+        $viewerUser->syncPermissions(['view reservations']);
+        $this->command->info('✅ View-only user');
 
         // Seed rooms (20 rooms)
         $this->seedRooms($hotel);
@@ -84,6 +96,7 @@ class DatabaseSeeder extends Seeder
         $this->command->info('📊 Login Credentials:');
         $this->command->info('   Super Admin: superadmin@pms.test / password');
         $this->command->info('   Front Desk:  frontdesk@pms.test / password');
+        $this->command->info('   View Only:   viewer@pms.test / password');
     }
 
     /**
