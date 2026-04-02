@@ -21,6 +21,17 @@
 12. Pages live in resources/js/Pages/[FEATURE_NAME_PLURAL]/ (no module folder)
 13. Mappers live in resources/js/Utils/Mappers/ (Pascal folder)
 
+## Important Bootstrap File (Must Analyze First)
+- App bootstrap: resources/js/app.ts
+
+Before generating any Vue, Inertia, Store, Plugin, or global setup related code:
+1. Must read and follow patterns from `resources/js/app.ts`
+2. Match:
+   - App initialization pattern
+   - Plugin registration (Pinia, Inertia, etc.)
+   - Global components or directives
+   - Layout or page resolver structure
+3. Do not introduce any setup that conflicts with existing `app.ts`
 
 ## Reference Files (Always Follow These Patterns)
 - Controller: app/Modules/FrontDesk/Controllers/Api/V1/ReservationController.php
@@ -35,8 +46,5 @@
 - Code only — no unnecessary explanation
 - One file at a time
 - Start each file with: `// FILE: path/to/file`
-```
-
-
 
 Follow the rules in AGENTS.md and analyze the reference files before writing.

@@ -30,7 +30,7 @@ export function useReservations(options: UseReservationOptions = {}) {
     const {
         autoFetch = false,
         initialFilters = {},
-        pollingInterval = 0,  // ✅ Fix: default 0 — polling off by default
+        pollingInterval = 0,
     } = options;
 
     // ─── Store (internal — expose করা হবে না) ────────────

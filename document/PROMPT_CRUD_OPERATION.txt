@@ -21,6 +21,37 @@
 
 ---
 
+## ⚠️ MUST READ BEFORE GENERATION
+
+### Core Bootstrap File (STRICT RULE)
+- resources/js/app.ts
+
+### Instruction (MANDATORY)
+Before generating ANY frontend-related file (Store, Composable, Pages, Plugins):
+
+1. MUST analyze `resources/js/app.ts`
+2. STRICTLY follow:
+   - Inertia app initialization pattern
+   - createInertiaApp setup
+   - resolvePageComponent logic
+   - Plugin registration (Pinia, Toast, Confirm, etc.)
+   - Global components/directives
+3. DO NOT:
+   - Re-initialize Pinia if already exists
+   - Re-register plugins
+   - Introduce conflicting setup
+4. Layout handling MUST match app.ts pattern
+
+❌ Wrong:
+- Creating new app instance logic
+- Adding duplicate plugin setup
+- Different page resolver
+
+✅ Correct:
+- Reuse EXACT structure from app.ts
+
+---
+
 ## Module Rules
 - Is New Module = YES -> Create Module folder, ServiceProvider, config
 - Is New Module = NO  -> Only create Feature files, do not touch module files

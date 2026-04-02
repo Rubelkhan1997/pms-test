@@ -6,15 +6,28 @@
 /**
  * Format date to readable string
  */
-export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): string {
+// FILE: resources/js/Utils/date.ts
+
+/**
+ * Date Utility Functions
+ * Date formatting and manipulation
+ */
+
+/**
+ * Format date to readable string
+ */
+export function formatDate(date: Date | string, format: string = 'DD-MM-YYYY'): string {
     const d = typeof date === 'string' ? new Date(date) : date;
 
     if (isNaN(d.getTime())) {
         return 'Invalid Date';
     }
 
+    const monthsShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, '0');
+    const monthShort = monthsShort[d.getMonth()];
     const day = String(d.getDate()).padStart(2, '0');
     const hours = String(d.getHours()).padStart(2, '0');
     const minutes = String(d.getMinutes()).padStart(2, '0');
@@ -22,6 +35,7 @@ export function formatDate(date: Date | string, format: string = 'YYYY-MM-DD'): 
 
     return format
         .replace('YYYY', String(year))
+        .replace('MM', monthShort) // must be before MM
         .replace('MM', month)
         .replace('DD', day)
         .replace('HH', hours)
@@ -49,7 +63,7 @@ export function formatRelativeTime(date: Date | string): string {
     } else if (diffDays < 7) {
         return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
     } else {
-        return formatDate(d, 'MMM DD, YYYY');
+        return formatDate(d, 'MM DD, YYYY');
     }
 }
 

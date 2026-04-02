@@ -180,60 +180,59 @@
     </div>
 </template>
 
-<script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { computed, onMounted, reactive } from 'vue';
-import { useReservations } from '@/Composables/FrontDesk/useReservations';
-import { useAuth } from '@/Composables/Auth/useAuth';
-import { formatDate } from '@/Utils/date';
+<script setup lang="ts"> 
+    import { computed, onMounted, reactive } from 'vue';
+    import { useReservations } from '@/Composables/FrontDesk/useReservations';
+    import { useAuth } from '@/Composables/Auth/useAuth';
+    import { formatDate } from '@/Utils/date';
 
-// ─────────────────────────────────────────────────────────
-// Composables
-// ─────────────────────────────────────────────────────────
-const { reservations, fetchAll, loading } = useReservations({ autoFetch: true });
-const { userName } = useAuth();
+    // ─────────────────────────────────────────────────────────
+    // Composables
+    // ─────────────────────────────────────────────────────────
+    const { reservations, loading } = useReservations({ autoFetch: true });
+    const { userName } = useAuth();
 
-// ─────────────────────────────────────────────────────────
-// Dashboard Stats
-// ─────────────────────────────────────────────────────────
-const dashboardStats = reactive({
-    totalReservations: 0,
-    availableRooms: 0,
-    checkInsToday: 0,
-    checkOutsToday: 0,
-});
+    // ─────────────────────────────────────────────────────────
+    // Dashboard Stats
+    // ─────────────────────────────────────────────────────────
+    const dashboardStats = reactive({
+        totalReservations: 0,
+        availableRooms: 0,
+        checkInsToday: 0,
+        checkOutsToday: 0,
+    });
 
-// ─────────────────────────────────────────────────────────
-// Computed
-// ─────────────────────────────────────────────────────────
-const currentDate = computed(() => {
-    return formatDate(new Date().toISOString());
-});
+    // ─────────────────────────────────────────────────────────
+    // Computed
+    // ─────────────────────────────────────────────────────────
+    const currentDate = computed(() => {
+        return formatDate(new Date().toISOString());
+    });
 
-const recentReservations = computed(() => {
-    return reservations.value.slice(0, 5);
-});
+    const recentReservations = computed(() => {
+        return reservations.value.slice(0, 5);
+    });
 
-// ─────────────────────────────────────────────────────────
-// Initialize Dashboard
-// ─────────────────────────────────────────────────────────
-onMounted(() => {
-    calculateStats();
-});
+    // ─────────────────────────────────────────────────────────
+    // Initialize Dashboard
+    // ─────────────────────────────────────────────────────────
+    onMounted(() => {
+        calculateStats();
+    });
 
-// ─────────────────────────────────────────────────────────
-// Calculate Stats
-// ─────────────────────────────────────────────────────────
-function calculateStats() {
-    const today = new Date().toISOString().split('T')[0];
+    // ─────────────────────────────────────────────────────────
+    // Calculate Stats
+    // ─────────────────────────────────────────────────────────
+    function calculateStats() {
+        const today = new Date().toISOString().split('T')[0];
 
-    dashboardStats.totalReservations = reservations.value.length;
-    dashboardStats.availableRooms = 10; // TODO: Fetch from API
-    dashboardStats.checkInsToday = reservations.value.filter(
-        (r) => r.check_in_date === today
-    ).length;
-    dashboardStats.checkOutsToday = reservations.value.filter(
-        (r) => r.check_out_date === today
-    ).length;
-}
+        dashboardStats.totalReservations = reservations.value.length;
+        dashboardStats.availableRooms = 10; // TODO: Fetch from API
+        dashboardStats.checkInsToday = reservations.value.filter(
+            (r) => r.checkInDate === today
+        ).length;
+        dashboardStats.checkOutsToday = reservations.value.filter(
+            (r) => r.checkOutDate === today
+        ).length;
+    }
 </script>
