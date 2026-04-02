@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run *)",
       "Bash(php *)",
-      "Bash(move *)"
+      "Bash(move *)",
+      "Bash(npm uninstall *)"
     ]
   },
   "$version": 3

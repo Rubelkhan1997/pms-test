@@ -1,30 +1,30 @@
 <template>
-    <Head title="Register" />
+    <Head :title="t('auth.register')" />
     <div class="min-h-screen bg-gradient-to-b from-cyan-50 to-white flex items-center justify-center px-4 py-12">
         <div class="w-full max-w-md">
 
             <!-- Logo / Title -->
             <div class="mb-8 text-center">
                 <h1 class="mb-2 text-3xl font-bold text-slate-800">PMS</h1>
-                <p class="text-slate-600">Property Management System</p>
+                <p class="text-slate-600">{{ t('auth.pms_full_name') }}</p>
             </div>
 
             <!-- Register Card -->
             <div class="bg-white rounded-lg shadow-lg p-8">
-                <h2 class="mb-6 text-2xl font-semibold text-slate-800">Create Account</h2>
+                <h2 class="mb-6 text-2xl font-semibold text-slate-800">{{ t('auth.create_account') }}</h2>
 
                 <form @submit.prevent="submit" class="space-y-6">
 
                     <!-- Name -->
                     <div>
                         <label for="name" class="block text-sm font-medium text-slate-700 mb-2">
-                            Full Name
+                            {{ t('guests.full_name') }}
                         </label>
                         <input
                             id="name"
                             v-model="form.name"
                             type="text"
-                            placeholder="John Doe"
+                            :placeholder="t('auth.name_placeholder')"
                             autocomplete="name"
                             :class="{ 'border-red-500': form.errors.name }"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
@@ -37,13 +37,13 @@
                     <!-- Email -->
                     <div>
                         <label for="email" class="block text-sm font-medium text-slate-700 mb-2">
-                            Email Address
+                            {{ t('auth.email') }}
                         </label>
                         <input
                             id="email"
                             v-model="form.email"
                             type="email"
-                            placeholder="you@example.com"
+                            :placeholder="t('auth.email_placeholder')"
                             autocomplete="email"
                             :class="{ 'border-red-500': form.errors.email }"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
@@ -56,7 +56,7 @@
                     <!-- Password -->
                     <div>
                         <label for="password" class="block text-sm font-medium text-slate-700 mb-2">
-                            Password
+                            {{ t('auth.password') }}
                         </label>
                         <input
                             id="password"
@@ -75,7 +75,7 @@
                     <!-- Confirm Password -->
                     <div>
                         <label for="password_confirmation" class="block text-sm font-medium text-slate-700 mb-2">
-                            Confirm Password
+                            {{ t('auth.confirm_password') }}
                         </label>
                         <input
                             id="password_confirmation"
@@ -107,12 +107,12 @@
                 <!-- Login Link -->
                 <div class="mt-6 text-center">
                     <p class="text-sm text-slate-600">
-                        Already have an account?
+                        {{ t('auth.already_have_account') }}
                         <Link
                             href="/login"
                             class="font-medium text-cyan-600 hover:text-cyan-700 hover:underline"
                         >
-                            Sign in
+                            {{ t('auth.sign_in') }}
                         </Link>
                     </p>
                 </div>
@@ -120,7 +120,7 @@
 
             <!-- Footer -->
             <p class="mt-8 text-center text-xs text-slate-500">
-                &copy; {{ new Date().getFullYear() }} PMS. All rights reserved.
+                &copy; {{ new Date().getFullYear() }} PMS. {{ t('auth.all_rights_reserved') }}
             </p>
         </div>
     </div>
@@ -130,12 +130,16 @@
     import { computed } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useAuth } from '@/Composables/Auth/useAuth';
+    import { useI18n } from '@/Composables/useI18n';
     import { hasToken } from '@/Utils/authToken';
     import { required, email as emailRule, minLength, confirmed, validateInertiaForm } from '@/Utils/validation';
     import type { RegisterDto } from '@/Types/Auth/auth';
 
     // ─── Layout ──────────────────────────────────────────────
     defineOptions({ layout: null });
+
+    // ─── i18n ────────────────────────────────────────────────
+    const { t } = useI18n();
 
     // ─── Guard: already authenticated (check token) ──────────
     if (hasToken()) {
@@ -155,7 +159,7 @@
     });
 
     const isLoading   = computed(() => form.processing || loadingAuth.value);
-    const submitLabel = computed(() => isLoading.value ? 'Creating account...' : 'Create Account');
+    const submitLabel = computed(() => isLoading.value ? t('auth.creating_account') : t('auth.create_account'));
 
     // ─── Submit ──────────────────────────────────────────────
     async function submit(): Promise<void> {

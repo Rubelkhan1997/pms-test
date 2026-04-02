@@ -9,6 +9,9 @@ import { toast, confirm } from '@/Plugins';
 // Import default layout statically (used as fallback)
 import AppLayout from '@/Layouts/AppLayout.vue';
 
+// Import language store for i18n
+import { useLanguageStore } from '@/Stores/languageStore';
+
 // Import global components (truly universal components used everywhere)
 // TODO: Uncomment when components are implemented
 // import { AppButton, AppInput, AppModal } from '@/Components';
@@ -17,19 +20,17 @@ createInertiaApp({
     title: (title) => title ? `${title} - PMS` : 'PMS',
 
     resolve: (name) => {
-        const pages = import.meta.glob('./Pages/**/*.vue', { eager: true });
+        const pages = import.meta.glob<{ default?: DefineComponent } & Record<string, unknown>>('./Pages/**/*.vue', { eager: true });
         const pageModule = pages[`./Pages/${name}.vue`];
 
         if (!pageModule) {
             throw new Error(`Page "${name}" not found`);
         }
 
-        const page = pageModule.default || pageModule;
+        const page = (pageModule.default || pageModule) as DefineComponent;
 
-        // Set default layout if not defined on the page
-        // Pages can set layout: null to disable layout (e.g., Login, Register)
         if (page.layout === undefined) {
-            page.layout = AppLayout;
+            page.layout = AppLayout as DefineComponent;
         }
 
         return page;
@@ -52,6 +53,15 @@ createInertiaApp({
         app.use(createPinia());
         app.use(toast);
         app.use(confirm);
+
+        const languageStore = useLanguageStore();
+        languageStore.initialize();
+
+        if (typeof document !== 'undefined') {
+            const direction = languageStore.isRTL ? 'rtl' : 'ltr';
+            document.documentElement.dir = direction;
+            document.documentElement.lang = languageStore.currentLanguage;
+        }
 
         app.mount(el);
     },

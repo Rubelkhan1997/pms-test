@@ -21,6 +21,13 @@
 12. Pages live in resources/js/Pages/[FEATURE_NAME_PLURAL]/ (no module folder)
 13. Mappers live in resources/js/Utils/Mappers/ (Pascal folder)
 
+## Routing Rules
+- NEVER use Ziggy or route() helper
+- NEVER use `import { route } from 'ziggy-js'`
+- For navigation: use Inertia `router.visit('/path')`
+- For form submissions: use `router.post('/path', data)`
+- Always use hardcoded URL strings or constants
+
 ## Important Bootstrap File (Must Analyze First)
 - App bootstrap: resources/js/app.ts
 

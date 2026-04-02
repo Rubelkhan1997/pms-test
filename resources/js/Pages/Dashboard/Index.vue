@@ -1,12 +1,12 @@
 <template>
-    <Head title="Dashboard" />
+    <Head :title="t('navigation.dashboard')" />
     <div class="space-y-6">
         <!-- Header -->
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-semibold text-slate-800">Dashboard</h1>
+                <h1 class="text-2xl font-semibold text-slate-800">{{ t('navigation.dashboard') }}</h1>
                 <p class="text-sm text-slate-500 mt-1">
-                    Welcome back, {{ userName }}!
+                    {{ t('messages.welcome') }}, {{ userName }}!
                 </p>
             </div>
             <div class="text-sm text-slate-600">
@@ -20,7 +20,7 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-sm text-slate-500">Total Reservations</div>
+                        <div class="text-sm text-slate-500">{{ t('dashboard.total_reservations') }}</div>
                         <div class="text-3xl font-bold text-slate-800 mt-2">
                             {{ dashboardStats.totalReservations }}
                         </div>
@@ -37,7 +37,7 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-sm text-slate-500">Available Rooms</div>
+                        <div class="text-sm text-slate-500">{{ t('dashboard.available_rooms') }}</div>
                         <div class="text-3xl font-bold text-green-600 mt-2">
                             {{ dashboardStats.availableRooms }}
                         </div>
@@ -54,7 +54,7 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-sm text-slate-500">Check-ins Today</div>
+                        <div class="text-sm text-slate-500">{{ t('dashboard.check_ins_today') }}</div>
                         <div class="text-3xl font-bold text-blue-600 mt-2">
                             {{ dashboardStats.checkInsToday }}
                         </div>
@@ -71,7 +71,7 @@
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex items-center justify-between">
                     <div>
-                        <div class="text-sm text-slate-500">Check-outs Today</div>
+                        <div class="text-sm text-slate-500">{{ t('dashboard.check_outs_today') }}</div>
                         <div class="text-3xl font-bold text-orange-600 mt-2">
                             {{ dashboardStats.checkOutsToday }}
                         </div>
@@ -90,17 +90,17 @@
             <!-- Recent Reservations -->
             <div class="bg-white p-6 rounded-lg shadow">
                 <div class="flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-semibold text-slate-800">Recent Reservations</h2>
+                    <h2 class="text-lg font-semibold text-slate-800">{{ t('dashboard.recent_activity') }}</h2>
                     <Link href="/reservations" class="text-sm text-cyan-600 hover:text-cyan-700">
-                        View All
+                        {{ t('actions.view') }}
                     </Link>
                 </div>
                 <div v-if="loading" class="text-center py-8">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto"></div>
-                    <p class="text-sm text-slate-500 mt-2">Loading...</p>
+                    <p class="text-sm text-slate-500 mt-2">{{ t('messages.loading') }}</p>
                 </div>
                 <div v-else-if="recentReservations.length === 0" class="text-center py-8">
-                    <p class="text-slate-500">No reservations yet</p>
+                    <p class="text-slate-500">{{ t('reservations.no_data') }}</p>
                 </div>
                 <div v-else class="space-y-3">
                     <div
@@ -113,14 +113,14 @@
                                 {{ reservation.guest?.firstName }} {{ reservation.guest?.lastName }}
                             </p>
                             <p class="text-sm text-slate-500">
-                                Room {{ reservation.room?.number }} • {{ reservation.status }}
+                                {{ t('rooms.room_number') }} {{ reservation.room?.number }} • {{ formatStatus(reservation.status) }}
                             </p>
                         </div>
                         <Link
                             :href="`/reservations/${reservation.id}`"
                             class="text-sm text-cyan-600 hover:text-cyan-700"
                         >
-                            View
+                            {{ t('actions.view') }}
                         </Link>
                     </div>
                 </div>
@@ -128,7 +128,7 @@
 
             <!-- Quick Actions -->
             <div class="bg-white p-6 rounded-lg shadow">
-                <h2 class="text-lg font-semibold text-slate-800 mb-4">Quick Actions</h2>
+                <h2 class="text-lg font-semibold text-slate-800 mb-4">{{ t('dashboard.quick_actions') }}</h2>
                 <div class="space-y-3">
                     <Link
                         href="/reservations/create"
@@ -140,8 +140,8 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="font-medium text-slate-800">New Reservation</p>
-                            <p class="text-sm text-slate-500">Create a new booking</p>
+                            <p class="font-medium text-slate-800">{{ t('reservations.new_reservation') }}</p>
+                            <p class="text-sm text-slate-500">{{ t('reservations.create_hint') }}</p>
                         </div>
                     </Link>
 
@@ -155,8 +155,8 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="font-medium text-slate-800">View All Reservations</p>
-                            <p class="text-sm text-slate-500">Manage bookings</p>
+                            <p class="font-medium text-slate-800">{{ t('reservations.view_all') }}</p>
+                            <p class="text-sm text-slate-500">{{ t('reservations.manage_hint') }}</p>
                         </div>
                     </Link>
 
@@ -170,8 +170,8 @@
                             </svg>
                         </div>
                         <div>
-                            <p class="font-medium text-slate-800">View Reports</p>
-                            <p class="text-sm text-slate-500">Coming soon</p>
+                            <p class="font-medium text-slate-800">{{ t('navigation.reports') }}</p>
+                            <p class="text-sm text-slate-500">{{ t('messages.coming_soon') }}</p>
                         </div>
                     </Link>
                 </div>
@@ -180,15 +180,18 @@
     </div>
 </template>
 
-<script setup lang="ts"> 
+<script setup lang="ts">
     import { computed, onMounted, reactive } from 'vue';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useAuth } from '@/Composables/Auth/useAuth';
+    import { useI18n } from '@/Composables/useI18n';
     import { formatDate } from '@/Utils/date';
+    import { formatStatus } from '@/Utils/format';
 
     // ─────────────────────────────────────────────────────────
     // Composables
     // ─────────────────────────────────────────────────────────
+    const { t } = useI18n();
     const { reservations, loading } = useReservations({ autoFetch: true });
     const { userName } = useAuth();
 

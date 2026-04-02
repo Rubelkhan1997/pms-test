@@ -1,4 +1,3 @@
-// FILE: resources/js/Stores/FrontDesk/reservationStore.ts
 import { defineStore } from 'pinia';
 import apiClient from '@/Services/apiClient';
 import { getErrorMessage } from '@/Helpers/error';
@@ -46,6 +45,9 @@ const DEFAULT_FILTERS: ReservationFilters = {
 // ─────────────────────────────────────────────────────────
 export const useReservationsStore = defineStore('reservations', {
 
+    // ─────────────────────────────────────────────────────
+    // State
+    // ─────────────────────────────────────────────────────
     state: () => ({
         reservations: [] as Reservation[],
         selectedReservation: null as Reservation | null,
@@ -74,7 +76,6 @@ export const useReservationsStore = defineStore('reservations', {
     // Actions
     // ─────────────────────────────────────────────────────
     actions: {
-
         setFilters(filters: Partial<ReservationFilters>): void {
             this.filters = { ...this.filters, ...filters };
         },
@@ -267,3 +268,5 @@ export const useReservationsStore = defineStore('reservations', {
         },
     },
 });
+
+

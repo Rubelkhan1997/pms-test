@@ -1,0 +1,47 @@
+Step 1 — আগে Static UI System বানান:
+
+Create a multi-language system for static UI text.
+
+Languages: en, bn, fr, ar
+Approach: Custom Composable (no new library)
+
+Create:
+- resources/js/Locales/en.ts
+- resources/js/Locales/bn.ts
+- resources/js/Locales/fr.ts
+- resources/js/Locales/ar.ts
+- resources/js/Stores/languageStore.ts
+- resources/js/Composables/useI18n.ts
+- resources/js/Utils/rtl.ts
+- resources/js/Components/LanguageSwitcher.vue
+
+Follow AGENTS.md rules. Analyze app.ts before frontend files.
+One file at a time, wait for confirmation.
+
+Step 2 — তারপর Dynamic DB Content System:
+
+Add database translation support for dynamic content.
+
+Use: spatie/laravel-translatable package
+Languages: en, bn, fr, ar
+
+Apply to these models: [আপনার model names দিন]
+Example: Room, RoomType, Category
+
+For each model:
+- Add translatable columns (name, description etc)
+- Migration for JSON columns
+- Update Model with HasTranslations trait
+- Update Resource to return current locale value
+- Update Form Request for multi-language input
+- Update Admin form (Vue) to show input for each language
+
+One file at a time, wait for confirmation.
+```
+
+---
+
+**Order টা মাথায় রাখুন:**
+```
+Step 1 আগে → Static system ready
+Step 2 পরে → Dynamic system add

@@ -1,41 +1,40 @@
 <template>
-    <Head title="Reservations" />
-    <!-- <AppLayout class="space-y-6"> -->
-        <div class="max-w-6xl mx-auto">
-            <!-- ─── Header ─────────────────────────────────────────── -->
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-2xl font-semibold text-slate-800">Reservations</h1>
-                    <p class="text-sm text-slate-500 mt-1">Manage all guest bookings</p>
-                </div>
-                <Link
-                    v-if="canCreate"
-                    href="/reservations/create"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-                >
-                    New Reservation
-                </Link>
+    <Head :title="t('navigation.reservations')" />
+    <div class="max-w-6xl mx-auto">
+        <!-- ─── Header ─────────────────────────────────────────── -->
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-semibold text-slate-800">{{ t('reservations.title') }}</h1>
+                <p class="text-sm text-slate-500 mt-1">{{ t('reservations.manage_hint') }}</p>
             </div>
+            <Link
+                v-if="canCreate"
+                href="/reservations/create"
+                class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+                {{ t('reservations.new_reservation') }}
+            </Link>
+        </div>
 
-            <!-- ─── Stats Cards ────────────────────────────────────── -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
-                    <div class="text-sm text-slate-500">Pending</div>
-                    <div class="text-2xl font-bold text-slate-800">{{ pendingCount }}</div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
-                    <div class="text-sm text-slate-500">Confirmed</div>
-                    <div class="text-2xl font-bold text-slate-800">{{ confirmedCount }}</div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
-                    <div class="text-sm text-slate-500">Checked In</div>
-                    <div class="text-2xl font-bold text-slate-800">{{ checkedInCount }}</div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
-                    <div class="text-sm text-slate-500">Today's Check-ins</div>
-                    <div class="text-2xl font-bold text-slate-800">{{ todayCheckIns.length }}</div>
-                </div>
+        <!-- ─── Stats Cards ────────────────────────────────────── -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
+                <div class="text-sm text-slate-500">{{ t('status.pending') }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ pendingCount }}</div>
             </div>
+            <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+                <div class="text-sm text-slate-500">{{ t('status.confirmed') }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ confirmedCount }}</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+                <div class="text-sm text-slate-500">{{ t('status.checked_in') }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ checkedInCount }}</div>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
+                <div class="text-sm text-slate-500">{{ t('dashboard.check_ins_today') }}</div>
+                <div class="text-2xl font-bold text-slate-800">{{ todayCheckIns.length }}</div>
+            </div>
+        </div>
 
             <!-- ─── Filters ────────────────────────────────────────── -->
             <div class="bg-white p-4 rounded-lg shadow mb-4">
@@ -43,37 +42,43 @@
 
                     <!-- Search -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Search</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            {{ t('search') }}
+                        </label>
                         <input
                             v-model="searchQuery"
                             @input="debouncedSearch"
                             type="text"
-                            placeholder="Reference or Guest name"
+                            :placeholder="t('reservations.search_placeholder')"
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
                     </div>
 
                     <!-- Status -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            {{ t('reservations.status') }}
+                        </label>
                         <select
                             v-model="localFilters.status"
                             @change="applyFilters"
                             class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                         >
-                            <option value="">All Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="checked_in">Checked In</option>
-                            <option value="checked_out">Checked Out</option>
-                            <option value="cancelled">Cancelled</option>
-                            <option value="no_show">No Show</option>
+                            <option value="">{{ t('reservations.all_status') }}</option>
+                            <option value="pending">{{ t('status.pending') }}</option>
+                            <option value="confirmed">{{ t('status.confirmed') }}</option>
+                            <option value="checked_in">{{ t('status.checked_in') }}</option>
+                            <option value="checked_out">{{ t('status.checked_out') }}</option>
+                            <option value="cancelled">{{ t('status.cancelled') }}</option>
+                            <option value="no_show">{{ t('status.no_show') }}</option>
                         </select>
                     </div>
 
                     <!-- Check-in From -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Check-in From</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            {{ t('reservations.check_in') }}
+                        </label>
                         <input
                             v-model="localFilters.checkInDate"
                             @change="applyFilters"
@@ -84,7 +89,9 @@
 
                     <!-- Check-out To -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">Check-out To</label>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            {{ t('reservations.check_out') }}
+                        </label>
                         <input
                             v-model="localFilters.checkOutDate"
                             @change="applyFilters"
@@ -99,7 +106,7 @@
                         @click="handleResetFilters"
                         class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition"
                     >
-                        Reset Filters
+                        {{ t('actions.reset') }}
                     </button>
                 </div>
             </div>
@@ -110,13 +117,13 @@
                     <table class="min-w-full divide-y divide-slate-200">
                         <thead class="bg-slate-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Guest</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Room</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Check-in</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Check-out</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Amount</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.guest_name') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.room_number') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.check_in') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.check_out') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.status') }}</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.amount') }}</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.actions') }}</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-slate-200">
@@ -163,7 +170,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-slate-900">
-                                            Room {{ res.room?.number || 'N/A' }}
+                                            {{ t('reservations.room') }} {{ res.room?.number || 'N/A' }}
                                         </div>
                                         <div class="text-xs text-slate-500">{{ res.room?.type || '' }}</div>
                                     </td>
@@ -199,17 +206,17 @@
                                                 :href="`/reservations/${res.id}/edit`"
                                                 class="text-blue-600 hover:text-blue-900"
                                             >
-                                                Edit
+                                                {{ t('reservations.edit') }}
                                             </Link>
                                             <Link :href="`/reservations/${res.id}`" class="text-green-600 hover:text-green-900">
-                                                View
+                                                {{ t('reservations.view') }}
                                             </Link>
                                             <button
                                                 v-if="canDelete"
                                                 @click="handleDelete(res)"
                                                 class="text-red-600 hover:text-red-900"
                                             >
-                                                Delete
+                                                {{ t('reservations.delete') }}
                                             </button>
                                         </div>
                                     </td>
@@ -273,6 +280,7 @@
 <script setup lang="ts">
     import { ref, reactive, onMounted, inject, computed } from 'vue';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
+    import { useI18n } from '@/Composables/useI18n';
     import { formatStatus } from '@/Utils/format';
     import { formatDate } from '@/Utils/date';
     import { usePermission } from '@/Plugins/directives/permission';
@@ -281,6 +289,9 @@
 
     // ─── Inject Confirm ─────────────────────────────────────
     const confirm = inject('confirm') as typeof ConfirmType;
+
+    // ─── i18n ────────────────────────────────────────────────
+    const { t } = useI18n();
 
     const {
         // State

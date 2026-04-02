@@ -1,18 +1,18 @@
 <template>
-    <Head title="Edit Reservation" /> 
+    <Head :title="t('reservations.edit_reservation')" />
     <div v-if="canEdit" class="max-w-4xl mx-auto">
         <section class="space-y-6">
             <!-- Header -->
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-semibold text-slate-800">Edit Reservation</h1>
-                    <p class="text-sm text-slate-500 mt-1">Update reservation details</p>
+                    <h1 class="text-2xl font-semibold text-slate-800">{{ t('reservations.edit_reservation') }}</h1>
+                    <p class="text-sm text-slate-500 mt-1">{{ t('reservations.update_hint') }}</p>
                 </div>
                 <Link
                     href="/reservations"
                     class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                 >
-                    ← Back to Reservations
+                    ← {{ t('navigation.reservations') }}
                 </Link>
             </div>
 
@@ -22,7 +22,7 @@
                     <!-- Hotel Selection (Read-only - can't change hotel) -->
                     <div>
                         <label for="hotel_id" class="block text-sm font-medium text-slate-700 mb-2">
-                            Hotel
+                            {{ t('navigation.hotels') }}
                         </label>
                         <select
                             id="hotel_id"
@@ -30,12 +30,12 @@
                             disabled
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
                         >
-                            <option value="">Select a hotel</option>
+                            <option value="">{{ t('reservations.select_hotel') }}</option>
                             <option v-for="hotel in hotelOptions" :key="hotel.id" :value="hotel.id">
                                 {{ hotel.name }} ({{ hotel.code }})
                             </option>
                         </select>
-                        <p class="mt-1 text-sm text-slate-500">Hotel cannot be changed after creation</p>
+                        <p class="mt-1 text-sm text-slate-500">{{ t('reservations.hotel_cannot_change') }}</p>
                     </div>
 
                     <!-- Guest & Room Selection -->
@@ -43,7 +43,7 @@
                         <!-- Guest Selection -->
                         <div>
                             <label for="guest_id" class="block text-sm font-medium text-slate-700 mb-2">
-                                Guest <span class="text-red-500">*</span>
+                                {{ t('guests.title') }} <span class="text-red-500">*</span>
                             </label>
                             <select
                                 id="guest_id"
@@ -51,7 +51,7 @@
                             :class="{ 'border-red-500': form.errors.guestId }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                                <option value="">Select a guest</option>
+                                <option value="">{{ t('reservations.select_guest') }}</option>
                             <option v-for="guest in guestOptions" :key="guest.id" :value="guest.id">
                                 {{ guest.firstName }} {{ guest.lastName }} ({{ guest.email }})
                             </option>
@@ -62,7 +62,7 @@
                         <!-- Room Selection -->
                         <div>
                             <label for="room_id" class="block text-sm font-medium text-slate-700 mb-2">
-                                Room <span class="text-red-500">*</span>
+                                {{ t('rooms.title') }} <span class="text-red-500">*</span>
                             </label>
                             <select
                                 id="room_id"
@@ -70,10 +70,10 @@
                             :class="{ 'border-red-500': form.errors.roomId }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                                <option value="">Select a room</option>
+                                <option value="">{{ t('reservations.select_room') }}</option>
                                 <!-- ✅ Fix: base_rate → price -->
                             <option v-for="room in availableRooms" :key="room.id" :value="room.id">
-                                Room {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
+                                {{ t('rooms.room_number') }} {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
                             </option>
                             </select>
                             <p v-if="form.errors.roomId" class="mt-1 text-sm text-red-500">{{ form.errors.roomId }}</p>
@@ -85,7 +85,7 @@
                         <!-- Check-in Date -->
                         <div>
                             <label for="check_in_date" class="block text-sm font-medium text-slate-700 mb-2">
-                                Check-in Date <span class="text-red-500">*</span>
+                                {{ t('reservations.check_in') }} <span class="text-red-500">*</span>
                             </label>
                             <input
                                 id="check_in_date"
@@ -100,7 +100,7 @@
                         <!-- Check-out Date -->
                         <div>
                             <label for="check_out_date" class="block text-sm font-medium text-slate-700 mb-2">
-                                Check-out Date <span class="text-red-500">*</span>
+                                {{ t('reservations.check_out') }} <span class="text-red-500">*</span>
                             </label>
                             <input
                                 id="check_out_date"
@@ -118,7 +118,7 @@
                         <!-- Total Amount -->
                         <div>
                             <label for="total_amount" class="block text-sm font-medium text-slate-700 mb-2">
-                                Total Amount (BDT) <span class="text-red-500">*</span>
+                                {{ t('reservations.total_price') }} <span class="text-red-500">*</span>
                             </label>
                             <input
                                 id="total_amount"
@@ -136,7 +136,7 @@
                         <!-- Status -->
                         <div>
                             <label for="status" class="block text-sm font-medium text-slate-700 mb-2">
-                                Status <span class="text-red-500">*</span>
+                                {{ t('reservations.status') }} <span class="text-red-500">*</span>
                             </label>
                             <select
                                 id="status"
@@ -144,11 +144,11 @@
                                 :class="{ 'border-red-500': form.errors.status }"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                                <option value="pending">Pending</option>
-                                <option value="confirmed">Confirmed</option>
-                                <option value="checked_in">Checked In</option>
-                                <option value="checked_out">Checked Out</option>
-                                <option value="cancelled">Cancelled</option>
+                                <option value="pending">{{ t('status.pending') }}</option>
+                                <option value="confirmed">{{ t('status.confirmed') }}</option>
+                                <option value="checked_in">{{ t('status.checked_in') }}</option>
+                                <option value="checked_out">{{ t('status.checked_out') }}</option>
+                                <option value="cancelled">{{ t('status.cancelled') }}</option>
                             </select>
                             <p v-if="form.errors.status" class="mt-1 text-sm text-red-500">{{ form.errors.status }}</p>
                         </div>
@@ -157,7 +157,7 @@
                     <!-- Notes -->
                     <div>
                         <label for="notes" class="block text-sm font-medium text-slate-700 mb-2">
-                            Notes
+                            {{ t('reservations.notes') }}
                         </label>
                         <textarea
                             id="notes"
@@ -165,7 +165,7 @@
                             :class="{ 'border-red-500': form.errors.notes }"
                             rows="3"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Any special requests or notes..."
+                            :placeholder="t('reservations.notes_placeholder')"
                         ></textarea>
                         <p v-if="form.errors.notes" class="mt-1 text-sm text-red-500">{{ form.errors.notes }}</p>
                     </div>
@@ -183,22 +183,22 @@
                             href="/reservations"
                             class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                         >
-                            Cancel
+                            {{ t('actions.cancel') }}
                         </Link>
                     </div>
                 </form>
             </div>
-        </section> 
+        </section>
     </div>
     <div v-else class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow p-6 text-center">
-            <h1 class="text-xl font-semibold text-slate-800">Access Denied</h1>
-            <p class="text-sm text-slate-500 mt-2">You do not have permission to edit reservations.</p>
+            <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
+            <p class="text-sm text-slate-500 mt-2">{{ t('messages.no_permission') }}</p>
             <Link
                 href="/reservations"
                 class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
             >
-                Back to Reservations
+                {{ t('actions.back') }}
             </Link>
         </div>
     </div>
@@ -208,10 +208,14 @@
     import { computed, watch, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
+    import { useI18n } from '@/Composables/useI18n';
     import type { Reservation, HotelOption, GuestOption, RoomOption } from '@/Types/FrontDesk/reservation';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
     import { mapGuestOptionApi, mapHotelOptionApi, mapReservationApiToReservation, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
     import { usePermission } from '@/Plugins/directives/permission';
+
+    // ─── i18n ────────────────────────────────────────────────
+    const { t } = useI18n();
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
@@ -262,7 +266,7 @@
 
     // template logic → computed-এ রাখা হয়েছে
     const isSaving    = computed(() => form.processing || saving.value);
-    const submitLabel = computed(() => isSaving.value ? 'Updating...' : 'Update Reservation');
+    const submitLabel = computed(() => isSaving.value ? t('actions.updating') : t('actions.update_reservation'));
 
     // check_in_date বদলালে check_out_date re-validate হবে
     watch(() => form.checkInDate, () => {

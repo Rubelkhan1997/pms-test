@@ -60,6 +60,13 @@ Before generating ANY frontend-related file (Store, Composable, Pages, Plugins):
 - Pinia store path -> Stores/[MODULE_NAME]/[model_name]Store.ts
 - Types path -> Types/[MODULE_NAME]/[model_name].ts
 
+## Routing Rules
+- NEVER use Ziggy or route() helper
+- NEVER use `import { route } from 'ziggy-js'`
+- For navigation: use Inertia `router.visit('/path')`
+- For form submissions: use `router.post('/path', data)`
+- Always use hardcoded URL strings or constants
+
 ---
 
 ## File Generation Order

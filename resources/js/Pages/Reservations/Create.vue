@@ -1,241 +1,242 @@
 <template>
-    <Head title="New Reservation" />
-    <!-- <AppLayout class="min-h-screen bg-slate-100 p-8"> -->
-        <div v-if="canCreate" class="max-w-4xl mx-auto">
-            <section class="space-y-6">
+    <Head :title="t('reservations.new_reservation')" />
+    <div v-if="canCreate" class="max-w-4xl mx-auto">
+        <section class="space-y-6">
 
-                <!-- Header -->
-                <div class="flex justify-between items-center">
-                    <div>
-                        <h1 class="text-2xl font-semibold text-slate-800">New Reservation</h1>
-                        <p class="text-sm text-slate-500 mt-1">Create a new guest reservation</p>
-                    </div>
-                    <Link
-                        href="/reservations"
-                        class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-                    >
-                        ← Back to Reservations
-                    </Link>
+            <!-- Header -->
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-semibold text-slate-800">{{ t('reservations.new_reservation') }}</h1>
+                    <p class="text-sm text-slate-500 mt-1">{{ t('reservations.create_hint') }}</p>
                 </div>
-
-                <!-- Reservation Form -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <form @submit.prevent="submit" class="space-y-6">
-                        <!-- Hotel -->
-                        <div>
-                            <label for="hotel_id" class="block text-sm font-medium text-slate-700 mb-2">
-                                Hotel <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                                id="hotel_id"
-                                v-model="form.hotelId"
-                                :class="{ 'border-red-500': form.errors.hotelId }"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="">Select a hotel</option>
-                                <option v-for="hotel in hotelOptions" :key="hotel.id" :value="hotel.id">
-                                    {{ hotel.name }} ({{ hotel.code }})
-                                </option>
-                            </select>
-                            <p v-if="form.errors.hotelId" class="mt-1 text-sm text-red-500">
-                                {{ form.errors.hotelId }}
-                            </p>
-                        </div>
-
-                        <!-- Guest & Room -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <!-- Guest -->
-                            <div>
-                                <label for="guest_id" class="block text-sm font-medium text-slate-700 mb-2">
-                                    Guest <span class="text-red-500">*</span>
-                                </label>
-                                <select
-                                    id="guest_id"
-                                    v-model="form.guestId"
-                                    :class="{ 'border-red-500': form.errors.guestId }"
-                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Select a guest</option>
-                                    <option v-for="guest in guestOptions" :key="guest.id" :value="guest.id">
-                                        {{ guest.firstName }} {{ guest.lastName }} ({{ guest.email }})
-                                    </option>
-                                </select>
-                                <p v-if="form.errors.guestId" class="mt-1 text-sm text-red-500">
-                                    {{ form.errors.guestId }}
-                                </p>
-                            </div>
-
-                            <!-- Room -->
-                            <div>
-                                <label for="room_id" class="block text-sm font-medium text-slate-700 mb-2">
-                                    Room <span class="text-red-500">*</span>
-                                </label>
-                                <select
-                                    id="room_id"
-                                    v-model="form.roomId"
-                                    :class="{ 'border-red-500': form.errors.roomId }"
-                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="">Select a room</option>
-                                    <!-- ✅ Fix: base_rate → price (Room type অনুযায়ী) -->
-                                    <option v-for="room in availableRooms" :key="room.id" :value="room.id">
-                                        Room {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
-                                    </option>
-                                </select>
-                                <p v-if="form.errors.roomId" class="mt-1 text-sm text-red-500">
-                                    {{ form.errors.roomId }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Dates -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <!-- Check-in -->
-                            <div>
-                                <label for="check_in_date" class="block text-sm font-medium text-slate-700 mb-2">
-                                    Check-in Date <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    id="check_in_date"
-                                    type="date"
-                                    v-model="form.checkInDate"
-                                    :class="{ 'border-red-500': form.errors.checkInDate }"
-                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                                <p v-if="form.errors.checkInDate" class="mt-1 text-sm text-red-500">
-                                    {{ form.errors.checkInDate }}
-                                </p>
-                            </div>
-
-                            <!-- Check-out -->
-                            <div>
-                                <label for="check_out_date" class="block text-sm font-medium text-slate-700 mb-2">
-                                    Check-out Date <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    id="check_out_date"
-                                    type="date"
-                                    v-model="form.checkOutDate"
-                                    @change="validateCheckOutDate"
-                                    :class="{ 'border-red-500': form.errors.checkOutDate }"
-                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                />
-                                <p v-if="form.errors.checkOutDate" class="mt-1 text-sm text-red-500">
-                                    {{ form.errors.checkOutDate }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Amount & Status -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-                            <!-- Total Amount -->
-                            <div>
-                                <label for="total_amount" class="block text-sm font-medium text-slate-700 mb-2">
-                                    Total Amount (BDT) <span class="text-red-500">*</span>
-                                </label>
-                                <input
-                                    id="total_amount"
-                                    type="number"
-                                    step="0.01"
-                                    min="1"
-                                    v-model="form.totalAmount"
-                                    :class="{ 'border-red-500': form.errors.totalAmount }"
-                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="0.00"
-                                />
-                                <p v-if="form.errors.totalAmount" class="mt-1 text-sm text-red-500">
-                                    {{ form.errors.totalAmount }}
-                                </p>
-                            </div>
-
-                            <!-- Status -->
-                            <div>
-                                <label for="status" class="block text-sm font-medium text-slate-700 mb-2">
-                                    Status <span class="text-red-500">*</span>
-                                </label>
-                                <select
-                                    id="status"
-                                    v-model="form.status"
-                                    :class="{ 'border-red-500': form.errors.status }"
-                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                    <option value="pending">Pending</option>
-                                    <option value="confirmed">Confirmed</option>
-                                    <option value="checked_in">Checked In</option>
-                                    <option value="checked_out">Checked Out</option>
-                                    <option value="cancelled">Cancelled</option>
-                                </select>
-                                <p v-if="form.errors.status" class="mt-1 text-sm text-red-500">
-                                    {{ form.errors.status }}
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Notes -->
-                        <div>
-                            <label for="notes" class="block text-sm font-medium text-slate-700 mb-2">
-                                Notes
-                            </label>
-                            <textarea
-                                id="notes"
-                                v-model="form.notes"
-                                :class="{ 'border-red-500': form.errors.notes }"
-                                rows="3"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Any special requests or notes..."
-                            ></textarea>
-                            <p v-if="form.errors.notes" class="mt-1 text-sm text-red-500">
-                                {{ form.errors.notes }}
-                            </p>
-                        </div>
-
-                        <!-- Submit -->
-                        <div class="flex gap-4 pt-4">
-                            <button
-                                type="submit"
-                                :disabled="isSaving"
-                                class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {{ submitLabel }}
-                            </button>
-                            <Link
-                                href="/reservations"
-                                class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-                            >
-                                Cancel
-                            </Link>
-                        </div>
-
-                    </form>
-                </div>
-            </section>
-        </div>
-        <div v-else class="max-w-4xl mx-auto">
-            <div class="bg-white rounded-lg shadow p-6 text-center">
-                <h1 class="text-xl font-semibold text-slate-800">Access Denied</h1>
-                <p class="text-sm text-slate-500 mt-2">You do not have permission to create reservations.</p>
                 <Link
                     href="/reservations"
-                    class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+                    class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                 >
-                    Back to Reservations
+                    ← {{ t('navigation.reservations') }}
                 </Link>
             </div>
+
+            <!-- Reservation Form -->
+            <div class="bg-white rounded-lg shadow p-6">
+                <form @submit.prevent="submit" class="space-y-6">
+                    <!-- Hotel -->
+                    <div>
+                        <label for="hotel_id" class="block text-sm font-medium text-slate-700 mb-2">
+                            {{ t('navigation.hotels') }} <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            id="hotel_id"
+                            v-model="form.hotelId"
+                            :class="{ 'border-red-500': form.errors.hotelId }"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">{{ t('reservations.select_hotel') }}</option>
+                            <option v-for="hotel in hotelOptions" :key="hotel.id" :value="hotel.id">
+                                {{ hotel.name }} ({{ hotel.code }})
+                            </option>
+                        </select>
+                        <p v-if="form.errors.hotelId" class="mt-1 text-sm text-red-500">
+                            {{ form.errors.hotelId }}
+                        </p>
+                    </div>
+
+                    <!-- Guest & Room -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- Guest -->
+                        <div>
+                            <label for="guest_id" class="block text-sm font-medium text-slate-700 mb-2">
+                                {{ t('navigation.guests') }} <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="guest_id"
+                                v-model="form.guestId"
+                                :class="{ 'border-red-500': form.errors.guestId }"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">{{ t('reservations.select_guest') }}</option>
+                                <option v-for="guest in guestOptions" :key="guest.id" :value="guest.id">
+                                    {{ guest.firstName }} {{ guest.lastName }} ({{ guest.email }})
+                                </option>
+                            </select>
+                            <p v-if="form.errors.guestId" class="mt-1 text-sm text-red-500">
+                                {{ form.errors.guestId }}
+                            </p>
+                        </div>
+
+                        <!-- Room -->
+                        <div>
+                            <label for="room_id" class="block text-sm font-medium text-slate-700 mb-2">
+                                {{ t('navigation.rooms') }} <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="room_id"
+                                v-model="form.roomId"
+                                :class="{ 'border-red-500': form.errors.roomId }"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">{{ t('reservations.select_room') }}</option>
+                                <option v-for="room in availableRooms" :key="room.id" :value="room.id">
+                                    {{ t('rooms.room_number') }} {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
+                                </option>
+                            </select>
+                            <p v-if="form.errors.roomId" class="mt-1 text-sm text-red-500">
+                                {{ form.errors.roomId }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- Check-in -->
+                        <div>
+                            <label for="check_in_date" class="block text-sm font-medium text-slate-700 mb-2">
+                                {{ t('reservations.check_in') }} <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                id="check_in_date"
+                                type="date"
+                                v-model="form.checkInDate"
+                                :class="{ 'border-red-500': form.errors.checkInDate }"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <p v-if="form.errors.checkInDate" class="mt-1 text-sm text-red-500">
+                                {{ form.errors.checkInDate }}
+                            </p>
+                        </div>
+
+                        <!-- Check-out -->
+                        <div>
+                            <label for="check_out_date" class="block text-sm font-medium text-slate-700 mb-2">
+                                {{ t('reservations.check_out') }} <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                id="check_out_date"
+                                type="date"
+                                v-model="form.checkOutDate"
+                                @change="validateCheckOutDate"
+                                :class="{ 'border-red-500': form.errors.checkOutDate }"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                            <p v-if="form.errors.checkOutDate" class="mt-1 text-sm text-red-500">
+                                {{ form.errors.checkOutDate }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Amount & Status -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                        <!-- Total Amount -->
+                        <div>
+                            <label for="total_amount" class="block text-sm font-medium text-slate-700 mb-2">
+                                {{ t('reservations.total_price') }} <span class="text-red-500">*</span>
+                            </label>
+                            <input
+                                id="total_amount"
+                                type="number"
+                                step="0.01"
+                                min="1"
+                                v-model="form.totalAmount"
+                                :class="{ 'border-red-500': form.errors.totalAmount }"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="0.00"
+                            />
+                            <p v-if="form.errors.totalAmount" class="mt-1 text-sm text-red-500">
+                                {{ form.errors.totalAmount }}
+                            </p>
+                        </div>
+
+                        <!-- Status -->
+                        <div>
+                            <label for="status" class="block text-sm font-medium text-slate-700 mb-2">
+                                {{ t('reservations.status') }} <span class="text-red-500">*</span>
+                            </label>
+                            <select
+                                id="status"
+                                v-model="form.status"
+                                :class="{ 'border-red-500': form.errors.status }"
+                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="pending">{{ t('status.pending') }}</option>
+                                <option value="confirmed">{{ t('status.confirmed') }}</option>
+                                <option value="checked_in">{{ t('status.checked_in') }}</option>
+                                <option value="checked_out">{{ t('status.checked_out') }}</option>
+                                <option value="cancelled">{{ t('status.cancelled') }}</option>
+                            </select>
+                            <p v-if="form.errors.status" class="mt-1 text-sm text-red-500">
+                                {{ form.errors.status }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label for="notes" class="block text-sm font-medium text-slate-700 mb-2">
+                            {{ t('reservations.notes') }}
+                        </label>
+                        <textarea
+                            id="notes"
+                            v-model="form.notes"
+                            :class="{ 'border-red-500': form.errors.notes }"
+                            rows="3"
+                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            :placeholder="t('reservations.notes_placeholder')"
+                        ></textarea>
+                        <p v-if="form.errors.notes" class="mt-1 text-sm text-red-500">
+                            {{ form.errors.notes }}
+                        </p>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="flex gap-4 pt-4">
+                        <button
+                            type="submit"
+                            :disabled="isSaving"
+                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {{ submitLabel }}
+                        </button>
+                        <Link
+                            href="/reservations"
+                            class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+                        >
+                            {{ t('actions.cancel') }}
+                        </Link>
+                    </div>
+
+                </form>
+            </div>
+        </section>
+    </div>
+    <div v-else class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+            <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
+            <p class="text-sm text-slate-500 mt-2">{{ t('messages.no_permission') }}</p>
+            <Link
+                href="/reservations"
+                class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+            >
+                {{ t('actions.back') }}
+            </Link>
         </div>
-    <!-- </AppLayout> -->
+    </div>
 </template>
 
 <script setup lang="ts">
     import { computed, watch, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
+    import { useI18n } from '@/Composables/useI18n';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
     import type { ReservationStatus, HotelOption, GuestOption, RoomOption } from '@/Types/FrontDesk/reservation';
     import { mapGuestOptionApi, mapHotelOptionApi, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
     import { usePermission } from '@/Plugins/directives/permission';
+
+    // ─── i18n ────────────────────────────────────────────────
+    const { t } = useI18n();
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
@@ -281,7 +282,7 @@
     });
  
     const isSaving    = computed(() => form.processing || saving.value);
-    const submitLabel = computed(() => isSaving.value ? 'Creating...' : 'Create Reservation');
+    const submitLabel = computed(() => isSaving.value ? t('actions.creating') : t('actions.create'));
 
     // check_in_date বদলালে check_out_date re-validate হবে
     watch(() => form.checkInDate, () => {

@@ -23,6 +23,8 @@
                         </nav>
                     </div>
 
+                    <LanguageSwitcher></LanguageSwitcher>
+
                     <!-- User Menu -->
                     <div class="flex items-center gap-4">
                         <!-- User Info -->
@@ -90,7 +92,9 @@
     import { router, usePage } from '@inertiajs/vue3';
     import { computed, inject, onMounted } from 'vue';
     import { useAuth } from '@/Composables/Auth/useAuth';
+    import LanguageSwitcher from '@/Components/LanguageSwitcher.vue';
     import type { confirm as ConfirmType } from '@/Plugins/confirm';
+
 
     // ─── Inject Confirm ─────────────────────────────────────
     const confirm = inject('confirm') as typeof ConfirmType;
@@ -139,7 +143,6 @@
             // Redirect to login after successful logout
             router.visit('/login');
         } catch (error) {
-            console.error('Logout failed:', error);
             // Force logout even if API fails
             router.visit('/login');
         }
