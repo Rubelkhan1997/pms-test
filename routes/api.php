@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function (): void {
     // Auth routes (public - no auth required)
-    Route::post('/auth/login', [AuthController::class, 'login']);
-    Route::post('/auth/register', [AuthController::class, 'register']);
+    Route::post('/auth/login', [AuthController::class, 'login'])->middleware('throttle:login');
+    Route::post('/auth/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
 
     // Protected routes (require Sanctum token)
     Route::middleware('auth:sanctum')->group(function (): void {

@@ -54,12 +54,12 @@ class AuthController extends Controller
                 'auth_token',
                 $token,
                 60 * 24,
-                '/',
-                null,
-                $request->isSecure(),
-                true,
+                config('session.path', '/'),
+                config('session.domain'),
+                (bool) config('session.secure', $request->isSecure()),
+                (bool) config('session.http_only', true),
                 false,
-                'lax'
+                (string) config('session.same_site', 'lax')
             );
 
             return response()->json([
@@ -98,12 +98,12 @@ class AuthController extends Controller
             'auth_token',
             $token,
             60 * 24,
-            '/',
-            null,
-            $request->isSecure(),
-            true,
+            config('session.path', '/'),
+            config('session.domain'),
+            (bool) config('session.secure', $request->isSecure()),
+            (bool) config('session.http_only', true),
             false,
-            'lax'
+            (string) config('session.same_site', 'lax')
         );
 
         return response()->json([

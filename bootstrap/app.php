@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(['auth_token']);
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
 
         // API routes don't need CSRF (token-based auth)
         $middleware->alias([
