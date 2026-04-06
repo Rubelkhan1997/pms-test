@@ -27,10 +27,11 @@
 - resources/js/app.ts
 
 ### Reference Vue Pages (STRICT RULE)
-- resources/js/Pages/Hotels/Create.vue        <- HIGHEST PRIORITY — same module, closest pattern
-- resources/js/Pages/Hotels/Edit.vue
-- resources/js/Pages/Hotels/Show.vue 
-- resources/js/Pages/Hotels/Index.vue  
+- resources/js/Pages/Hotels/Create.vue        <- HIGHEST PRIORITY — same module, closest pattern i18n + full validation pattern reference
+- resources/js/Pages/Hotels/Create.vue    <- HIGHEST PRIORITY — same module, closest pattern i18n + full validation pattern reference
+- resources/js/Pages/Hotels/Edit.vue <- HIGHEST PRIORITY — same module, closest pattern i18n + full validation pattern reference
+- resources/js/Pages/Hotels/Show.vue <- HIGHEST PRIORITY — same module, closest pattern i18n + full validation pattern reference
+- resources/js/Pages/Hotels/Index.vue  <- HIGHEST PRIORITY — same module, closest pattern i18n + full validation pattern reference
 
 ### Reference Frontend Files (STRICT RULE)
 - resources/js/Composables/FrontDesk/useHotels.ts   <- Composable pattern
@@ -99,8 +100,8 @@ Backend:
 9.  Observer
 10. Action (Create[MODEL_NAME]Action.php)
 11. Service
-12. API Controller (Api/V1/[MODEL_NAME]Controller.php)
-13. Web Controller (Web/[MODEL_NAME]Controller.php) — Inertia responses only
+12. API Controller (App\Modules\[MODULE_NAME]\Controllers\Api\V1\[MODEL_NAME]Controller.php)
+13. Web Controller (App\Modules\[MODULE_NAME]\Controllers\Web\[MODEL_NAME]Controller.php)
 14. Routes (api.php + web.php)
 [If Has Events/Jobs = YES]
 15. Event ([MODEL_NAME]Created.php)
@@ -247,7 +248,6 @@ public function index(Request $request): JsonResponse
 
 ### Web Controller
 - Namespace: App\Modules\[MODULE_NAME]\Controllers\Web\[MODEL_NAME]Controller
-
 - Returns Inertia responses only
 - Constructor: private readonly [MODEL_NAME]Service $service
 - Prop key = lowercase model name (NOT generic 'item')
@@ -295,28 +295,30 @@ public function edit(int $id): Response
 ### Routes
 ```php
 // api.php
-// Namespace: App\Modules\[MODULE_NAME]\Http\Controllers\Api\V1\[MODEL_NAME]Controller
+use App\Modules\[MODULE_NAME]\Controllers\Api\V1\[MODEL_NAME]Controller as [MODEL_NAME]ApiController;
+
 Route::middleware('auth:sanctum')
     ->prefix('v1/[ROUTE_SLUG]')
     ->name('[ROUTE_PREFIX].')
     ->group(fn() => [
-        Route::get('/',        [[MODEL_NAME]Controller::class, 'index'])  ->name('index'),
-        Route::post('/',       [[MODEL_NAME]Controller::class, 'store'])  ->name('store'),
-        Route::get('/{id}',    [[MODEL_NAME]Controller::class, 'show'])   ->name('show'),
-        Route::put('/{id}',    [[MODEL_NAME]Controller::class, 'update']) ->name('update'),
-        Route::delete('/{id}', [[MODEL_NAME]Controller::class, 'destroy'])->name('destroy'),
+        Route::get('/',        [[MODEL_NAME]ApiController::class, 'index'])  ->name('index'),
+        Route::post('/',       [[MODEL_NAME]ApiController::class, 'store'])  ->name('store'),
+        Route::get('/{id}',    [[MODEL_NAME]ApiController::class, 'show'])   ->name('show'),
+        Route::put('/{id}',    [[MODEL_NAME]ApiController::class, 'update']) ->name('update'),
+        Route::delete('/{id}', [[MODEL_NAME]ApiController::class, 'destroy'])->name('destroy'),
     ]);
 
 // web.php
-// Namespace: App\Modules\[MODULE_NAME]\Http\Controllers\Web\[MODEL_NAME]Controller
+use App\Modules\[MODULE_NAME]\Controllers\Web\[MODEL_NAME]Controller as [MODEL_NAME]WebController;
+
 Route::middleware('auth')
     ->prefix('[ROUTE_SLUG]')
     ->name('[ROUTE_PREFIX].')
     ->group(fn() => [
-        Route::get('/',          [[MODEL_NAME]Controller::class, 'index']) ->name('index'),
-        Route::get('/create',    [[MODEL_NAME]Controller::class, 'create'])->name('create'),
-        Route::get('/{id}',      [[MODEL_NAME]Controller::class, 'show'])  ->name('show'),
-        Route::get('/{id}/edit', [[MODEL_NAME]Controller::class, 'edit'])  ->name('edit'),
+        Route::get('/',          [[MODEL_NAME]WebController::class, 'index']) ->name('index'),
+        Route::get('/create',    [[MODEL_NAME]WebController::class, 'create'])->name('create'),
+        Route::get('/{id}',      [[MODEL_NAME]WebController::class, 'show'])  ->name('show'),
+        Route::get('/{id}/edit', [[MODEL_NAME]WebController::class, 'edit'])  ->name('edit'),
     ]);
 ```
 
@@ -463,10 +465,6 @@ Before writing ANY .vue page:
 4. DO NOT:
    - Use `reactive()` for form state
    - Use `reactive()` for errors
-   - Use hardcoded strings — always `t()`
-   - Skip `mapBackendField()`
-   - Skip `scrollToFirstError()`
-   - Skip permission check + `v-if="canCreate"`
    - Skip `form.reset()` before `router.visit()`
 
 - **Index.vue**  : search, status filter, `<Table>`, pagination, edit/delete per row
@@ -521,12 +519,18 @@ onMounted(() => {
 // ─── Submit ──────────────────────────────────────────────
 async function submit(): Promise<void> {
     form.clearErrors()
+
     if (!validateForm()) {
         scrollToFirstError()
         return
     }
+
     try {
-        const result = await create({ ...form })
+        const result = await create({
+            field1: form.field1,
+            field2: form.field2 || undefined,
+        })
+
         if (Number(result.status) === 1) {
             form.reset()
             router.visit('/[ROUTE_SLUG]')
@@ -542,6 +546,7 @@ async function submit(): Promise<void> {
         }
     }
 }
+```
 
 // ─── Validation ──────────────────────────────────────────
 function validateForm(): boolean {
@@ -569,26 +574,14 @@ function scrollToFirstError(): void {
         firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 100)
 }
-```
-
-**Template must-haves:**
-```html
-<!-- Permission guard -->
-<div v-if="canCreate"> ... </div>
-
-<!-- All labels via t() — NO hardcoded strings -->
-<label>{{ t('hotels.field_label') }}</label>
-<input :placeholder="t('hotels.field_placeholder')" />
-<button :disabled="isSaving">{{ submitLabel }}</button>
-```
-
-**useForm benefits (why NOT reactive):**
-- `form.errors` — built-in per-field error tracking
-- `form.processing` — built-in loading state
-- `form.reset()` — reset to initial values
-- `form.clearErrors()` — clear all errors
-- `form.setError()` — set errors from API response
-- `form.isDirty` — track unsaved changes
+``` 
+ 
+### Page Summary
+- Index.vue  : search, status filter (if enum exists), table, pagination, edit/delete per row
+- Create.vue : useForm() + usePermission() + useI18n() — follow Hotels/Create.vue exactly
+- Edit.vue   : receives '[model_name]' as Inertia prop (NOT 'item'), pre-filled form, same pattern as Create
+- Show.vue   : read-only detail view, back + edit buttons
+- All use AppLayout, AppButton, AppInput
 
 ---
 
@@ -604,9 +597,8 @@ function scrollToFirstError(): void {
 ---
 
 ## Auth Flow Note
-- Web (Inertia) → session auth
-- API → Sanctum token
-- Login/Register → `with_token` boolean controls token issuance
+- Web (Inertia) -> session auth
+- API -> Sanctum token
 
 ---
 
