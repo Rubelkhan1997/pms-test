@@ -4,10 +4,11 @@ declare(strict_types=1);
 
 namespace App\Modules\FrontDesk\Services;
 
-use App\Modules\FrontDesk\Actions\CreateReservationAction;
+use App\Modules\FrontDesk\Actions\CreateReservationAction; 
 use App\Modules\FrontDesk\Data\ReservationData;
 use App\Modules\FrontDesk\Models\Reservation;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 readonly class ReservationService
 {
@@ -69,93 +70,55 @@ readonly class ReservationService
      *
      * @param array<string, mixed> $payload
      */
-    public function create(array $payload): Reservation
+    public function create(ReservationData $payload): Reservation
     {
-        $reservation = ($this->createAction)($payload);
-        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations after create
+        return DB::transaction(function () use ($payload): Reservation {
+            $reservation = ($this->createAction)($payload);
+            return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations after create
+        });
     }
-
-    /**
-     * Return a UI badge color by status.
-     */
-    public function statusBadge(string $status): string
-    {
-        return match ($status) {
-            'confirmed', 'paid', 'completed', 'served', 'resolved' => 'success',
-            'cancelled', 'failed', 'blocked' => 'danger',
-            default => 'warning',
-        };
-    }
-
+    
     /**
      * Update an existing reservation.
      *
      * @param array<string, mixed> $payload
      */
-    public function update(int $id, array $payload): ?Reservation
+    public function update(int $id, ReservationData $payload): ?Reservation
     {
-        $reservation = Reservation::find($id);
-        if (!$reservation) {
-            return null;
-        }
-        $reservation->update($payload);
-        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations after update
+        return DB::transaction(function () use ($id, $payload): ?Reservation {
+            $reservation = $this->find($id);
+            if (!$reservation) {
+                return null;
+            }
+            $reservation->update($payload);
+            return $reservation->load(['hotel', 'room', 'guest']);
+        });
     }
 
     /**
      * Delete a reservation.
      */
-    public function delete(int $id): bool
+    public function delete(int $id): void
     {
-        $reservation = Reservation::find($id);
-        if (!$reservation) {
-            return false;
-        }
-        return $reservation->delete();
-    }
-
-    /**
-     * Check in a guest.
-     */
-    public function checkIn(int $id): ?Reservation
-    {
-        $reservation = Reservation::find($id);
-        if (!$reservation) {
-            return null;
-        }
-        $reservation->update(['status' => 'checked_in']);
-        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations
-    }
-
-    /**
-     * Check out a guest.
-     *
-     * @param array<string, mixed> $paymentData
-     */
-    public function checkOut(int $id, array $paymentData = []): ?Reservation
-    {
-        $reservation = Reservation::find($id);
-        if (!$reservation) {
-            return null;
-        }
-        $reservation->update([
-            'status' => 'checked_out',
-            ...$paymentData
-        ]);
-        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations
+        DB::transaction(function () use ($id): void {
+            $reservation = $this->find($id);
+            $reservation->delete();
+        });
     }
 
     /**
      * Cancel a reservation.
      */
     public function cancel(int $id): ?Reservation
-    {
-        $reservation = Reservation::find($id);
-        if (!$reservation) {
-            return null;
-        }
-        $reservation->update(['status' => 'cancelled']);
-        return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations
+    { 
+        return DB::transaction(function () use ($id): ?Reservation {
+            $reservation = $this->find($id);
+            if (!$reservation) {
+                return null;
+            }
+            $reservation->update(['status' => 'cancelled']);
+            return $reservation->load(['hotel', 'room', 'guest']);
+        });
     }
 }
 

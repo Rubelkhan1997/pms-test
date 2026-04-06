@@ -31,21 +31,9 @@ readonly class GuestProfileService
      *
      * @param array<string, mixed> $payload
      */
-    public function create(array $payload): GuestProfile
+    public function create(GuestProfileData $payload): GuestProfile
     {
         return ($this->createAction)($payload);
-    }
-
-    /**
-     * Return a UI badge color by status.
-     */
-    public function statusBadge(string $status): string
-    {
-        return match ($status) {
-            'confirmed', 'paid', 'completed', 'served', 'resolved' => 'success',
-            'cancelled', 'failed', 'blocked' => 'danger',
-            default => 'warning',
-        };
     }
 }
 

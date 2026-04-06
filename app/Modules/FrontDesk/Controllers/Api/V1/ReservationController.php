@@ -4,8 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\FrontDesk\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller;
-use App\Modules\FrontDesk\Requests\CheckOutReservationRequest;
+use App\Http\Controllers\Controller; 
 use App\Modules\FrontDesk\Requests\StoreReservationRequest;
 use App\Modules\FrontDesk\Resources\ReservationResource;
 use App\Modules\FrontDesk\Services\ReservationService;
@@ -127,50 +126,6 @@ class ReservationController extends Controller
             'status' => 1,
             'data' => null,
             'message' => 'Reservation deleted successfully',
-        ]);
-    }
-
-    /**
-     * Check in guest.
-     */
-    public function checkIn(int $id): JsonResponse
-    {
-        $reservation = $this->service->checkIn($id);
-
-        if (!$reservation) {
-            return response()->json([
-                'status' => 0,
-                'data' => null,
-                'message' => 'Failed to check in guest',
-            ], 422);
-        }
-
-        return response()->json([
-            'status' => 1,
-            'data' => new ReservationResource($reservation),
-            'message' => 'Guest checked in successfully',
-        ]);
-    }
-
-    /**
-     * Check out guest.
-     */
-    public function checkOut(int $id, CheckOutReservationRequest $request): JsonResponse
-    {
-        $reservation = $this->service->checkOut($id, $request->validated());
-
-        if (!$reservation) {
-            return response()->json([
-                'status' => 0,
-                'data' => null,
-                'message' => 'Failed to check out guest',
-            ], 422);
-        }
-
-        return response()->json([
-            'status' => 1,
-            'data' => new ReservationResource($reservation),
-            'message' => 'Guest checked out successfully',
         ]);
     }
 

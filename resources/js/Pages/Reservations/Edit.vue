@@ -226,7 +226,7 @@
     }>();
 
     // ─── Composable ──────────────────────────────────────────
-    const { update: updateReservation, saving, error } = useReservations();
+    const { update: updateReservation, saving } = useReservations();
     const permission = usePermission();
     const canEdit = computed(() => permission.check('edit reservations'));
 
@@ -264,11 +264,11 @@
     });
 
 
-    // template logic → computed-এ রাখা হয়েছে
+    // ─── Computed ────────────────────────────────────────────
     const isSaving    = computed(() => form.processing || saving.value);
     const submitLabel = computed(() => isSaving.value ? t('actions.updating') : t('actions.update_reservation'));
 
-    // check_in_date বদলালে check_out_date re-validate হবে
+    // Watchers to validate check-out date when check-in date or check-out date changes
     watch(() => form.checkInDate, () => {
         if (form.checkOutDate) validateCheckOutDate();
     });
@@ -303,14 +303,10 @@
                 notes:          form.notes || undefined,
             });
 
-            // Check API response status - toast already shown by composable
             if (Number(result.status) === 1) {
                 router.visit('/reservations');
             }
-            // If status === 0, error toast already shown by composable
-
         } catch (err: unknown) {
-            // Backend Laravel validation errors
             const apiErr = err as Record<string, any>;
 
             if (apiErr?.response?.data?.errors) {

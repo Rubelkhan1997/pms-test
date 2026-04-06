@@ -4,7 +4,8 @@
       "Bash(npm run *)",
       "Bash(php *)",
       "Bash(move *)",
-      "Bash(npm uninstall *)"
+      "Bash(npm uninstall *)",
+      "Bash(findstr *)"
     ]
   },
   "$version": 3

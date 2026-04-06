@@ -32,7 +32,7 @@ class ReservationResource extends JsonResource
             'meta' => $this->meta,
             'created_at' => $this->created_at,
             
-            // ✅ Relations
+            // Relations
             'hotel' => $this->whenLoaded('hotel', fn () => [
                 'id' => $this->hotel->id,
                 'name' => $this->hotel->name,

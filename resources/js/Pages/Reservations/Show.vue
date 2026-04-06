@@ -188,7 +188,7 @@
     // ─── i18n ────────────────────────────────────────────────
     const { t } = useI18n();
 
-    const { reservation, loading, error, fetchById, cancel: cancelAction} = useReservations();
+    const { reservation, loading, fetchById, cancel: cancelAction} = useReservations();
     const permission = usePermission();
     const canView = computed(() => permission.check('view reservations'));
     const canEdit = computed(() => permission.check('edit reservations'));

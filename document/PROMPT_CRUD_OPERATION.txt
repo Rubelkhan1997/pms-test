@@ -12,7 +12,7 @@
 - Model Name:       [MODEL_NAME]       ← Model class name  → e.g. Reservation
 - Table Name:       [TABLE_NAME]       ← e.g. reservations
 - Route Slug:       [ROUTE_SLUG]       ← e.g. reservations
-- Route Prefix:     [ROUTE_PREFIX]     <- e.g. front-desk.reservations
+- Route Prefix:     [ROUTE_PREFIX]     ← e.g. front-desk.reservations
 - Is New Module:    [YES|NO]           ← YES = new module, NO = add to existing
 - Fields:           [FIELD_LIST]       ← e.g. title:string, room_id:foreignId, note:text|nullable
 - Relationships:    [RELATIONSHIPS]    ← e.g. belongsTo Room
@@ -25,6 +25,10 @@
 
 ### Core Bootstrap File (STRICT RULE)
 - resources/js/app.ts
+
+### Reference Vue Pages (STRICT RULE)
+- resources/js/Pages/Reservations/Create.vue  ← i18n + full validation pattern
+- resources/js/Pages/Hotels/Create.vue        ← same module, closest reference — HIGHEST PRIORITY
 
 ### Instruction (MANDATORY)
 Before generating ANY frontend-related file (Store, Composable, Pages, Plugins):
@@ -53,12 +57,11 @@ Before generating ANY frontend-related file (Store, Composable, Pages, Plugins):
 ---
 
 ## Module Rules
-- Is New Module = YES -> Create Module folder, ServiceProvider, config
-- Is New Module = NO  -> Only create Feature files, do not touch module files
-- Route Prefix:     [ROUTE_PREFIX]     <- e.g. front-desk.reservations
-- Frontend path always -> Pages/[FEATURE_NAME_PLURAL]/
-- Pinia store path -> Stores/[MODULE_NAME]/[model_name]Store.ts
-- Types path -> Types/[MODULE_NAME]/[model_name].ts
+- Is New Module = YES → Create Module folder, ServiceProvider, config
+- Is New Module = NO  → Only create Feature files, do not touch module files
+- Frontend path always → Pages/[FEATURE_NAME_PLURAL]/
+- Pinia store path → Stores/[MODULE_NAME]/[model_name]Store.ts
+- Types path → Types/[MODULE_NAME]/[model_name].ts
 
 ## Routing Rules
 - NEVER use Ziggy or route() helper
@@ -73,6 +76,7 @@ Before generating ANY frontend-related file (Store, Composable, Pages, Plugins):
 
 > Is New Module = YES → সব files তৈরি করো
 > Is New Module = NO  → Module-level files (ServiceProvider, config) skip করো, শুধু Feature files তৈরি করো
+
 ```
 Backend:
 1.  Migration
@@ -86,8 +90,8 @@ Backend:
 9.  Observer
 10. Action (Create[MODEL_NAME]Action.php)
 11. Service
-12. API Controller (Api/V1/)
-13. Web Controller (Web/) — Inertia responses only
+12. API Controller (Api/V1/[MODEL_NAME]Controller.php)
+13. Web Controller (Web/[MODEL_NAME]Controller.php) — Inertia responses only
 14. Routes (api.php + web.php)
 [If Has Events/Jobs = YES]
 15. Event ([MODEL_NAME]Created.php)
@@ -119,7 +123,7 @@ Tests:
 ### Enum
 ```php
 <?php declare(strict_types=1);
-namespace App\\Enums;
+namespace App\Enums;
 
 enum [MODEL_NAME]Status: string {
     case Pending = 'pending';
@@ -174,6 +178,7 @@ Always output:
 
 ### API Controller
 - Thin — only: authorize, validate, call service, return response
+- Class lives at `Api/V1/[MODEL_NAME]Controller.php` — no ApiController suffix
 - Response format: `{ status: 1|0, data: ..., message: string }`
 - Pagination response:
 ```json
@@ -183,13 +188,14 @@ Always output:
     "items": [],
     "pagination": { "current_page": 1, "per_page": 15, "total": 0, "last_page": 1 }
   },
-   "message": "..."
+  "message": "..."
 }
 ```
 - HTTP codes: 200 / 201 / 204 / 422 / 404
 
 ### Web Controller
 - Returns Inertia responses only
+- Class lives at `Web/[MODEL_NAME]Controller.php` — no WebController suffix
 - `index()`  → `Inertia::render('[FEATURE_NAME_PLURAL]/Index')`
 - `create()` → `Inertia::render('[FEATURE_NAME_PLURAL]/Create')`
 - `edit()`   → `Inertia::render('[FEATURE_NAME_PLURAL]/Edit',   ['item' => ...])`
@@ -198,26 +204,28 @@ Always output:
 ### Routes
 ```php
 // api.php
+// Namespace: App\Modules\[MODULE_NAME]\Http\Controllers\Api\V1\[MODEL_NAME]Controller
 Route::middleware('auth:sanctum')
     ->prefix('v1/[ROUTE_SLUG]')
     ->name('[ROUTE_PREFIX].')
     ->group(fn() => [
-        Route::get('/',      [[MODEL_NAME]ApiController::class, 'index'])  ->name('index'),
-        Route::post('/',     [[MODEL_NAME]ApiController::class, 'store'])  ->name('store'),
-        Route::get('/{id}',  [[MODEL_NAME]ApiController::class, 'show'])   ->name('show'),
-        Route::put('/{id}',  [[MODEL_NAME]ApiController::class, 'update']) ->name('update'),
-        Route::delete('/{id}',[[MODEL_NAME]ApiController::class,'destroy'])->name('destroy'),
+        Route::get('/',        [[MODEL_NAME]Controller::class, 'index'])  ->name('index'),
+        Route::post('/',       [[MODEL_NAME]Controller::class, 'store'])  ->name('store'),
+        Route::get('/{id}',    [[MODEL_NAME]Controller::class, 'show'])   ->name('show'),
+        Route::put('/{id}',    [[MODEL_NAME]Controller::class, 'update']) ->name('update'),
+        Route::delete('/{id}', [[MODEL_NAME]Controller::class, 'destroy'])->name('destroy'),
     ]);
 
 // web.php
+// Namespace: App\Modules\[MODULE_NAME]\Http\Controllers\Web\[MODEL_NAME]Controller
 Route::middleware('auth')
     ->prefix('[ROUTE_SLUG]')
     ->name('[ROUTE_PREFIX].')
     ->group(fn() => [
-        Route::get('/',           [[MODEL_NAME]WebController::class, 'index']) ->name('index'),
-        Route::get('/create',     [[MODEL_NAME]WebController::class, 'create'])->name('create'),
-        Route::get('/{id}',       [[MODEL_NAME]WebController::class, 'show'])  ->name('show'),
-        Route::get('/{id}/edit',  [[MODEL_NAME]WebController::class, 'edit'])  ->name('edit'),
+        Route::get('/',          [[MODEL_NAME]Controller::class, 'index']) ->name('index'),
+        Route::get('/create',    [[MODEL_NAME]Controller::class, 'create'])->name('create'),
+        Route::get('/{id}',      [[MODEL_NAME]Controller::class, 'show'])  ->name('show'),
+        Route::get('/{id}/edit', [[MODEL_NAME]Controller::class, 'edit'])  ->name('edit'),
     ]);
 ```
 
@@ -257,44 +265,177 @@ pagination: {
 - Delete confirms via `$confirm.show({ variant: 'danger', ... })`
 - Never expose store directly
 
-### Pages
+### Pages — MANDATORY PATTERN
+Before writing ANY .vue page:
+1. MUST read `resources/js/Pages/Hotels/Create.vue` (highest priority — same module)
+2. MUST read `resources/js/Pages/Reservations/Create.vue` (i18n pattern reference)
+3. STRICTLY follow:
+
+   **Permission (MANDATORY):**
+   - `usePermission()` → `permission.check('create [MODEL_NAME_PLURAL]')`
+   - `canCreate` computed → wrap entire form in `v-if="canCreate"`
+   - `onMounted` → redirect to `/[ROUTE_SLUG]` if no permission
+
+   **i18n Translations (MANDATORY):**
+   - `import { useI18n } from '@/Composables/useI18n'`
+   - `const { t } = useI18n()`
+   - ALL user-facing strings MUST use `t('key')` — NO hardcoded strings
+   - Labels, placeholders, button text, page title, hints — all via `t()`
+   - `submitLabel` computed → `t('actions.creating')` / `t('actions.create')`
+
+   **Form (MANDATORY):**
+   - `useForm()` shape and field typing (with proper TS types e.g. `'' as number | string`)
+   - `validateForm()` + `validateInertiaForm()` pattern
+   - `form.clearErrors()` before submit
+   - `form.setError()` for backend 422 errors
+   - `mapBackendField()` for snake_case → camelCase error mapping
+   - `scrollToFirstError()` after validation failure
+   - `isSaving` computed from `form.processing || saving.value`
+   - `Number(result.status) === 1` check
+   - `form.reset()` before `router.visit()`
+   - `watch()` for dependent field re-validation (if applicable)
+
+4. DO NOT:
+   - Use `reactive()` for form state
+   - Use `reactive()` for errors
+   - Use hardcoded strings — always `t()`
+   - Skip `mapBackendField()`
+   - Skip `scrollToFirstError()`
+   - Skip permission check + `v-if="canCreate"`
+   - Skip `form.reset()` before `router.visit()`
+
 - **Index.vue**  : search, status filter, `<Table>`, pagination, edit/delete per row
-- **Create.vue** : typed `reactive()` form, `try/catch`, `error.response?.status === 422`
-- **Edit.vue**   : receives `item` as Inertia prop, pre-filled form, same pattern as Create
+- **Create.vue** : `useForm()` + `usePermission()` + `useI18n()` — follow Hotels/Create.vue pattern
+- **Edit.vue**   : receives `item` as Inertia prop, pre-filled form, same pattern as Create.vue
 - **Show.vue**   : read-only detail view, back + edit buttons
 - All use `<AppLayout>`, `<AppButton>`, `<AppInput>`
 
 ### Page Pattern (Create/Edit)
 ```ts
-// ✅ Standard pattern — Login/Register/Reservation এর মতো
-const form = reactive({ ... })
-const errors = reactive<Record<string, string>>({ ... })
+// ✅ Standard pattern — MUST match resources/js/Pages/Hotels/Create.vue
+import { computed, watch, onMounted } from 'vue'
+import { useForm, router } from '@inertiajs/vue3'
+import { usePermission } from '@/Plugins/directives/permission'
+import { useI18n } from '@/Composables/useI18n'
+import { required, minValue, validateInertiaForm } from '@/Utils/validation'
+import { use[MODEL_NAME]s } from '@/Composables/[MODULE_NAME]/use[MODEL_NAME]s'
 
+// ─── i18n (MANDATORY — no hardcoded strings) ─────────────
+const { t } = useI18n()
+
+// ─── Permission (MANDATORY) ──────────────────────────────
+const permission = usePermission()
+const canCreate  = computed(() => permission.check('create [MODEL_NAME_PLURAL]'))
+
+// ─── Composable ──────────────────────────────────────────
+const { create, saving } = use[MODEL_NAME]s()
+
+// ─── Form (MANDATORY — useForm, NEVER reactive) ──────────
+const form = useForm({
+    field1: '' as number | string,
+    field2: '',
+    // ... all [FIELD_LIST] fields with proper TS types
+})
+
+// ─── Computed ────────────────────────────────────────────
+const isSaving    = computed(() => form.processing || saving.value)
+const submitLabel = computed(() =>
+    isSaving.value ? t('actions.creating') : t('actions.create')
+)
+
+// ─── watch for dependent field re-validation (if needed) ─
+watch(() => form.dependentField, () => {
+    if (form.otherField) validateOtherField()
+})
+
+// ─── onMounted permission guard ──────────────────────────
+onMounted(() => {
+    if (!canCreate.value) router.visit('/[ROUTE_SLUG]')
+})
+
+// ─── Submit ──────────────────────────────────────────────
 async function submit(): Promise<void> {
-    Object.keys(errors).forEach(key => errors[key] = '')
-    if (!validateForm()) return
+    form.clearErrors()
+    if (!validateForm()) {
+        scrollToFirstError()
+        return
+    }
     try {
-        await create(form)   // বা update()
-        router.visit('/[ROUTE_SLUG]')
-    } catch (error: any) {
-        if (error.response?.status === 422) {
-            const apiErr = error.response.data
-            // map errors to reactive errors object
+        const result = await create({ ...form })
+        if (Number(result.status) === 1) {
+            form.reset()
+            router.visit('/[ROUTE_SLUG]')
+        }
+    } catch (err: unknown) {
+        const apiErr = err as Record<string, any>
+        if (apiErr?.response?.data?.errors) {
+            const backendErrors: Record<string, string[]> = apiErr.response.data.errors
+            Object.entries(backendErrors).forEach(([key, messages]) => {
+                form.setError(mapBackendField(key) as any, messages[0])
+            })
+            scrollToFirstError()
         }
     }
 }
+
+// ─── Validation ──────────────────────────────────────────
+function validateForm(): boolean {
+    return validateInertiaForm(form, {
+        field1: [required],
+        field2: [required, minValue(0)],
+        // ... all required [FIELD_LIST] fields
+    })
+}
+
+// ─── snake_case (Laravel) → camelCase (form) mapping ─────
+function mapBackendField(field: string): string {
+    const map: Record<string, string> = {
+        field_one: 'fieldOne',
+        field_two: 'fieldTwo',
+        // ... all [FIELD_LIST] mappings
+    }
+    return map[field] ?? field
+}
+
+// ─── Scroll to first error ────────────────────────────────
+function scrollToFirstError(): void {
+    setTimeout(() => {
+        const firstError = document.querySelector('.border-red-500')
+        firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    }, 100)
+}
 ```
+
+**Template must-haves:**
+```html
+<!-- Permission guard -->
+<div v-if="canCreate"> ... </div>
+
+<!-- All labels via t() — NO hardcoded strings -->
+<label>{{ t('hotels.field_label') }}</label>
+<input :placeholder="t('hotels.field_placeholder')" />
+<button :disabled="isSaving">{{ submitLabel }}</button>
+```
+
+**useForm benefits (why NOT reactive):**
+- `form.errors` — built-in per-field error tracking
+- `form.processing` — built-in loading state
+- `form.reset()` — reset to initial values
+- `form.clearErrors()` — clear all errors
+- `form.setError()` — set errors from API response
+- `form.isDirty` — track unsaved changes
 
 ---
 
 ## Conventions
 - Pages are at resources/js/Pages/[FEATURE_NAME_PLURAL]/ (no module folder)
-- PHP -> snake_case for fields/arrays
-- TS/JS -> camelCase in UI/types
-- Helpers -> pure functions only (no side effects)
-- Side effects (localStorage, cookies, DOM) -> Utils/ only
+- PHP → snake_case for fields/arrays
+- TS/JS → camelCase in UI/types
+- Helpers → pure functions only (no side effects)
+- Side effects (localStorage, cookies, DOM) → Utils/ only
 
 ---
+
 ## Auth Flow Note
 - Web (Inertia) → session auth
 - API → Sanctum token
@@ -317,11 +458,3 @@ async function submit(): Promise<void> {
 ✓ destroy → 404 for missing id
 ✓ unauthorized user → 403
 ```
-
-
-
-
-
-
-
-
