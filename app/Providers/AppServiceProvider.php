@@ -8,6 +8,9 @@ use App\Modules\FrontDesk\Models\Reservation;
 use App\Modules\FrontDesk\Observers\ReservationObserver;
 use App\Modules\Guest\Models\GuestProfile;
 use App\Modules\Guest\Observers\GuestProfileObserver;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,6 +28,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('login', static function (Request $request): Limit {
+            $email = (string) $request->input('email', 'guest');
+
+            return Limit::perMinute(5)->by($email.'|'.$request->ip());
+        });
+
         Reservation::observe(ReservationObserver::class);
         GuestProfile::observe(GuestProfileObserver::class);
     }
