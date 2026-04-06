@@ -36,10 +36,16 @@ function createApiClient(baseURL: string): AxiosInstance {
     apiClient.interceptors.response.use(
         (response) => response,
         (error) => {
-            if (error.response?.status === 401) {
+            const status = error.response?.status;
+            const requestUrl: string = error.config?.url ?? '';
+            const isLoginRequest = requestUrl.includes('/auth/login');
+            const alreadyOnLogin = typeof window !== 'undefined' && window.location.pathname === '/login';
+
+            if (status === 401 && !isLoginRequest && !alreadyOnLogin) {
                 removeToken();
                 window.location.href = '/login';
             }
+
             return Promise.reject(error);
         }
     );
