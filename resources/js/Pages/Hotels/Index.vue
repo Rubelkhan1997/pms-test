@@ -188,12 +188,13 @@
 <script setup lang="ts">
     import { ref, reactive, onMounted, inject, computed } from 'vue';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
-    import { usePermission } from '@/Plugins/directives/permission';
-    import type { confirm as ConfirmType } from '@/Plugins/confirm';
+    import { usePermissionService } from '@/Composables/usePermissionService';
+    import type { ConfirmType } from '@/Plugins/confirm';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
 
     // ─── Inject Confirm ─────────────────────────────────────
-    const confirm = inject('confirm') as typeof ConfirmType;
+    const confirm = inject<ConfirmType>('confirm')!;
+    const permission = usePermissionService();
 
     const {
         // State
@@ -208,7 +209,6 @@
         resetFilters,
     } = useHotels();
 
-    const permission = usePermission();
     const canCreate = computed(() => permission.check('create hotels'));
     const canEdit = computed(() => permission.check('edit hotels'));
     const canDelete = computed(() => permission.check('delete hotels'));

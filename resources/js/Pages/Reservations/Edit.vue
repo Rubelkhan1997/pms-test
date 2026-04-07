@@ -210,10 +210,10 @@
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
+    import { usePermissionService } from '@/Composables/usePermissionService';
     import type { Reservation, HotelOption, GuestOption, RoomOption } from '@/Types/FrontDesk/reservation';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
     import { mapGuestOptionApi, mapHotelOptionApi, mapReservationApiToReservation, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
-    import { usePermission } from '@/Plugins/directives/permission';
 
     // ─── i18n ────────────────────────────────────────────────
     const { t } = useI18n();
@@ -228,7 +228,7 @@
 
     // ─── Composable ──────────────────────────────────────────
     const { update: updateReservation, saving } = useReservations();
-    const permission = usePermission();
+    const permission = usePermissionService();
     const canEdit = computed(() => permission.check('edit reservations'));
 
     // ─── Available Rooms ─────────────────────────────────────

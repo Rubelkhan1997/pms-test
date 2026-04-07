@@ -96,10 +96,10 @@
     import { formatDate } from '@/Utils/date';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
     import { mapToHotel } from '@/Utils/Mappers/hotel';
-    import { usePermission } from '@/Plugins/directives/permission';
+    import { usePermissionService } from '@/Composables/usePermissionService';
     
     // ─── Permissions ─────────────────────────────────────────
-    const permission = usePermission();
+    const permission = usePermissionService();
     const canView = computed(() => permission.check('view hotels'));
     const canEdit = computed(() => permission.check('edit hotels')); 
 

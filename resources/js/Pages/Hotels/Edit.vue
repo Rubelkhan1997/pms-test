@@ -168,10 +168,10 @@
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
+    import { usePermissionService } from '@/Composables/usePermissionService';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
     import { mapToHotel } from '@/Utils/Mappers/hotel';
     import { required, validateInertiaForm } from '@/Utils/validation';
-    import { usePermission } from '@/Plugins/directives/permission';
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
@@ -180,14 +180,11 @@
 
     // ─── Composable ──────────────────────────────────────────
     const { update: updateRoom, saving } = useHotels();
-    const permission = usePermission();
+    const permission = usePermissionService();
     const canEdit = computed(() => permission.check('edit hotels'));
 
     // ─── Form ────────────────────────────────────────────────
     const hotelData: Hotel = mapToHotel(props.hotel);
-
-    console.log(props.hotel);
-    
 
     const form = useForm({
         name:     hotelData.name || '',

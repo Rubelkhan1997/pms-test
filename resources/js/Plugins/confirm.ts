@@ -186,6 +186,8 @@ const confirm = {
     useDialogs: () => readonly(dialogs)
 };
 
+export type ConfirmType = typeof confirm;
+
 export function install(app: App): void {
     injectStyles();
     app.config.globalProperties.$confirm = confirm;

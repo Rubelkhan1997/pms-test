@@ -177,21 +177,21 @@
     import { HotelLayout } from '@/Layouts';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
+    import { usePermissionService } from '@/Composables/usePermissionService';
+    import type { ConfirmType } from '@/Plugins/confirm';
     import { formatDate, calculateNights } from '@/Utils/date';
     import { formatStatus } from '@/Utils/format';
-    import { usePermission } from '@/Plugins/directives/permission';
     import { mapReservationApiToReservation } from '@/Utils/Mappers/reservation';
-    import type { confirm as ConfirmType } from '@/Plugins/confirm';
     import type { Reservation } from '@/Types/FrontDesk/reservation';
       
     // ─── Inject Confirm ─────────────────────────────────────
-    const confirm = inject('confirm') as typeof ConfirmType;
+    const confirm = inject<ConfirmType>('confirm')!;
+    const permission = usePermissionService();
 
     // ─── i18n ────────────────────────────────────────────────
     const { t } = useI18n();
 
     // ─── Permissions ─────────────────────────────────────────
-    const permission = usePermission();
     const canView = computed(() => permission.check('view reservations'));
     const canEdit = computed(() => permission.check('edit reservations'));
     const canCancel = computed(() => permission.check('edit reservations'));

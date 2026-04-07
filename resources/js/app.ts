@@ -4,7 +4,7 @@ import '../css/app.css';
 import { createApp, h, DefineComponent } from 'vue';
 import { createInertiaApp, Head, Link } from '@inertiajs/vue3';
 import { createPinia } from 'pinia';
-import { toast, confirm } from '@/Plugins';
+import { toast, confirm, directives } from '@/Plugins';
 
 // Import default layout statically (used as fallback)
 import AppLayout from '@/Layouts/AppLayout.vue';
@@ -53,6 +53,7 @@ createInertiaApp({
         app.use(createPinia());
         app.use(toast);
         app.use(confirm);
+        app.use(directives);
 
         const languageStore = useLanguageStore();
         languageStore.initialize();

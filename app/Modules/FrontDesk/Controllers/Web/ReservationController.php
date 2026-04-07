@@ -7,6 +7,7 @@ namespace App\Modules\FrontDesk\Controllers\Web;
 use App\Http\Controllers\Controller;
 use App\Modules\FrontDesk\Models\Hotel;
 use App\Modules\FrontDesk\Models\Room;
+use App\Modules\FrontDesk\Resources\ReservationResource;
 use App\Modules\FrontDesk\Services\ReservationService;
 use App\Modules\Guest\Models\GuestProfile;
 use Illuminate\Http\Request;
@@ -61,7 +62,7 @@ class ReservationController extends Controller
             $reservation = $this->service->find($id);
 
             return Inertia::render('Reservations/Show', [
-                'reservation' => $reservation,
+                'reservation' => new ReservationResource($reservation),
             ]);
         } catch (Throwable $e) {
             logger()->error('Error loading reservation: ' . $e->getMessage());
@@ -82,7 +83,7 @@ class ReservationController extends Controller
             $rooms  = Room::orderBy('number')->get();
 
             return Inertia::render('Reservations/Edit', [
-                'reservation' => $reservation,
+                'reservation' => new ReservationResource($reservation),
                 'hotels' => $hotels,
                 'guests' => $guests,
                 'rooms' => $rooms,
@@ -93,5 +94,4 @@ class ReservationController extends Controller
         }
     }
 }
-
 

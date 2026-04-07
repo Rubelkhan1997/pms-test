@@ -231,10 +231,10 @@
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
+    import { usePermissionService } from '@/Composables/usePermissionService';
     import { required, minValue, checkInDate, checkOutDate, validateInertiaForm } from '@/Utils/validation';
     import type { ReservationStatus, HotelOption, GuestOption, RoomOption } from '@/Types/FrontDesk/reservation';
     import { mapGuestOptionApi, mapHotelOptionApi, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
-    import { usePermission } from '@/Plugins/directives/permission';
 
     // ─── i18n ────────────────────────────────────────────────
     const { t } = useI18n();
@@ -247,8 +247,8 @@
     }>();
 
     // ─── Composable ──────────────────────────────────────────
-    const { create: createReservation, saving, error } = useReservations();
-    const permission = usePermission();
+    const { create: createReservation, saving } = useReservations();
+    const permission = usePermissionService();
     const canCreate = computed(() => permission.check('create reservations'));
 
     const hotelOptions = computed<HotelOption[]>(() =>

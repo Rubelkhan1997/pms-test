@@ -109,6 +109,9 @@ export function install(app: App, customOptions?: PermissionOptions): void {
         setupPermission(customOptions);
     }
 
+    const permission = usePermission();
+    app.provide('permission', permission);
+    app.config.globalProperties.$permission = permission;
     app.directive('permission', permissionDirective);
 }
 
@@ -137,6 +140,12 @@ export function usePermission() {
         hasAnyRole,
         hasAllRoles
     };
+}
+
+declare module 'vue' {
+    interface ComponentCustomProperties {
+        $permission: ReturnType<typeof usePermission>;
+    }
 }
 
 export default { install, setupPermission };

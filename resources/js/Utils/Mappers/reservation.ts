@@ -10,39 +10,41 @@ import type {
 } from '@/Types/FrontDesk/reservation';
 
 export function mapReservationApiToReservation(api: Record<string, any>): Reservation {
+    const source = api?.data ?? api;
+
     return {
-        id: api.id,
-        hotelId: api['hotel_id'],
-        guestId: api['guest_id'],
-        roomId: api['room_id'],
-        reference: api.reference,
-        checkInDate: api['check_in_date'],
-        checkOutDate: api['check_out_date'],
-        totalAmount: api['total_amount'],
-        status: api.status,
-        notes: api.notes,
-        adults: api.adults,
-        children: api.children,
-        meta: api.meta,
-        createdAt: api['created_at'],
-        hotel: api.hotel ? {
-            id: api.hotel.id,
-            name: api.hotel.name,
-            code: api.hotel.code,
+        id: source.id,
+        hotelId: source.hotel_id,
+        guestId: source.guest_id,
+        roomId: source.room_id,
+        reference: source.reference,
+        checkInDate: source.check_in_date,
+        checkOutDate: source.check_out_date,
+        totalAmount: source.total_amount,
+        status: source.status,
+        notes: source.notes,
+        adults: source.adults,
+        children: source.children,
+        meta: source.meta,
+        createdAt: source.created_at,
+        hotel: source.hotel ? {
+            id: source.hotel.id,
+            name: source.hotel.name,
+            code: source.hotel.code,
         } : undefined,
-        room: api.room ? {
-            id: api.room.id,
-            number: api.room.number,
-            type: api.room.type,
-            price: api.room.price,
-            status: api.room.status,
+        room: source.room ? {
+            id: source.room.id,
+            number: source.room.number,
+            type: source.room.type,
+            price: source.room.price,
+            status: source.room.status,
         } : undefined,
-        guest: api.guest ? {
-            id: api.guest.id,
-            firstName: api.guest['first_name'],
-            lastName: api.guest['last_name'],
-            email: api.guest.email,
-            phone: api.guest.phone,
+        guest: source.guest ? {
+            id: source.guest.id,
+            firstName: source.guest.first_name,
+            lastName: source.guest.last_name,
+            email: source.guest.email,
+            phone: source.guest.phone,
         } : undefined,
     };
 }

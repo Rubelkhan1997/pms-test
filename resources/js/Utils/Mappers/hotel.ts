@@ -7,17 +7,19 @@ import type {
 } from '@/Types/FrontDesk/hotel';
 
 export function mapToHotel(api: Record<string, any>): Hotel {
+    const source = api?.data ?? api;
+
     return {
-        id: api.id,
-        name: api.name,
-        code: api.code,
-        timezone: api.timezone,
-        currency: api.currency,
-        email: api.email,
-        phone: api.phone,
-        address: api.address,
-        createdAt: api.created_at,
-        updatedAt: api.updated_at,
+        id: source.id,
+        name: source.name,
+        code: source.code,
+        timezone: source.timezone,
+        currency: source.currency,
+        email: source.email,
+        phone: source.phone,
+        address: source.address,
+        createdAt: source.created_at ?? source.createdAt,
+        updatedAt: source.updated_at ?? source.updatedAt,
     };
 }
 

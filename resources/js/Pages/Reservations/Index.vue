@@ -281,14 +281,15 @@
     import { ref, reactive, onMounted, inject, computed } from 'vue';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
+    import { usePermissionService } from '@/Composables/usePermissionService';
+    import type { ConfirmType } from '@/Plugins/confirm';
     import { formatStatus } from '@/Utils/format';
     import { formatDate } from '@/Utils/date';
-    import { usePermission } from '@/Plugins/directives/permission';
-    import type { confirm as ConfirmType } from '@/Plugins/confirm';
     import type { ReservationFilters, Reservation } from '@/Types/FrontDesk/reservation';
 
     // ─── Inject Confirm ─────────────────────────────────────
-    const confirm = inject('confirm') as typeof ConfirmType;
+    const confirm = inject<ConfirmType>('confirm')!;
+    const permission = usePermissionService();
 
     // ─── i18n ────────────────────────────────────────────────
     const { t } = useI18n();
@@ -310,7 +311,6 @@
         resetFilters,
     } = useReservations();
 
-    const permission = usePermission();
     const canCreate = computed(() => permission.check('create reservations'));
     const canEdit = computed(() => permission.check('edit reservations'));
     const canDelete = computed(() => permission.check('delete reservations'));

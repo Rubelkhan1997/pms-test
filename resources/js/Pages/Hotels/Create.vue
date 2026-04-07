@@ -168,13 +168,12 @@
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
+    import { usePermissionService } from '@/Composables/usePermissionService';
     import { required, validateInertiaForm } from '@/Utils/validation';
-    import { usePermission } from '@/Plugins/directives/permission';
 
     // ─── Composable ──────────────────────────────────────────
-    const { create, saving } = useHotels();
-
-    const permission = usePermission();
+    const { create: createRoom, saving } = useHotels();
+    const permission = usePermissionService();
     const canCreate = computed(() => permission.check('create hotels'));
 
     // ─── Form ────────────────────────────────────────────────
@@ -208,7 +207,7 @@
         }
 
         try {
-            const result = await create({
+            const result = await createRoom({
                 name:     form.name,
                 code:     form.code,
                 timezone: form.timezone || undefined,
