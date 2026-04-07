@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Modules\FrontDesk\Controllers\Api\V1;
 
-use App\Http\Controllers\Controller; 
+use App\Http\Controllers\Controller;
+use App\Modules\FrontDesk\Data\ReservationData;
 use App\Modules\FrontDesk\Requests\StoreReservationRequest;
+use App\Modules\FrontDesk\Requests\UpdateReservationRequest;
 use App\Modules\FrontDesk\Resources\ReservationResource;
 use App\Modules\FrontDesk\Services\ReservationService;
 use Illuminate\Http\JsonResponse;
@@ -73,7 +75,8 @@ class ReservationController extends Controller
      */
     public function store(StoreReservationRequest $request): JsonResponse
     {
-        $reservation = $this->service->create($request->validated());
+        $reservationData = ReservationData::from($request->validated());
+        $reservation = $this->service->create($reservationData);
 
         return response()->json([
             'status' => 1,
@@ -85,12 +88,13 @@ class ReservationController extends Controller
     /**
      * Update the specified resource.
      */
-    public function update(StoreReservationRequest $request, int $id): JsonResponse
+    public function update(UpdateReservationRequest $request, int $id): JsonResponse
     {
         $validated = $request->validated();
         unset($validated['hotel_id']); // Can't change hotel
 
-        $reservation = $this->service->update($id, $validated);
+        $reservationData = ReservationData::from($validated);
+        $reservation = $this->service->update($id, $reservationData);
 
         if (!$reservation) {
             return response()->json([

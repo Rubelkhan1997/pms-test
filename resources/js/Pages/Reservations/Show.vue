@@ -180,43 +180,55 @@
     import { formatDate, calculateNights } from '@/Utils/date';
     import { formatStatus } from '@/Utils/format';
     import { usePermission } from '@/Plugins/directives/permission';
+    import { mapReservationApiToReservation } from '@/Utils/Mappers/reservation';
     import type { confirm as ConfirmType } from '@/Plugins/confirm';
-
+    import type { Reservation } from '@/Types/FrontDesk/reservation';
+      
     // ─── Inject Confirm ─────────────────────────────────────
     const confirm = inject('confirm') as typeof ConfirmType;
 
     // ─── i18n ────────────────────────────────────────────────
     const { t } = useI18n();
 
-    const { reservation, loading, fetchById, cancel: cancelAction} = useReservations();
+    // ─── Permissions ─────────────────────────────────────────
     const permission = usePermission();
     const canView = computed(() => permission.check('view reservations'));
     const canEdit = computed(() => permission.check('edit reservations'));
     const canCancel = computed(() => permission.check('edit reservations'));
 
-    // Calculate number of nights (reusable function from Utils)
+    // ─── Props ───────────────────────────────────────────────
+    const props = defineProps<{
+        reservation: Record<string, any>;
+    }>();
+
+    const { loading, cancel: cancelAction} = useReservations();
+   
+    // ─── Mapped Reservation ──────────────────────────────────
+    const reservation: Reservation = mapReservationApiToReservation(props.reservation);
+
+    // Calculate number of nights
     const nights = computed(() => {
-        if (!reservation.value || !reservation.value.checkInDate || !reservation.value.checkOutDate) {
+        if (!reservation?.checkInDate || !reservation?.checkOutDate) {
             return 0;
         }
-        return calculateNights(reservation.value.checkInDate, reservation.value.checkOutDate);
+        return calculateNights(reservation.checkInDate, reservation.checkOutDate);
     });
 
-    // Handle Cancel
+    //  Handle Cancel
     async function handleCancel() {
         const confirmed = await confirm.show({
             title: 'Cancel Reservation?',
-            message: `Reservation ${reservation.value?.reference } will be cancelled. This cannot be undone.`,
+            message: `Reservation ${reservation?.reference} will be cancelled. This cannot be undone.`,
             confirmText: 'Cancel',
             cancelText: 'Keep',
-            variant: 'danger',  
+            variant: 'danger',
         });
 
         if (!confirmed) return;
 
         try {
-            if (reservation.value) {
-                await cancelAction(reservation.value.id);
+            if (reservation) {
+                await cancelAction(reservation.id);
                 router.reload();
             }
         } catch (e) {
@@ -229,12 +241,6 @@
         if (!canView.value) {
             router.visit('/reservations');
             return;
-        }
-        const pathSegments = window.location.pathname.split('/');
-        const reservationId = pathSegments[pathSegments.length - 1];
-
-        if (reservationId) {
-            fetchById(parseInt(reservationId));
         }
     });
 </script>

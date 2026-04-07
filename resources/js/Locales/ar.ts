@@ -184,6 +184,7 @@ export default {
 
   // Status
   status: {
+    draft: 'مسودة',
     pending: 'قيد الانتظار',
     confirmed: 'مؤكد',
     checked_in: 'تم تسجيل الوصول',

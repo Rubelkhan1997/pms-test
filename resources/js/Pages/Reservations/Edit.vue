@@ -47,10 +47,10 @@
                             </label>
                             <select
                                 id="guest_id"
-                            v-model="form.guestId"
-                            :class="{ 'border-red-500': form.errors.guestId }"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
+                                v-model="form.guestId"
+                                :class="{ 'border-red-500': form.errors.guestId }"
+                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
                                 <option value="">{{ t('reservations.select_guest') }}</option>
                             <option v-for="guest in guestOptions" :key="guest.id" :value="guest.id">
                                 {{ guest.firstName }} {{ guest.lastName }} ({{ guest.email }})
@@ -145,6 +145,7 @@
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="pending">{{ t('status.pending') }}</option>
+                                <option value="draft">{{ t('status.draft') }}</option>
                                 <option value="confirmed">{{ t('status.confirmed') }}</option>
                                 <option value="checked_in">{{ t('status.checked_in') }}</option>
                                 <option value="checked_out">{{ t('status.checked_out') }}</option>
@@ -248,21 +249,20 @@
     );
 
     // ─── Form ────────────────────────────────────────────────
-    const reservationData: Reservation = mapReservationApiToReservation(props.reservation);
+    const reservation: Reservation = mapReservationApiToReservation(props.reservation);
 
     const form = useForm({
-        hotelId: reservationData.hotelId,
-        guestId: reservationData.guestId,
-        roomId: reservationData.roomId,
-        checkInDate: reservationData.checkInDate,
-        checkOutDate: reservationData.checkOutDate,
-        totalAmount: reservationData.totalAmount.toString(),
-        adults: reservationData.adults || 1,
-        children: reservationData.children || 0,
-        status: reservationData.status,
-        notes: reservationData.notes || '',
+        hotelId: reservation.hotelId,
+        guestId: reservation.guestId,
+        roomId: reservation.roomId,
+        checkInDate: reservation.checkInDate,
+        checkOutDate: reservation.checkOutDate,
+        totalAmount: reservation.totalAmount.toString(),
+        adults: reservation.adults || 1,
+        children: reservation.children || 0,
+        status: reservation.status,
+        notes: reservation.notes || '',
     });
-
 
     // ─── Computed ────────────────────────────────────────────
     const isSaving    = computed(() => form.processing || saving.value);

@@ -3,12 +3,13 @@
 // ============================================================================
 export type ReservationStatus =
     | 'pending'
+    | 'draft'
     | 'confirmed'
     | 'checked_in'
     | 'checked_out'
     | 'cancelled'
     | 'no_show';
-
+     
 export interface Reservation {
     id: number;
     hotelId: number;

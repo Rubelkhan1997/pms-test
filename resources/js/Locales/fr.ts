@@ -183,6 +183,7 @@ export default {
 
   // Status
   status: {
+    draft: 'Brouillon',
     pending: 'En attente',
     confirmed: 'Confirmé',
     checked_in: 'Arrivé',

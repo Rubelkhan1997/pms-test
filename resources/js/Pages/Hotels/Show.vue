@@ -91,9 +91,11 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, onMounted, inject } from 'vue';
+    import { computed, onMounted } from 'vue';
     import { router } from '@inertiajs/vue3';
     import { formatDate } from '@/Utils/date';
+    import type { Hotel } from '@/Types/FrontDesk/hotel';
+    import { mapToHotel } from '@/Utils/Mappers/hotel';
     import { usePermission } from '@/Plugins/directives/permission';
     
     // ─── Permissions ─────────────────────────────────────────
@@ -103,27 +105,16 @@
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
-        item: Record<string, any>;
+        hotel: Record<string, any>;
     }>();
 
     // ─── Computed ────────────────────────────────────────────
-    const hotel = computed(() => ({
-        id: props.item.id,
-        name: props.item.name,
-        code: props.item.code,
-        timezone: props.item.timezone,
-        currency: props.item.currency,
-        email: props.item.email,
-        phone: props.item.phone,
-        address: props.item.address,
-        createdAt: props.item.created_at,
-        updatedAt: props.item.updated_at,
-    }));
+    const hotel: Hotel = mapToHotel(props.hotel);
 
     // Load reservation on mount
     onMounted(() => {
         if (!canView.value) {
-            router.visit('/reservations');
+            router.visit('/hotels');
             return;
         } 
     });

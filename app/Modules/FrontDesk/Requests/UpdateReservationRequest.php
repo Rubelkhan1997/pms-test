@@ -6,7 +6,7 @@ namespace App\Modules\FrontDesk\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreReservationRequest extends FormRequest
+class UpdateReservationRequest extends FormRequest
 {
     /**
      * Determine whether the user is authorized.
@@ -24,15 +24,14 @@ class StoreReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'hotel_id' => ['nullable', 'integer', 'exists:hotels,id'],
-            'guest_id' => ['required', 'integer', 'exists:guest_profiles,id'],
-            'room_id' => ['required', 'integer', 'exists:rooms,id'],
-            'check_in_date' => ['required', 'date', 'after_or_equal:today'],
-            'check_out_date' => ['required', 'date', 'after:check_in_date'],
-            'total_amount' => ['required', 'numeric', 'min:0'],
-            'adults' => ['nullable', 'integer', 'min:1', 'max:10'],
-            'children' => ['nullable', 'integer', 'min:0', 'max:10'],
-            'status' => ['required', 'string', 'in:pending,draft,confirmed,checked_in,checked_out,cancelled'],
+            'guest_id' => ['sometimes', 'integer', 'exists:guest_profiles,id'],
+            'room_id' => ['sometimes', 'integer', 'exists:rooms,id'],
+            'check_in_date' => ['sometimes', 'date', 'after_or_equal:today'],
+            'check_out_date' => ['sometimes', 'date', 'after:check_in_date'],
+            'total_amount' => ['sometimes', 'numeric', 'min:0'],
+            'adults' => ['sometimes', 'integer', 'min:1', 'max:10'],
+            'children' => ['sometimes', 'integer', 'min:0', 'max:10'],
+            'status' => ['sometimes', 'string', 'in:pending,draft,confirmed,checked_in,checked_out,cancelled'],
         ];
     }
 
@@ -42,17 +41,11 @@ class StoreReservationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'guest_id.required' => 'Please select a guest',
             'guest_id.exists' => 'Selected guest does not exist',
-            'room_id.required' => 'Please select a room',
             'room_id.exists' => 'Selected room does not exist',
-            'check_in_date.required' => 'Check-in date is required',
             'check_in_date.after_or_equal' => 'Check-in date must be today or later',
-            'check_out_date.required' => 'Check-out date is required',
             'check_out_date.after' => 'Check-out date must be after check-in date',
-            'total_amount.required' => 'Total amount is required',
             'total_amount.min' => 'Total amount cannot be negative',
-            'status.required' => 'Reservation status is required',
             'status.in' => 'Invalid status value',
         ];
     }
@@ -71,4 +64,3 @@ class StoreReservationRequest extends FormRequest
         );
     }
 }
-

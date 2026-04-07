@@ -168,29 +168,35 @@
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
+    import type { Hotel } from '@/Types/FrontDesk/hotel';
+    import { mapToHotel } from '@/Utils/Mappers/hotel';
     import { required, validateInertiaForm } from '@/Utils/validation';
     import { usePermission } from '@/Plugins/directives/permission';
 
     // ─── Props ───────────────────────────────────────────────
     const props = defineProps<{
-        item: Record<string, any>;
+        hotel: Record<string, any>;
     }>();
 
     // ─── Composable ──────────────────────────────────────────
-    const { update, saving } = useHotels();
+    const { update: updateRoom, saving } = useHotels();
     const permission = usePermission();
     const canEdit = computed(() => permission.check('edit hotels'));
 
-
     // ─── Form ────────────────────────────────────────────────
+    const hotelData: Hotel = mapToHotel(props.hotel);
+
+    console.log(props.hotel);
+    
+
     const form = useForm({
-        name:     props.item.name || '',
-        code:     props.item.code || '',
-        timezone: props.item.timezone || '',
-        currency: props.item.currency || '',
-        email:    props.item.email || '',
-        phone:    props.item.phone || '',
-        address:  props.item.address || '',
+        name:     hotelData.name || '',
+        code:     hotelData.code || '',
+        timezone: hotelData.timezone || '',
+        currency: hotelData.currency || '',
+        email:    hotelData.email || '',
+        phone:    hotelData.phone || '',
+        address:  hotelData.address || '',
     });
 
     // ─── Computed ────────────────────────────────────────────
@@ -213,7 +219,7 @@
         }
 
         try {
-            const result = await update(Number(props.item.id), {
+            const result = await updateRoom(Number(hotelData.id), {
                 name:     form.name,
                 code:     form.code,
                 timezone: form.timezone || undefined,

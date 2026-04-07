@@ -183,6 +183,7 @@ export default {
 
   // Status
   status: {
+    draft: 'খসড়া',
     pending: 'অমীমাংসিত',
     confirmed: 'নিশ্চিত',
     checked_in: 'চেক-ইন করা',

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 namespace App\Modules\FrontDesk\Actions;
-
+ 
 use App\Modules\FrontDesk\Models\Reservation;
 
 class CreateReservationAction

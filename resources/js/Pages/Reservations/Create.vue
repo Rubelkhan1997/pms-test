@@ -161,6 +161,7 @@
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
                                 <option value="pending">{{ t('status.pending') }}</option>
+                                <option value="draft">{{ t('status.draft') }}</option>
                                 <option value="confirmed">{{ t('status.confirmed') }}</option>
                                 <option value="checked_in">{{ t('status.checked_in') }}</option>
                                 <option value="checked_out">{{ t('status.checked_out') }}</option>
@@ -313,10 +314,10 @@
                 checkInDate:   form.checkInDate,
                 checkOutDate:  form.checkOutDate,
                 totalAmount:   parseFloat(form.totalAmount as string),
-                adults:         form.adults,
-                children:       form.children,
-                status:         form.status,
-                notes:          form.notes || undefined,
+                adults:        form.adults,
+                children:      form.children,
+                status:        form.status,
+                notes:         form.notes || undefined,
             });
 
             if (Number(result.status) === 1) {

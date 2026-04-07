@@ -51,10 +51,10 @@ readonly class HotelService
     /**
      * Store a new record.
      */
-    public function create(HotelData $data): Hotel
+    public function create(HotelData $payload): Hotel
     {
-        return DB::transaction(function () use ($data): Hotel {
-            return ($this->createAction)($data->toArray());
+        return DB::transaction(function () use ($payload): Hotel {
+            return ($this->createAction)($payload->toArray());
         });
     }
 
@@ -63,11 +63,11 @@ readonly class HotelService
      *
      * @param array<string, mixed> $data
      */
-    public function update(int $id, HotelData $data): Hotel
+    public function update(int $id, HotelData $payload): Hotel
     {
-        return DB::transaction(function () use ($id, $data): Hotel {
+        return DB::transaction(function () use ($id, $payload): Hotel {
             $hotel = $this->find($id);
-            $hotel->update($data->toArray());
+            $hotel->update($payload->toArray());
             return $hotel;
         });
     }

@@ -67,21 +67,17 @@ readonly class ReservationService
 
     /**
      * Store a new record.
-     *
-     * @param array<string, mixed> $payload
      */
     public function create(ReservationData $payload): Reservation
     {
         return DB::transaction(function () use ($payload): Reservation {
-            $reservation = ($this->createAction)($payload);
-            return $reservation->load(['hotel', 'room', 'guest']); // ✅ Load relations after create
+            $reservation = ($this->createAction)($payload->toArray());
+            return $reservation->load(['hotel', 'room', 'guest']); // Load relations after create
         });
     }
     
     /**
      * Update an existing reservation.
-     *
-     * @param array<string, mixed> $payload
      */
     public function update(int $id, ReservationData $payload): ?Reservation
     {
@@ -90,7 +86,7 @@ readonly class ReservationService
             if (!$reservation) {
                 return null;
             }
-            $reservation->update($payload);
+            $reservation->update($payload->toArray());
             return $reservation->load(['hotel', 'room', 'guest']);
         });
     }
