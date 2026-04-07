@@ -21,10 +21,6 @@ const normalizeReservations = (value: unknown): Reservation[] => (
     Array.isArray(value) ? value : []
 );
 
-
-// ─────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────
 const DEFAULT_PAGINATION: ReservationPagination = {
     currentPage: 1,
     perPage: 15,
@@ -40,41 +36,31 @@ const DEFAULT_FILTERS: ReservationFilters = {
     perPage: 15,
 };
 
-// ─────────────────────────────────────────────────────────
-// Store
-// ─────────────────────────────────────────────────────────
 export const useReservationsStore = defineStore('reservations', {
-
-    // ─────────────────────────────────────────────────────
-    // State
-    // ─────────────────────────────────────────────────────
     state: () => ({
-        reservations: [] as Reservation[],
-        selectedReservation: null as Reservation | null,
+        items: [] as Reservation[],
+        selectedItem: null as Reservation | null,
         loading: false,
         loadingList: false,
         loadingDetail: false,
         error: null as string | null,
         filters: { ...DEFAULT_FILTERS } as ReservationFilters,
-        pagination: { ...DEFAULT_PAGINATION } as ReservationPagination,
+        pagination: {
+            data: [] as Reservation[],
+            meta: { ...DEFAULT_PAGINATION },
+        },
     }),
 
-    // ─────────────────────────────────────────────────────
-    // Getters
-    // ─────────────────────────────────────────────────────
     getters: {
-        pendingCount: (state): number => normalizeReservations(state.reservations).filter(r => r.status === 'pending').length,
-        confirmedCount: (state): number => normalizeReservations(state.reservations).filter(r => r.status === 'confirmed').length,
-        checkedInCount: (state): number => normalizeReservations(state.reservations).filter(r => r.status === 'checked_in').length,
+        pendingCount: (state): number => normalizeReservations(state.items).filter((r) => r.status === 'pending').length,
+        confirmedCount: (state): number => normalizeReservations(state.items).filter((r) => r.status === 'confirmed').length,
+        checkedInCount: (state): number => normalizeReservations(state.items).filter((r) => r.status === 'checked_in').length,
         todayCheckIns: (state): Reservation[] => {
             const today = new Date().toISOString().split('T')[0];
-            return normalizeReservations(state.reservations).filter(r => r.checkInDate === today);
+            return normalizeReservations(state.items).filter((r) => r.checkInDate === today);
         },
     },
 
-    // ─────────────────────────────────────────────────────
-    // Actions
-    // ─────────────────────────────────────────────────────
     actions: {
         setFilters(filters: Partial<ReservationFilters>): void {
             this.filters = { ...this.filters, ...filters };
@@ -95,13 +81,18 @@ export const useReservationsStore = defineStore('reservations', {
                         per_page: this.filters.perPage,
                     },
                 });
+
                 const payload = data?.data ?? {};
-                const items = Array.isArray(payload.items)? payload.items : Array.isArray(payload.data) ? payload.data : [];
+                const items = Array.isArray(payload.items)
+                    ? payload.items
+                    : Array.isArray(payload.data)
+                        ? payload.data
+                        : [];
                 const pagination = payload.pagination ?? payload.meta ?? {};
 
-                this.reservations = normalizeReservations(items).map(mapReservationApiToReservation);
-                this.pagination = mapReservationPaginationApiToPagination(pagination);
-
+                this.items = normalizeReservations(items).map(mapReservationApiToReservation);
+                this.pagination.meta = mapReservationPaginationApiToPagination(pagination);
+                this.pagination.data = this.items;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch reservations');
                 throw err;
@@ -115,7 +106,7 @@ export const useReservationsStore = defineStore('reservations', {
             this.error = null;
             try {
                 const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
-                this.selectedReservation = data.data
+                this.selectedItem = data.data
                     ? mapReservationApiToReservation(data.data)
                     : null;
             } catch (err: unknown) {
@@ -136,9 +127,8 @@ export const useReservationsStore = defineStore('reservations', {
                 );
                 const response = data as ApiResponse<Record<string, any>>;
 
-                // Add to store
                 if (Number(response.status) === 1 && response.data) {
-                    this.addReservation(mapReservationApiToReservation(response.data));
+                    this.addItem(mapReservationApiToReservation(response.data));
                 }
 
                 return {
@@ -163,9 +153,8 @@ export const useReservationsStore = defineStore('reservations', {
                 );
                 const response = data as ApiResponse<Record<string, any>>;
 
-                // Update store
                 if (Number(response.status) === 1 && response.data) {
-                    this.updateReservation(id, mapReservationApiToReservation(response.data));
+                    this.updateItem(id, mapReservationApiToReservation(response.data));
                 }
 
                 return {
@@ -187,9 +176,8 @@ export const useReservationsStore = defineStore('reservations', {
                 const { data } = await apiClient.v1.patch(`/front-desk/reservations/${id}/cancel`);
                 const response = data as ApiResponse<void>;
 
-                // Update store only if successful
                 if (Number(response.status) === 1) {
-                    this.updateReservation(id, { status: 'cancelled' } as Partial<Reservation>);
+                    this.updateItem(id, { status: 'cancelled' } as Partial<Reservation>);
                 }
 
                 return response;
@@ -208,9 +196,8 @@ export const useReservationsStore = defineStore('reservations', {
                 const { data } = await apiClient.v1.delete(`/front-desk/reservations/${id}`);
                 const response = data as ApiResponse<void>;
 
-                // Update store only if successful
                 if (Number(response.status) === 1) {
-                    this.removeReservation(id);
+                    this.removeItem(id);
                 }
 
                 return response;
@@ -222,32 +209,36 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        // ── Helpers (internal) ───────────────────────────
-
-        addReservation(reservation: Reservation): void {
-            this.reservations = normalizeReservations(this.reservations);
-            this.reservations.unshift(reservation);
-            this.pagination.total++;
+        addItem(item: Reservation): void {
+            this.items = normalizeReservations(this.items);
+            this.items.unshift(item);
+            this.pagination.data = this.items;
+            this.pagination.meta.total++;
         },
 
-        updateReservation(id: number, data: Partial<Reservation>): void {
-            this.reservations = normalizeReservations(this.reservations);
-            const index = this.reservations.findIndex(r => r.id === id);
+        updateItem(id: number, data: Partial<Reservation>): void {
+            this.items = normalizeReservations(this.items);
+            const index = this.items.findIndex((r) => r.id === id);
             if (index !== -1) {
-                this.reservations[index] = { ...this.reservations[index], ...data };
+                this.items[index] = { ...this.items[index], ...data };
             }
-            if (this.selectedReservation?.id === id) {
-                this.selectedReservation = { ...this.selectedReservation, ...data };
+
+            if (this.selectedItem?.id === id) {
+                this.selectedItem = { ...this.selectedItem, ...data };
             }
+
+            this.pagination.data = this.items;
         },
 
-        removeReservation(id: number): void {
-            this.reservations = normalizeReservations(this.reservations);
-            const index = this.reservations.findIndex(r => r.id === id);
+        removeItem(id: number): void {
+            this.items = normalizeReservations(this.items);
+            const index = this.items.findIndex((r) => r.id === id);
             if (index !== -1) {
-                this.reservations.splice(index, 1);
-                this.pagination.total--;
+                this.items.splice(index, 1);
+                this.pagination.meta.total = Math.max(0, this.pagination.meta.total - 1);
             }
+
+            this.pagination.data = this.items;
         },
 
         clearError(): void {
@@ -256,17 +247,18 @@ export const useReservationsStore = defineStore('reservations', {
 
         $reset(): void {
             this.$patch({
-                reservations: [],
-                selectedReservation: null,
+                items: [],
+                selectedItem: null,
                 loading: false,
                 loadingList: false,
                 loadingDetail: false,
                 error: null,
                 filters: { ...DEFAULT_FILTERS },
-                pagination: { ...DEFAULT_PAGINATION },
+                pagination: {
+                    data: [],
+                    meta: { ...DEFAULT_PAGINATION },
+                },
             });
         },
     },
 });
-
-

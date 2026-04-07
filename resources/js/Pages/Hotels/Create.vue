@@ -162,6 +162,18 @@
             </div>
         </section>
     </div>
+    <div v-else class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-lg shadow p-6 text-center">
+            <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
+            <p class="text-sm text-slate-500 mt-2">{{ t('messages.no_permission') }}</p>
+            <Link
+                href="/hotels"
+                class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
+            >
+                {{ t('actions.back') }}
+            </Link>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -173,7 +185,7 @@
     import { required, validateInertiaForm } from '@/Utils/validation';
 
     // Composable
-    const { create: createRoom, saving } = useHotels();
+    const { create: createHotel, saving } = useHotels();
     const { t } = useI18n();
     const permission = usePermissionService();
     const canCreate = computed(() => permission.check('create hotels'));
@@ -209,7 +221,7 @@
         }
 
         try {
-            const result = await createRoom({
+            const result = await createHotel({
                 name:     form.name,
                 code:     form.code,
                 timezone: form.timezone || undefined,

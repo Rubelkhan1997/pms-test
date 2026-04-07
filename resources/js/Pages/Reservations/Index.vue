@@ -133,8 +133,8 @@
                                 <td colspan="8" class="px-6 py-16 text-center">
                                     <div class="flex flex-col items-center justify-center">
                                         <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-cyan-600 mb-4"></div>
-                                        <p class="text-lg font-medium text-slate-700">Loading reservations...</p>
-                                        <p class="text-sm text-slate-500 mt-1">Please wait</p>
+                                        <p class="text-lg font-medium text-slate-700">{{ t('reservations.loading') }}</p>
+                                        <p class="text-sm text-slate-500 mt-1">{{ t('reservations.please_wait') }}</p>
                                     </div>
                                 </td>
                             </tr>
@@ -146,8 +146,8 @@
                                         <svg class="w-16 h-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                         </svg>
-                                        <p class="text-lg font-medium text-slate-700">No reservations found</p>
-                                        <p class="text-sm text-slate-500 mt-1">Create a new reservation to get started</p>
+                                        <p class="text-lg font-medium text-slate-700">{{ t('reservations.no_results') }}</p>
+                                        <p class="text-sm text-slate-500 mt-1">{{ t('reservations.create_new') }}</p>
                                     </div>
                                 </td>
                             </tr>
@@ -163,14 +163,14 @@
                                         <div class="text-sm font-medium text-slate-900">
                                             {{ res.guest?.firstName && res.guest?.lastName 
                                                 ? res.guest.firstName + ' ' + res.guest.lastName 
-                                                : 'N/A' 
+                                                : t('na')
                                             }}
                                         </div>
                                         <div class="text-sm text-slate-500">{{ res.guest?.email || '' }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         <div class="text-sm font-medium text-slate-900">
-                                            {{ t('reservations.room') }} {{ res.room?.number || 'N/A' }}
+                                            {{ t('reservations.room') }} {{ res.room?.number || t('na') }}
                                         </div>
                                         <div class="text-xs text-slate-500">{{ res.room?.type || '' }}</div>
                                     </td>
@@ -234,7 +234,7 @@
                     <div class="flex items-center gap-4">
                         <!-- Per Page -->
                         <div class="flex items-center gap-2">
-                            <label class="text-sm text-slate-500">Per Page:</label>
+                            <label class="text-sm text-slate-500">{{ t('reservations.per_page') }}:</label>
                             <select
                             v-model="perPage"
                             @change="changePerPage"
@@ -250,8 +250,8 @@
                         
                         <!-- Page Info -->
                         <div class="text-sm text-slate-500">
-                            Page {{ pagination.currentPage }} of {{ pagination.lastPage }}
-                            ({{ pagination.total }} total)
+                            {{ t('reservations.page') }} {{ pagination.currentPage }} {{ t('reservations.of') }} {{ pagination.lastPage }}
+                            ({{ pagination.total }} {{ t('reservations.total') }})
                         </div>
                     </div>
                     
@@ -261,14 +261,14 @@
                             :disabled="pagination.currentPage === 1"
                             class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                         >
-                            Previous
+                            {{ t('previous') }}
                         </button>
                         <button
                             @click="changePage(pagination.currentPage + 1)"
                             :disabled="pagination.currentPage === pagination.lastPage"
                             class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                         >
-                            Next
+                            {{ t('next') }}
                         </button>
                     </div>
                 </div>
@@ -357,10 +357,10 @@
     async function handleDelete(res: Reservation) { 
         if (!canDelete.value) return;
         const confirmed = await confirm.show({
-            title: 'Delete Reservation?',
-            message: `Reservation ${res.reference} permanently removed. This cannot be undone.`,
-            confirmText: 'Delete',
-            cancelText: 'Cancel',
+            title: t('actions.delete'),
+            message: t('messages.confirm_delete'),
+            confirmText: t('actions.delete'),
+            cancelText: t('actions.cancel'),
             variant: 'danger',  
         });
 

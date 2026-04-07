@@ -9,7 +9,10 @@
 import { App, Directive, DirectiveBinding } from 'vue';
 
 type ClickOutsideBinding = ((event: Event) => void) | undefined;
-type ClickOutsideElement = HTMLElement & { __click_outside_handler__?: (event: Event) => void };
+type ClickOutsideElement = HTMLElement & {
+    __click_outside_handler__?: (event: Event) => void;
+    __click_outside_timer__?: ReturnType<typeof setTimeout>;
+};
 
 function onDocumentInteraction(el: ClickOutsideElement, binding: DirectiveBinding<ClickOutsideBinding>, event: Event): void {
     const callback = binding.value;
@@ -32,11 +35,24 @@ export const clickOutsideDirective: Directive<HTMLElement, ClickOutsideBinding> 
         const targetEl = el as ClickOutsideElement;
         targetEl.__click_outside_handler__ = (event: Event) => onDocumentInteraction(targetEl, binding, event);
 
-        document.addEventListener('click', targetEl.__click_outside_handler__);
-        document.addEventListener('touchstart', targetEl.__click_outside_handler__);
+        // Delay listener registration to avoid immediately closing on the same click
+        // event that opened the dropdown.
+        targetEl.__click_outside_timer__ = setTimeout(() => {
+            if (!targetEl.__click_outside_handler__) {
+                return;
+            }
+
+            document.addEventListener('click', targetEl.__click_outside_handler__);
+            document.addEventListener('touchstart', targetEl.__click_outside_handler__);
+        }, 0);
     },
     unmounted(el) {
         const targetEl = el as ClickOutsideElement;
+
+        if (targetEl.__click_outside_timer__) {
+            clearTimeout(targetEl.__click_outside_timer__);
+            delete targetEl.__click_outside_timer__;
+        }
 
         if (!targetEl.__click_outside_handler__) {
             return;

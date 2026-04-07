@@ -11,71 +11,49 @@ import type {
     UpdateReservationDto,
 } from '@/Types/FrontDesk/reservation';
 
-// ─────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────
-
-export interface UseReservationOptions {
+export interface UseReservationsOptions {
     autoFetch?: boolean;
     initialFilters?: Partial<ReservationFilters>;
     pollingInterval?: number;
 }
 
-// ─────────────────────────────────────────────────────────
-// Composable
-// ─────────────────────────────────────────────────────────
-
-export function useReservations(options: UseReservationOptions = {}) {
-
+export function useReservations(options: UseReservationsOptions = {}) {
     const {
         autoFetch = false,
         initialFilters = {},
         pollingInterval = 0,
     } = options;
 
-    // ─── Store (internal — never expose directly) ────────────
     const store = useReservationsStore();
-
-    // ─── Inject Toast ────────────────────────────────────
     const toast = inject('toast') as typeof ToastType;
 
-    // ─── UI Helpers ──────────────────────────────────────
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
 
-    // ─── Polling ─────────────────────────────────────────
     const { start: startPolling, stop: stopPolling } = usePolling(
         () => fetchAll(),
         pollingInterval,
         () => pollingInterval > 0
     );
 
-    // ─────────────────────────────────────────────────────
-    // Reactive State
-    // ─────────────────────────────────────────────────────
-
-    const reservations = computed(() => store.reservations);
-    const reservation = computed(() => store.selectedReservation);
-    const pagination = computed(() => store.pagination);
-
-    const loading = computed(() => _loading.value || store.loadingList);
+    const reservations = computed(() => store.items);
+    const reservation = computed(() => store.selectedItem);
+    const loading = computed(() => _loading.value || store.loadingList || store.loadingDetail);
     const saving = computed(() => _saving.value || store.loading);
     const error = computed(() => store.error);
+    const pagination = computed(() => store.pagination.meta);
 
-    // ─── Derived (Store Getters) ──────────────────────────
     const pendingCount = computed(() => store.pendingCount);
     const confirmedCount = computed(() => store.confirmedCount);
     const checkedInCount = computed(() => store.checkedInCount);
     const todayCheckIns = computed(() => store.todayCheckIns);
 
-    
-    // ─────────────────────────────────────────────────────
-    // Actions
-    // ─────────────────────────────────────────────────────
-
     async function fetchAll(page = 1, params?: Partial<ReservationFilters>): Promise<void> {
         startLoading();
-        if (params) store.setFilters(params);
+        if (params) {
+            store.setFilters(params);
+        }
+
         try {
             await store.fetchAll(page);
         } catch (err: unknown) {
@@ -103,12 +81,13 @@ export function useReservations(options: UseReservationOptions = {}) {
         try {
             const result = await store.create(payload);
             const isSuccess = Number(result.status) === 1;
-            // Show toast based on API response status
+
             if (isSuccess) {
                 toast.success(result.message || 'Reservation created successfully');
             } else {
                 toast.error(result.message || 'Failed to create reservation');
             }
+
             return result;
         } catch (err: unknown) {
             toast.error(getApiError(err, 'Failed to create reservation'));
@@ -123,12 +102,13 @@ export function useReservations(options: UseReservationOptions = {}) {
         try {
             const result = await store.update(id, payload);
             const isSuccess = Number(result.status) === 1;
-            // Show toast based on API response status
+
             if (isSuccess) {
                 toast.success(result.message || 'Reservation updated successfully');
             } else {
                 toast.error(result.message || 'Failed to update reservation');
             }
+
             return result;
         } catch (err: unknown) {
             toast.error(getApiError(err, 'Failed to update reservation'));
@@ -143,12 +123,13 @@ export function useReservations(options: UseReservationOptions = {}) {
         try {
             const result = await store.cancel(id);
             const isSuccess = Number(result.status) === 1;
-            // Show toast based on API response status
+
             if (isSuccess) {
                 toast.success(result.message || 'Reservation cancelled successfully');
             } else {
                 toast.error(result.message || 'Failed to cancel reservation');
             }
+
             return result;
         } catch (err: unknown) {
             toast.error(getApiError(err, 'Failed to cancel reservation'));
@@ -163,12 +144,13 @@ export function useReservations(options: UseReservationOptions = {}) {
         try {
             const result = await store.delete(id);
             const isSuccess = Number(result.status) === 1;
-            // Show toast based on API response status
+
             if (isSuccess) {
                 toast.success(result.message || 'Reservation deleted successfully');
             } else {
                 toast.error(result.message || 'Failed to delete reservation');
             }
+
             return result;
         } catch (err: unknown) {
             toast.error(getApiError(err, 'Failed to delete reservation'));
@@ -177,7 +159,7 @@ export function useReservations(options: UseReservationOptions = {}) {
             stopSaving();
         }
     }
- 
+
     function setFilters(filters: Partial<ReservationFilters>): void {
         store.setFilters(filters);
     }
@@ -186,13 +168,12 @@ export function useReservations(options: UseReservationOptions = {}) {
         store.resetFilters();
     }
 
-    // ─── Lifecycle ───────────────────────────────────────
-
     if (autoFetch) {
         onMounted(() => {
             if (Object.keys(initialFilters).length > 0) {
                 store.setFilters(initialFilters);
             }
+
             fetchAll();
             startPolling();
         });
@@ -202,14 +183,7 @@ export function useReservations(options: UseReservationOptions = {}) {
         });
     }
 
-    // ─────────────────────────────────────────────────────
-    // Public API
-    // ✅ Fix: store expose করা হয়নি — encapsulation বজায় আছে
-    // ✅ Fix: All errors now show as toast notifications
-    // ─────────────────────────────────────────────────────
-
     return {
-        // State
         reservations,
         reservation,
         pagination,
@@ -217,13 +191,11 @@ export function useReservations(options: UseReservationOptions = {}) {
         saving,
         error,
 
-        // Derived
         pendingCount,
         confirmedCount,
         checkedInCount,
         todayCheckIns,
 
-        // Actions
         fetchAll,
         fetchById,
         create,

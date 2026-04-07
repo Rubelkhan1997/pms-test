@@ -3,7 +3,7 @@ import { useHotelsStore } from '@/Stores/FrontDesk/hotelStore';
 import { useLoading, usePolling } from '@/Composables';
 import { getApiError } from '@/Helpers/error';
 import type { ApiResponse } from '@/Types/api';
-import type { toast as ToastType } from '@/Plugins/toast'; 
+import type { toast as ToastType } from '@/Plugins/toast';
 import type {
     Hotel,
     HotelFilters,
@@ -11,67 +11,48 @@ import type {
     UpdateHotelDto,
 } from '@/Types/FrontDesk/hotel';
 
-// ─────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────
-
 export interface UseHotelsOptions {
     autoFetch?: boolean;
     initialFilters?: Partial<HotelFilters>;
     pollingInterval?: number;
 }
 
-// ─────────────────────────────────────────────────────────
-// Composable
-// ─────────────────────────────────────────────────────────
-
 export function useHotels(options: UseHotelsOptions = {}) {
-
     const {
         autoFetch = false,
         initialFilters = {},
         pollingInterval = 0,
     } = options;
 
-    // ─── Store (internal — never expose directly) ────────
     const store = useHotelsStore();
+    const toast = inject('toast') as typeof ToastType;
 
-    // ─── Inject Toast  ──────────────────────────
-    const $toast = inject('toast') as typeof ToastType; 
-
-    // ─── UI Helpers ──────────────────────────────────────
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
 
-    // ─── Polling ─────────────────────────────────────────
     const { start: startPolling, stop: stopPolling } = usePolling(
         () => fetchAll(),
         pollingInterval,
         () => pollingInterval > 0
     );
 
-    // ─────────────────────────────────────────────────────
-    // Reactive State
-    // ─────────────────────────────────────────────────────
-
     const hotels = computed(() => store.items);
     const hotel = computed(() => store.selectedItem);
-    const loading = computed(() => _loading.value || store.loadingList);
+    const loading = computed(() => _loading.value || store.loadingList || store.loadingDetail);
     const saving = computed(() => _saving.value || store.loading);
     const error = computed(() => store.error);
     const pagination = computed(() => store.pagination.meta);
 
-    // ─────────────────────────────────────────────────────
-    // Actions
-    // ─────────────────────────────────────────────────────
-
     async function fetchAll(page = 1, params?: Partial<HotelFilters>): Promise<void> {
         startLoading();
-        if (params) store.setFilters(params);
+        if (params) {
+            store.setFilters(params);
+        }
+
         try {
             await store.fetchAll(page);
         } catch (err: unknown) {
-            $toast.error(getApiError(err, 'Failed to fetch hotels'));
+            toast.error(getApiError(err, 'Failed to fetch hotels'));
             throw err;
         } finally {
             stopLoading();
@@ -83,7 +64,7 @@ export function useHotels(options: UseHotelsOptions = {}) {
         try {
             await store.fetchById(id);
         } catch (err: unknown) {
-            $toast.error(getApiError(err, 'Failed to fetch hotel'));
+            toast.error(getApiError(err, 'Failed to fetch hotel'));
             throw err;
         } finally {
             stopLoading();
@@ -95,14 +76,16 @@ export function useHotels(options: UseHotelsOptions = {}) {
         try {
             const result = await store.create(payload);
             const isSuccess = Number(result.status) === 1;
+
             if (isSuccess) {
-                $toast.success(result.message || 'Hotel created successfully');
+                toast.success(result.message || 'Hotel created successfully');
             } else {
-                $toast.error(result.message || 'Failed to create hotel');
+                toast.error(result.message || 'Failed to create hotel');
             }
+
             return result;
         } catch (err: unknown) {
-            $toast.error(getApiError(err, 'Failed to create hotel'));
+            toast.error(getApiError(err, 'Failed to create hotel'));
             throw err;
         } finally {
             stopSaving();
@@ -114,14 +97,16 @@ export function useHotels(options: UseHotelsOptions = {}) {
         try {
             const result = await store.update(id, payload);
             const isSuccess = Number(result.status) === 1;
+
             if (isSuccess) {
-                $toast.success(result.message || 'Hotel updated successfully');
+                toast.success(result.message || 'Hotel updated successfully');
             } else {
-                $toast.error(result.message || 'Failed to update hotel');
+                toast.error(result.message || 'Failed to update hotel');
             }
+
             return result;
         } catch (err: unknown) {
-            $toast.error(getApiError(err, 'Failed to update hotel'));
+            toast.error(getApiError(err, 'Failed to update hotel'));
             throw err;
         } finally {
             stopSaving();
@@ -133,14 +118,16 @@ export function useHotels(options: UseHotelsOptions = {}) {
         try {
             const result = await store.delete(id);
             const isSuccess = Number(result.status) === 1;
+
             if (isSuccess) {
-                $toast.success(result.message || 'Hotel deleted successfully');
+                toast.success(result.message || 'Hotel deleted successfully');
             } else {
-                $toast.error(result.message || 'Failed to delete hotel');
+                toast.error(result.message || 'Failed to delete hotel');
             }
+
             return result;
         } catch (err: unknown) {
-            $toast.error(getApiError(err, 'Failed to delete hotel'));
+            toast.error(getApiError(err, 'Failed to delete hotel'));
             throw err;
         } finally {
             stopSaving();
@@ -155,13 +142,12 @@ export function useHotels(options: UseHotelsOptions = {}) {
         store.resetFilters();
     }
 
-    // ─── Lifecycle ───────────────────────────────────────
-
     if (autoFetch) {
         onMounted(() => {
             if (Object.keys(initialFilters).length > 0) {
                 store.setFilters(initialFilters);
             }
+
             fetchAll();
             startPolling();
         });
@@ -171,12 +157,7 @@ export function useHotels(options: UseHotelsOptions = {}) {
         });
     }
 
-    // ─────────────────────────────────────────────────────
-    // Public API
-    // ─────────────────────────────────────────────────────
-
     return {
-        // State
         hotels,
         hotel,
         loading,
@@ -184,7 +165,6 @@ export function useHotels(options: UseHotelsOptions = {}) {
         error,
         pagination,
 
-        // Actions
         fetchAll,
         fetchById,
         create,

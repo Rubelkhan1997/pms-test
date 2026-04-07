@@ -21,9 +21,6 @@ const normalizeHotels = (value: unknown): Hotel[] => (
     Array.isArray(value) ? value : []
 );
 
-// ─────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────
 const DEFAULT_PAGINATION: HotelPagination = {
     currentPage: 1,
     perPage: 15,
@@ -36,19 +33,13 @@ const DEFAULT_FILTERS: HotelFilters = {
     perPage: 15,
 };
 
-// ─────────────────────────────────────────────────────────
-// Store
-// ─────────────────────────────────────────────────────────
 export const useHotelsStore = defineStore('hotels', {
-
-    // ─────────────────────────────────────────────────────
-    // State
-    // ─────────────────────────────────────────────────────
     state: () => ({
         items: [] as Hotel[],
         selectedItem: null as Hotel | null,
         loading: false,
         loadingList: false,
+        loadingDetail: false,
         error: null as string | null,
         filters: { ...DEFAULT_FILTERS } as HotelFilters,
         pagination: {
@@ -57,14 +48,8 @@ export const useHotelsStore = defineStore('hotels', {
         },
     }),
 
-    // ─────────────────────────────────────────────────────
-    // Getters
-    // ─────────────────────────────────────────────────────
     getters: {},
 
-    // ─────────────────────────────────────────────────────
-    // Actions
-    // ─────────────────────────────────────────────────────
     actions: {
         setFilters(filters: Partial<HotelFilters>): void {
             this.filters = { ...this.filters, ...filters };
@@ -85,14 +70,18 @@ export const useHotelsStore = defineStore('hotels', {
                         per_page: this.filters.perPage,
                     },
                 });
+
                 const payload = data?.data ?? {};
-                const items = Array.isArray(payload.items) ? payload.items : Array.isArray(payload.data) ? payload.data : [];
+                const items = Array.isArray(payload.items)
+                    ? payload.items
+                    : Array.isArray(payload.data)
+                        ? payload.data
+                        : [];
                 const pagination = payload.pagination ?? payload.meta ?? {};
 
                 this.items = normalizeHotels(items).map(mapToHotel);
                 this.pagination.meta = mapToHotelPagination(pagination);
                 this.pagination.data = this.items;
-
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch hotels');
                 throw err;
@@ -102,7 +91,7 @@ export const useHotelsStore = defineStore('hotels', {
         },
 
         async fetchById(id: number): Promise<void> {
-            this.loadingList = true;
+            this.loadingDetail = true;
             this.error = null;
             try {
                 const { data } = await apiClient.v1.get(`/front-desk/hotels/${id}`);
@@ -113,7 +102,7 @@ export const useHotelsStore = defineStore('hotels', {
                 this.error = getErrorMessage(err, 'Failed to fetch hotel');
                 throw err;
             } finally {
-                this.loadingList = false;
+                this.loadingDetail = false;
             }
         },
 
@@ -128,7 +117,7 @@ export const useHotelsStore = defineStore('hotels', {
                 const response = data as ApiResponse<Record<string, any>>;
 
                 if (Number(response.status) === 1 && response.data) {
-                    this.items.unshift(mapToHotel(response.data));
+                    this.addItem(mapToHotel(response.data));
                 }
 
                 return {
@@ -154,10 +143,7 @@ export const useHotelsStore = defineStore('hotels', {
                 const response = data as ApiResponse<Record<string, any>>;
 
                 if (Number(response.status) === 1 && response.data) {
-                    const index = this.items.findIndex(h => h.id === id);
-                    if (index !== -1) {
-                        this.items[index] = mapToHotel(response.data);
-                    }
+                    this.updateItem(id, mapToHotel(response.data));
                 }
 
                 return {
@@ -180,10 +166,7 @@ export const useHotelsStore = defineStore('hotels', {
                 const response = data as ApiResponse<void>;
 
                 if (Number(response.status) === 1) {
-                    const index = this.items.findIndex(h => h.id === id);
-                    if (index !== -1) {
-                        this.items.splice(index, 1);
-                    }
+                    this.removeItem(id);
                 }
 
                 return response;
@@ -193,6 +176,37 @@ export const useHotelsStore = defineStore('hotels', {
             } finally {
                 this.loading = false;
             }
+        },
+
+        addItem(item: Hotel): void {
+            this.items = normalizeHotels(this.items);
+            this.items.unshift(item);
+            this.pagination.data = this.items;
+            this.pagination.meta.total++;
+        },
+
+        updateItem(id: number, data: Partial<Hotel>): void {
+            this.items = normalizeHotels(this.items);
+            const index = this.items.findIndex((h) => h.id === id);
+            if (index !== -1) {
+                this.items[index] = { ...this.items[index], ...data };
+            }
+
+            if (this.selectedItem?.id === id) {
+                this.selectedItem = { ...this.selectedItem, ...data };
+            }
+
+            this.pagination.data = this.items;
+        },
+
+        removeItem(id: number): void {
+            this.items = normalizeHotels(this.items);
+            const index = this.items.findIndex((h) => h.id === id);
+            if (index !== -1) {
+                this.items.splice(index, 1);
+                this.pagination.meta.total = Math.max(0, this.pagination.meta.total - 1);
+            }
+            this.pagination.data = this.items;
         },
 
         clearError(): void {
@@ -205,6 +219,7 @@ export const useHotelsStore = defineStore('hotels', {
                 selectedItem: null,
                 loading: false,
                 loadingList: false,
+                loadingDetail: false,
                 error: null,
                 filters: { ...DEFAULT_FILTERS },
                 pagination: {
