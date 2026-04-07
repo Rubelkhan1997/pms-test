@@ -198,16 +198,16 @@
     const canEdit = computed(() => permission.check('edit hotels'));
 
     // Form
-    const hotelData: Hotel = mapToHotel(props.hotel);
+    const hotel: Hotel = mapToHotel(props.hotel);
 
     const form = useForm({
-        name:     hotelData.name || '',
-        code:     hotelData.code || '',
-        timezone: hotelData.timezone || '',
-        currency: hotelData.currency || '',
-        email:    hotelData.email || '',
-        phone:    hotelData.phone || '',
-        address:  hotelData.address || '',
+        name:     hotel.name || '',
+        code:     hotel.code || '',
+        timezone: hotel.timezone || '',
+        currency: hotel.currency || '',
+        email:    hotel.email || '',
+        phone:    hotel.phone || '',
+        address:  hotel.address || '',
     });
 
     // Computed
@@ -230,7 +230,7 @@
         }
 
         try {
-            const result = await updateHotel(Number(hotelData.id), {
+            const result = await updateHotel(Number(hotel.id), {
                 name:     form.name,
                 code:     form.code,
                 timezone: form.timezone || undefined,

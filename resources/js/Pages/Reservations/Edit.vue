@@ -290,7 +290,7 @@
         }
 
         try {
-            const result = await updateReservation(props.reservation.id, {
+            const result = await updateReservation(reservation.id, {
                 hotelId:       Number(form.hotelId),
                 guestId:       Number(form.guestId),
                 roomId:        Number(form.roomId),

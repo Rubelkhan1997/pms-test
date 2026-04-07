@@ -24,6 +24,7 @@ class UpdateReservationRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'hotel_id' => ['nullable', 'integer', 'exists:hotels,id'],
             'guest_id' => ['sometimes', 'integer', 'exists:guest_profiles,id'],
             'room_id' => ['sometimes', 'integer', 'exists:rooms,id'],
             'check_in_date' => ['sometimes', 'date', 'after_or_equal:today'],

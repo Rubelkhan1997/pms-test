@@ -33,7 +33,7 @@ export const availableLanguages = [
     code: 'en' as LocaleCode,
     name: 'English',
     nativeName: 'English',
-    flag: '🇬🇧',
+    flag:  '🇺🇸',
     direction: 'ltr' as const,
   },
   {

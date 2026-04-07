@@ -93,7 +93,7 @@ class ReservationController extends Controller
     {
         try {
             $validated = $request->validated();
-            unset($validated['hotel_id']); // Can't change hotel
+            // unset($validated['hotel_id']); // Can't change hotel
 
             $reservationData = ReservationData::from($validated);
             $reservation = $this->service->update($id, $reservationData);
