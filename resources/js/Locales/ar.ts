@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Arabic Translations
  * العربية
  * RTL Language
@@ -22,7 +22,8 @@ export default {
   previous: 'السابق',
   yes: 'نعم',
   no: 'لا',
-  ok: 'موافق',
+  ok: 'OK',
+  na: 'N/A',
 
   // Actions
   actions: {
@@ -151,7 +152,41 @@ export default {
     reference: 'المرجع',
     created_at: 'تاريخ الإنشاء',
   },
-
+  // Hotels
+  hotels: {
+    title: 'الفنادق',
+    new_hotel: 'إضافة فندق',
+    edit_hotel: 'تعديل الفندق',
+    hotel_details: 'تفاصيل الفندق',
+    create_hint: 'إنشاء فندق جديد',
+    update_hint: 'تحديث معلومات الفندق',
+    manage_hint: 'إدارة منشآت الفندق',
+    back_to_hotels: 'العودة إلى الفنادق',
+    name: 'الاسم',
+    code: 'الكود',
+    timezone: 'المنطقة الزمنية',
+    currency: 'العملة',
+    email: 'البريد الإلكتروني',
+    phone: 'الهاتف',
+    address: 'العنوان',
+    search_placeholder: 'ابحث بالاسم أو الكود أو البريد الإلكتروني',
+    loading: 'جارٍ تحميل الفنادق...',
+    please_wait: 'يرجى الانتظار',
+    no_results: 'لم يتم العثور على فنادق',
+    create_new: 'أضف فندقًا جديدًا للبدء',
+    name_placeholder: 'أدخل اسم الفندق',
+    code_placeholder: 'مثال: HTL001',
+    timezone_placeholder: 'مثال: Asia/Dhaka',
+    currency_placeholder: 'مثال: BDT, USD',
+    email_placeholder: 'hotel@example.com',
+    phone_placeholder: '+880 1XXX-XXXXXX',
+    address_placeholder: 'العنوان الكامل للفندق',
+    delete_title: 'حذف الفندق؟',
+    delete_message: 'الفندق',
+    delete_warning: 'سيتم حذفه نهائيًا. لا يمكن التراجع عن هذا الإجراء.',
+    created_at: 'تاريخ الإنشاء',
+    updated_at: 'تاريخ التحديث',
+  },
   // Rooms
   rooms: {
     title: 'الغرف',
@@ -299,3 +334,9 @@ export default {
     default: 'العملة الافتراضية',
   },
 };
+
+
+
+
+
+

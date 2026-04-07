@@ -7,7 +7,7 @@
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-semibold text-slate-800">{{ hotel.name }}</h1>
-                    <p class="text-sm text-slate-500 mt-1">Hotel Details</p>
+                    <p class="text-sm text-slate-500 mt-1">{{ t('hotels.hotel_details') }}</p>
                 </div>
                 <div class="flex gap-2">
                     <Link
@@ -15,13 +15,13 @@
                         :href="`/hotels/${hotel.id}/edit`"
                         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
                     >
-                        Edit
+                        {{ t('actions.edit') }}
                     </Link>
-                    <Link 
+                    <Link
                         href="/hotels"
                         class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                     >
-                        ← Back
+                        {{ t('actions.back') }}
                     </Link>
                 </div>
             </div>
@@ -29,59 +29,51 @@
             <!-- Details Card -->
             <div class="bg-white rounded-lg shadow p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Name -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-500 mb-1">Hotel Name</label>
+                        <label class="block text-sm font-medium text-slate-500 mb-1">{{ t('hotels.name') }}</label>
                         <p class="text-slate-900">{{ hotel.name }}</p>
                     </div>
 
-                    <!-- Code -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-500 mb-1">Hotel Code</label>
+                        <label class="block text-sm font-medium text-slate-500 mb-1">{{ t('hotels.code') }}</label>
                         <p class="text-slate-900">{{ hotel.code }}</p>
                     </div>
 
-                    <!-- Timezone -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-500 mb-1">Timezone</label>
-                        <p class="text-slate-900">{{ hotel.timezone || 'N/A' }}</p>
+                        <label class="block text-sm font-medium text-slate-500 mb-1">{{ t('hotels.timezone') }}</label>
+                        <p class="text-slate-900">{{ hotel.timezone || t('na') }}</p>
                     </div>
 
-                    <!-- Currency -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-500 mb-1">Currency</label>
-                        <p class="text-slate-900">{{ hotel.currency || 'N/A' }}</p>
+                        <label class="block text-sm font-medium text-slate-500 mb-1">{{ t('hotels.currency') }}</label>
+                        <p class="text-slate-900">{{ hotel.currency || t('na') }}</p>
                     </div>
 
-                    <!-- Email -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-500 mb-1">Email</label>
-                        <p class="text-slate-900">{{ hotel.email || 'N/A' }}</p>
+                        <label class="block text-sm font-medium text-slate-500 mb-1">{{ t('hotels.email') }}</label>
+                        <p class="text-slate-900">{{ hotel.email || t('na') }}</p>
                     </div>
 
-                    <!-- Phone -->
                     <div>
-                        <label class="block text-sm font-medium text-slate-500 mb-1">Phone</label>
-                        <p class="text-slate-900">{{ hotel.phone || 'N/A' }}</p>
+                        <label class="block text-sm font-medium text-slate-500 mb-1">{{ t('hotels.phone') }}</label>
+                        <p class="text-slate-900">{{ hotel.phone || t('na') }}</p>
                     </div>
                 </div>
 
-                <!-- Address (Full Width) -->
                 <div class="mt-6">
-                    <label class="block text-sm font-medium text-slate-500 mb-1">Address</label>
-                    <p class="text-slate-900">{{ hotel.address || 'N/A' }}</p>
+                    <label class="block text-sm font-medium text-slate-500 mb-1">{{ t('hotels.address') }}</label>
+                    <p class="text-slate-900">{{ hotel.address || t('na') }}</p>
                 </div>
 
-                <!-- Timestamps -->
                 <div class="mt-6 pt-6 border-t border-slate-200">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
-                            <span class="text-slate-500">Created At:</span>
-                            <span class="ml-2 text-slate-900">{{ formatDate(hotel.createdAt) }}</span>
+                            <span class="text-slate-500">{{ t('hotels.created_at') }}:</span>
+                            <span class="ml-2 text-slate-900">{{ hotel.createdAt ? formatDate(hotel.createdAt) : t('na') }}</span>
                         </div>
                         <div>
-                            <span class="text-slate-500">Updated At:</span>
-                            <span class="ml-2 text-slate-900">{{ formatDate(hotel.updatedAt) }}</span>
+                            <span class="text-slate-500">{{ t('hotels.updated_at') }}:</span>
+                            <span class="ml-2 text-slate-900">{{ hotel.updatedAt ? formatDate(hotel.updatedAt) : t('na') }}</span>
                         </div>
                     </div>
                 </div>
@@ -96,26 +88,27 @@
     import { formatDate } from '@/Utils/date';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
     import { mapToHotel } from '@/Utils/Mappers/hotel';
+    import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
-    
-    // ─── Permissions ─────────────────────────────────────────
+
+    // Permissions
     const permission = usePermissionService();
     const canView = computed(() => permission.check('view hotels'));
-    const canEdit = computed(() => permission.check('edit hotels')); 
+    const canEdit = computed(() => permission.check('edit hotels'));
+    const { t } = useI18n();
 
-    // ─── Props ───────────────────────────────────────────────
+    // Props
     const props = defineProps<{
         hotel: Record<string, any>;
     }>();
 
-    // ─── Computed ────────────────────────────────────────────
+    // Computed
     const hotel: Hotel = mapToHotel(props.hotel);
 
-    // Load reservation on mount
     onMounted(() => {
         if (!canView.value) {
             router.visit('/hotels');
             return;
-        } 
+        }
     });
 </script>

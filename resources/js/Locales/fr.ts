@@ -1,4 +1,4 @@
-/**
+﻿/**
  * French Translations
  * Français
  */
@@ -22,6 +22,7 @@ export default {
   yes: 'Oui',
   no: 'Non',
   ok: 'OK',
+  na: 'N/A',
 
   // Actions
   actions: {
@@ -150,7 +151,41 @@ export default {
     reference: 'Référence',
     created_at: 'Créé le',
   },
-
+  // Hotels
+  hotels: {
+    title: 'Hôtels',
+    new_hotel: 'Ajouter un hôtel',
+    edit_hotel: 'Modifier l\'hôtel',
+    hotel_details: 'Détails de l\'hôtel',
+    create_hint: 'Créer un nouvel établissement',
+    update_hint: 'Mettre à jour les informations de l\'hôtel',
+    manage_hint: 'Gérer vos établissements hôteliers',
+    back_to_hotels: 'Retour aux hôtels',
+    name: 'Nom',
+    code: 'Code',
+    timezone: 'Fuseau horaire',
+    currency: 'Devise',
+    email: 'E-mail',
+    phone: 'Téléphone',
+    address: 'Adresse',
+    search_placeholder: 'Rechercher par nom, code ou e-mail',
+    loading: 'Chargement des hôtels...',
+    please_wait: 'Veuillez patienter',
+    no_results: 'Aucun hôtel trouvé',
+    create_new: 'Ajoutez un nouvel hôtel pour commencer',
+    name_placeholder: 'Entrez le nom de l\'hôtel',
+    code_placeholder: 'ex: HTL001',
+    timezone_placeholder: 'ex: Asia/Dhaka',
+    currency_placeholder: 'ex: BDT, USD',
+    email_placeholder: 'hotel@example.com',
+    phone_placeholder: '+880 1XXX-XXXXXX',
+    address_placeholder: 'Adresse complète de l\'hôtel',
+    delete_title: 'Supprimer l\'hôtel ?',
+    delete_message: 'L\'hôtel',
+    delete_warning: 'sera supprimé définitivement. Cette action est irréversible.',
+    created_at: 'Créé le',
+    updated_at: 'Mis à jour le',
+  },
   // Rooms
   rooms: {
     title: 'Chambres',
@@ -298,3 +333,9 @@ export default {
     default: 'Devise par défaut',
   },
 };
+
+
+
+
+
+

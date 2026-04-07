@@ -20,20 +20,23 @@ Route::prefix('v1')->group(function (): void {
 
         Route::get('/user', static fn (Request $request): mixed => $request->user());
 
-        // Hotels API (Full CRUD)
         Route::prefix('front-desk')->group(function (): void {
-            Route::get('hotels', [HotelController::class, 'index'])->name('front-desk.hotels.index')->middleware('permission:view hotels');
-            Route::get('hotels/{id}', [HotelController::class, 'show'])->name('front-desk.hotels.show')->middleware('permission:view hotels');
+            // Hotels API (Full CRUD)
+            // Route::get('hotels', [HotelController::class, 'index'])->name('front-desk.hotels.index')->middleware('permission:view hotels');
+            // Route::get('hotels/{id}', [HotelController::class, 'show'])->name('front-desk.hotels.show')->middleware('permission:view hotels');
+
+            Route::apiResource('hotels', HotelController::class)->only(['index', 'show'])->middleware('permission:view hotels');
             Route::post('hotels', [HotelController::class, 'store'])->name('front-desk.hotels.store')->middleware('permission:create hotels');
             Route::put('hotels/{id}', [HotelController::class, 'update'])->name('front-desk.hotels.update')->middleware('permission:edit hotels');
             Route::delete('hotels/{id}', [HotelController::class, 'destroy'])->name('front-desk.hotels.destroy')->middleware('permission:delete hotels');
+            
+            // Reservations API (Full CRUD)
+            Route::apiResource('reservations', FrontDeskController::class)->only(['index', 'show'])->middleware('permission:view reservations');
+            Route::post('reservations', [FrontDeskController::class, 'store'])->middleware('permission:create reservations');
+            Route::put('reservations/{id}', [FrontDeskController::class, 'update'])->middleware('permission:edit reservations');
+            Route::delete('reservations/{id}', [FrontDeskController::class, 'destroy'])->middleware('permission:delete reservations'); 
+            Route::patch('reservations/{id}/cancel', [FrontDeskController::class, 'cancel'])->middleware('permission:edit reservations');
         });
 
-        // Reservations API (Full CRUD)
-        Route::apiResource('front-desk/reservations', FrontDeskController::class)->only(['index', 'show'])->middleware('permission:view reservations');
-        Route::post('front-desk/reservations', [FrontDeskController::class, 'store'])->middleware('permission:create reservations');
-        Route::put('front-desk/reservations/{reservation}', [FrontDeskController::class, 'update'])->middleware('permission:edit reservations');
-        Route::delete('front-desk/reservations/{reservation}', [FrontDeskController::class, 'destroy'])->middleware('permission:delete reservations'); 
-        Route::patch('front-desk/reservations/{reservation}/cancel', [FrontDeskController::class, 'cancel'])->middleware('permission:edit reservations');
     });
 });

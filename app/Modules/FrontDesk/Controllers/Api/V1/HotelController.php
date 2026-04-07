@@ -121,7 +121,7 @@ class HotelController extends Controller
                 'status' => 1,
                 'data' => null,
                 'message' => 'Hotel deleted successfully',
-            ], 204);
+            ]);
         } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => 0,

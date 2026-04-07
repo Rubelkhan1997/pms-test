@@ -1,19 +1,19 @@
 <template>
-    <Head title="Add Hotel" />
+    <Head :title="t('hotels.new_hotel')" />
     <div v-if="canCreate" class="max-w-4xl mx-auto">
         <section class="space-y-6">
 
             <!-- Header -->
             <div class="flex justify-between items-center">
                 <div>
-                    <h1 class="text-2xl font-semibold text-slate-800">Add Hotel</h1>
-                    <p class="text-sm text-slate-500 mt-1">Create a new hotel property</p>
+                    <h1 class="text-2xl font-semibold text-slate-800">{{ t('hotels.new_hotel') }}</h1>
+                    <p class="text-sm text-slate-500 mt-1">{{ t('hotels.create_hint') }}</p>
                 </div>
                 <Link
                     href="/hotels"
                     class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                 >
-                    ← Back to Hotels
+                    {{ t('hotels.back_to_hotels') }}
                 </Link>
             </div>
 
@@ -25,7 +25,7 @@
                         <!-- Name -->
                         <div>
                             <label for="name" class="block text-sm font-medium text-slate-700 mb-2">
-                                Hotel Name <span class="text-red-500">*</span>
+                                {{ t('hotels.name') }} <span class="text-red-500">*</span>
                             </label>
                             <input
                                 id="name"
@@ -33,7 +33,7 @@
                                 :class="{ 'border-red-500': form.errors.name }"
                                 type="text"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Enter hotel name"
+                                :placeholder="t('hotels.name_placeholder')"
                             />
                             <p v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</p>
                         </div>
@@ -41,7 +41,7 @@
                         <!-- Code -->
                         <div>
                             <label for="code" class="block text-sm font-medium text-slate-700 mb-2">
-                                Hotel Code <span class="text-red-500">*</span>
+                                {{ t('hotels.code') }} <span class="text-red-500">*</span>
                             </label>
                             <input
                                 id="code"
@@ -49,7 +49,7 @@
                                 :class="{ 'border-red-500': form.errors.code }"
                                 type="text"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="e.g., HTL001"
+                                :placeholder="t('hotels.code_placeholder')"
                             />
                             <p v-if="form.errors.code" class="mt-1 text-sm text-red-500">{{ form.errors.code }}</p>
                         </div>
@@ -60,7 +60,7 @@
                         <!-- Timezone -->
                         <div>
                             <label for="timezone" class="block text-sm font-medium text-slate-700 mb-2">
-                                Timezone
+                                {{ t('hotels.timezone') }}
                             </label>
                             <input
                                 id="timezone"
@@ -68,7 +68,7 @@
                                 :class="{ 'border-red-500': form.errors.timezone }"
                                 type="text"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="e.g., Asia/Dhaka"
+                                :placeholder="t('hotels.timezone_placeholder')"
                             />
                             <p v-if="form.errors.timezone" class="mt-1 text-sm text-red-500">{{ form.errors.timezone }}</p>
                         </div>
@@ -76,7 +76,7 @@
                         <!-- Currency -->
                         <div>
                             <label for="currency" class="block text-sm font-medium text-slate-700 mb-2">
-                                Currency
+                                {{ t('hotels.currency') }}
                             </label>
                             <input
                                 id="currency"
@@ -84,7 +84,7 @@
                                 :class="{ 'border-red-500': form.errors.currency }"
                                 type="text"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="e.g., BDT, USD"
+                                :placeholder="t('hotels.currency_placeholder')"
                             />
                             <p v-if="form.errors.currency" class="mt-1 text-sm text-red-500">{{ form.errors.currency }}</p>
                         </div>
@@ -95,7 +95,7 @@
                         <!-- Email -->
                         <div>
                             <label for="email" class="block text-sm font-medium text-slate-700 mb-2">
-                                Email
+                                {{ t('hotels.email') }}
                             </label>
                             <input
                                 id="email"
@@ -103,7 +103,7 @@
                                 :class="{ 'border-red-500': form.errors.email }"
                                 type="email"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="hotel@example.com"
+                                :placeholder="t('hotels.email_placeholder')"
                             />
                             <p v-if="form.errors.email" class="mt-1 text-sm text-red-500">{{ form.errors.email }}</p>
                         </div>
@@ -111,7 +111,7 @@
                         <!-- Phone -->
                         <div>
                             <label for="phone" class="block text-sm font-medium text-slate-700 mb-2">
-                                Phone
+                                {{ t('hotels.phone') }}
                             </label>
                             <input
                                 id="phone"
@@ -119,7 +119,7 @@
                                 :class="{ 'border-red-500': form.errors.phone }"
                                 type="text"
                                 class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="+880 1XXX-XXXXXX"
+                                :placeholder="t('hotels.phone_placeholder')"
                             />
                             <p v-if="form.errors.phone" class="mt-1 text-sm text-red-500">{{ form.errors.phone }}</p>
                         </div>
@@ -128,7 +128,7 @@
                     <!-- Address -->
                     <div>
                         <label for="address" class="block text-sm font-medium text-slate-700 mb-2">
-                            Address
+                            {{ t('hotels.address') }}
                         </label>
                         <textarea
                             id="address"
@@ -136,7 +136,7 @@
                             :class="{ 'border-red-500': form.errors.address }"
                             rows="3"
                             class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            placeholder="Full address of the hotel"
+                            :placeholder="t('hotels.address_placeholder')"
                         ></textarea>
                         <p v-if="form.errors.address" class="mt-1 text-sm text-red-500">{{ form.errors.address }}</p>
                     </div>
@@ -154,7 +154,7 @@
                             href="/hotels"
                             class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
                         >
-                            Cancel
+                            {{ t('actions.cancel') }}
                         </Link>
                     </div>
 
@@ -168,15 +168,17 @@
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
+    import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
     import { required, validateInertiaForm } from '@/Utils/validation';
 
-    // ─── Composable ──────────────────────────────────────────
+    // Composable
     const { create: createRoom, saving } = useHotels();
+    const { t } = useI18n();
     const permission = usePermissionService();
     const canCreate = computed(() => permission.check('create hotels'));
 
-    // ─── Form ────────────────────────────────────────────────
+    // Form
     const form = useForm({
         name:     '',
         code:     '',
@@ -187,9 +189,9 @@
         address:  '',
     });
 
-    // ─── Computed ────────────────────────────────────────────
-    const isSaving    = computed(() => form.processing || saving.value);
-    const submitLabel = computed(() => isSaving.value ? 'Creating...' : 'Create Hotel');
+    // Computed
+    const isSaving = computed(() => form.processing || saving.value);
+    const submitLabel = computed(() => isSaving.value ? t('actions.creating') : t('hotels.new_hotel'));
 
     onMounted(() => {
         if (!canCreate.value) {
@@ -197,7 +199,7 @@
         }
     });
 
-    // ─── Submit ──────────────────────────────────────────────
+    // Submit
     async function submit(): Promise<void> {
         form.clearErrors();
 
@@ -235,7 +237,7 @@
         }
     }
 
-    // ─── Validation ──────────────────────────────────────────
+    // Validation
     function validateForm(): boolean {
         return validateInertiaForm(form, {
             name: [required],

@@ -22,6 +22,7 @@ export default {
     yes: 'Yes',
     no: 'No',
     ok: 'OK',
+    na: 'N/A',
 
     // Actions
     actions: {
@@ -149,6 +150,42 @@ export default {
         duration: 'Duration',
         reference: 'Reference',
         created_at: 'Created At',
+    },
+
+    // Hotels
+    hotels: {
+        title: 'Hotels',
+        new_hotel: 'Add Hotel',
+        edit_hotel: 'Edit Hotel',
+        hotel_details: 'Hotel Details',
+        create_hint: 'Create a new hotel property',
+        update_hint: 'Update hotel information',
+        manage_hint: 'Manage your hotel properties',
+        back_to_hotels: 'Back to Hotels',
+        name: 'Name',
+        code: 'Code',
+        timezone: 'Timezone',
+        currency: 'Currency',
+        email: 'Email',
+        phone: 'Phone',
+        address: 'Address',
+        search_placeholder: 'Search by name, code, or email',
+        loading: 'Loading hotels...',
+        please_wait: 'Please wait',
+        no_results: 'No hotels found',
+        create_new: 'Add a new hotel to get started',
+        name_placeholder: 'Enter hotel name',
+        code_placeholder: 'e.g., HTL001',
+        timezone_placeholder: 'e.g., Asia/Dhaka',
+        currency_placeholder: 'e.g., BDT, USD',
+        email_placeholder: 'hotel@example.com',
+        phone_placeholder: '+880 1XXX-XXXXXX',
+        address_placeholder: 'Full address of the hotel',
+        delete_title: 'Delete Hotel?',
+        delete_message: 'Hotel',
+        delete_warning: 'will be permanently removed. This cannot be undone.',
+        created_at: 'Created At',
+        updated_at: 'Updated At',
     },
 
     // Rooms

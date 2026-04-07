@@ -1,18 +1,18 @@
 <template>
-    <Head title="Hotels" />
+    <Head :title="t('navigation.hotels')" />
     <div class="max-w-6xl mx-auto">
         <!-- ─── Header ─────────────────────────────────────────── -->
         <div class="flex justify-between items-center">
             <div>
-                <h1 class="text-2xl font-semibold text-slate-800">Hotels</h1>
-                <p class="text-sm text-slate-500 mt-1">Manage your hotel properties</p>
+                <h1 class="text-2xl font-semibold text-slate-800">{{ t('hotels.title') }}</h1>
+                <p class="text-sm text-slate-500 mt-1">{{ t('hotels.manage_hint') }}</p>
             </div>
             <Link
                 v-if="canCreate"
                 href="/hotels/create"
                 class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
             >
-                Add Hotel
+                {{ t('hotels.new_hotel') }}
             </Link>
         </div>
 
@@ -22,13 +22,13 @@
                 <!-- Search -->
                 <div>
                     <label class="block text-sm font-medium text-slate-700 mb-1">
-                        Search
+                        {{ t('search') }}
                     </label>
                     <input
                         v-model="searchQuery"
                         @input="debouncedSearch"
                         type="text"
-                        placeholder="Search by name, code, or email"
+                        :placeholder="t('hotels.search_placeholder')"
                         class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                 </div>
@@ -39,7 +39,7 @@
                     @click="handleResetFilters"
                     class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition"
                 >
-                    Reset
+                    {{ t('actions.reset') }}
                 </button>
             </div>
         </div>
@@ -50,12 +50,12 @@
                 <table class="min-w-full divide-y divide-slate-200">
                     <thead class="bg-slate-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Code</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Email</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Phone</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Currency</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('hotels.name') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('hotels.code') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('hotels.email') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('hotels.phone') }}</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('hotels.currency') }}</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-slate-500 uppercase tracking-wider">{{ t('reservations.actions') }}</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-slate-200">
@@ -65,8 +65,8 @@
                             <td colspan="6" class="px-6 py-16 text-center">
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="animate-spin rounded-full h-12 w-12 border-b-4 border-cyan-600 mb-4"></div>
-                                    <p class="text-lg font-medium text-slate-700">Loading hotels...</p>
-                                    <p class="text-sm text-slate-500 mt-1">Please wait</p>
+                                    <p class="text-lg font-medium text-slate-700">{{ t('hotels.loading') }}</p>
+                                    <p class="text-sm text-slate-500 mt-1">{{ t('hotels.please_wait') }}</p>
                                 </div>
                             </td>
                         </tr>
@@ -78,8 +78,8 @@
                                     <svg class="w-16 h-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                                     </svg>
-                                    <p class="text-lg font-medium text-slate-700">No hotels found</p>
-                                    <p class="text-sm text-slate-500 mt-1">Add a new hotel to get started</p>
+                                    <p class="text-lg font-medium text-slate-700">{{ t('hotels.no_results') }}</p>
+                                    <p class="text-sm text-slate-500 mt-1">{{ t('hotels.create_new') }}</p>
                                 </div>
                             </td>
                         </tr>
@@ -98,13 +98,13 @@
                                     <div class="text-sm text-slate-600">{{ item.code }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-slate-600">{{ item.email || 'N/A' }}</div>
+                                    <div class="text-sm text-slate-600">{{ item.email || t('na') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-slate-600">{{ item.phone || 'N/A' }}</div>
+                                    <div class="text-sm text-slate-600">{{ item.phone || t('na') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="text-sm text-slate-600">{{ item.currency || 'N/A' }}</div>
+                                    <div class="text-sm text-slate-600">{{ item.currency || t('na') }}</div>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <div class="flex justify-end gap-2">
@@ -112,21 +112,21 @@
                                             :href="`/hotels/${item.id}`"
                                             class="text-green-600 hover:text-green-900"
                                         >
-                                            View
+                                            {{ t('actions.view') }}
                                         </Link>
                                         <Link
                                             v-if="canEdit"
                                             :href="`/hotels/${item.id}/edit`"
                                             class="text-blue-600 hover:text-blue-900"
                                         >
-                                            Edit
+                                            {{ t('actions.edit') }}
                                         </Link>
                                         <button
                                             v-if="canDelete"
                                             @click="handleDelete(item)"
                                             class="text-red-600 hover:text-red-900"
                                         >
-                                            Delete
+                                            {{ t('actions.delete') }}
                                         </button>
                                     </div>
                                 </td>
@@ -144,7 +144,7 @@
                 <div class="flex items-center gap-4">
                     <!-- Per Page -->
                     <div class="flex items-center gap-2">
-                        <label class="text-sm text-slate-500">Per Page:</label>
+                        <label class="text-sm text-slate-500">{{ t('reservations.per_page') }}:</label>
                         <select
                             v-model="perPage"
                             @change="changePerPage"
@@ -159,8 +159,8 @@
 
                     <!-- Page Info -->
                     <div class="text-sm text-slate-500">
-                        Page {{ pagination.currentPage }} of {{ pagination.lastPage }}
-                        ({{ pagination.total }} total)
+                        {{ t('reservations.page') }} {{ pagination.currentPage }} {{ t('reservations.of') }} {{ pagination.lastPage }}
+                        ({{ pagination.total }} {{ t('reservations.total') }})
                     </div>
                 </div>
 
@@ -170,14 +170,14 @@
                         :disabled="pagination.currentPage === 1"
                         class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                     >
-                        Previous
+                        {{ t('previous') }}
                     </button>
                     <button
                         @click="changePage(pagination.currentPage + 1)"
                         :disabled="pagination.currentPage === pagination.lastPage"
                         class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
                     >
-                        Next
+                        {{ t('next') }}
                     </button>
                 </div>
             </div>
@@ -188,6 +188,7 @@
 <script setup lang="ts">
     import { ref, reactive, onMounted, inject, computed } from 'vue';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
+    import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
     import type { ConfirmType } from '@/Plugins/confirm';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
@@ -195,6 +196,7 @@
     // ─── Inject Confirm ─────────────────────────────────────
     const confirm = inject<ConfirmType>('confirm')!;
     const permission = usePermissionService();
+    const { t } = useI18n();
 
     const {
         // State
@@ -243,10 +245,10 @@
 
     async function handleDelete(item: Hotel) {
         const confirmed = await confirm.show({
-            title: 'Delete Hotel?',
-            message: `Hotel "${item.name}" will be permanently removed. This cannot be undone.`,
-            confirmText: 'Delete',
-            cancelText: 'Cancel',
+            title: t('hotels.delete_title'),
+            message: `${t('hotels.delete_message')} "${item.name}". ${t('hotels.delete_warning')}`,
+            confirmText: t('actions.delete'),
+            cancelText: t('actions.cancel'),
             variant: 'danger',
         });
 

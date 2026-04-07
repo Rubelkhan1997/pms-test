@@ -10,6 +10,7 @@ use App\Modules\FrontDesk\Requests\StoreReservationRequest;
 use App\Modules\FrontDesk\Requests\UpdateReservationRequest;
 use App\Modules\FrontDesk\Resources\ReservationResource;
 use App\Modules\FrontDesk\Services\ReservationService;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -53,21 +54,21 @@ class ReservationController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $reservation = $this->service->find($id);
+        try {
+            $reservation = $this->service->find($id);
 
-        if (!$reservation) {
+            return response()->json([
+                'status' => 1,
+                'data' => new ReservationResource($reservation),
+                'message' => 'Reservation fetched successfully',
+            ]);
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => 0,
                 'data' => null,
                 'message' => 'Reservation not found',
             ], 404);
         }
-
-        return response()->json([
-            'status' => 1,
-            'data' => new ReservationResource($reservation),
-            'message' => 'Reservation fetched successfully',
-        ]);
     }
 
     /**
@@ -90,25 +91,26 @@ class ReservationController extends Controller
      */
     public function update(UpdateReservationRequest $request, int $id): JsonResponse
     {
-        $validated = $request->validated();
-        unset($validated['hotel_id']); // Can't change hotel
+        try {
+            $validated = $request->validated();
+            unset($validated['hotel_id']); // Can't change hotel
 
-        $reservationData = ReservationData::from($validated);
-        $reservation = $this->service->update($id, $reservationData);
+            $reservationData = ReservationData::from($validated);
+            $reservation = $this->service->update($id, $reservationData);
 
-        if (!$reservation) {
+
+            return response()->json([
+                'status' => 1,
+                'data' => new ReservationResource($reservation),
+                'message' => 'Reservation updated successfully',
+            ]);
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => 0,
                 'data' => null,
-                'message'  => 'Reservation not found',
+                'message' => 'Reservation not found',
             ], 404);
         }
-
-        return response()->json([
-            'status' => 1,
-            'data' => new ReservationResource($reservation),
-            'message' => 'Reservation updated successfully',
-        ]);
     }
 
     /**
@@ -116,21 +118,21 @@ class ReservationController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $deleted = $this->service->delete($id);
+        try {
+            $this->service->delete($id);
 
-        if (!$deleted) {
+            return response()->json([
+                'status' => 1,
+                'data' => null,
+                'message' => 'Reservation deleted successfully',
+            ]);
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => 0,
                 'data' => null,
                 'message' => 'Reservation not found',
             ], 404);
-        }
-
-        return response()->json([
-            'status' => 1,
-            'data' => null,
-            'message' => 'Reservation deleted successfully',
-        ]);
+        } 
     }
 
     /**

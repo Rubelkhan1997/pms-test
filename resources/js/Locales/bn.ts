@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Bengali (Bangla) Translations
  * বাংলা ভাষা
  */
@@ -21,7 +21,8 @@ export default {
   previous: 'পূর্ববর্তী',
   yes: 'হ্যাঁ',
   no: 'না',
-  ok: 'ঠিক আছে',
+  ok: 'OK',
+  na: 'N/A',
 
   // Actions
   actions: {
@@ -150,7 +151,41 @@ export default {
     reference: 'রেফারেন্স',
     created_at: 'তৈরি করা হয়েছে',
   },
-
+  // Hotels
+  hotels: {
+    title: 'হোটেল',
+    new_hotel: 'নতুন হোটেল',
+    edit_hotel: 'হোটেল সম্পাদনা',
+    hotel_details: 'হোটেল বিবরণ',
+    create_hint: 'নতুন হোটেল যোগ করুন',
+    update_hint: 'হোটেলের তথ্য হালনাগাদ করুন',
+    manage_hint: 'হোটেল সম্পত্তি পরিচালনা করুন',
+    back_to_hotels: 'হোটেল তালিকায় ফিরুন',
+    name: 'নাম',
+    code: 'কোড',
+    timezone: 'সময় অঞ্চল',
+    currency: 'মুদ্রা',
+    email: 'ইমেইল',
+    phone: 'ফোন',
+    address: 'ঠিকানা',
+    search_placeholder: 'নাম, কোড বা ইমেইল দিয়ে খুঁজুন',
+    loading: 'হোটেল লোড হচ্ছে...',
+    please_wait: 'অনুগ্রহ করে অপেক্ষা করুন',
+    no_results: 'কোনো হোটেল পাওয়া যায়নি',
+    create_new: 'শুরু করতে নতুন হোটেল যোগ করুন',
+    name_placeholder: 'হোটেলের নাম লিখুন',
+    code_placeholder: 'যেমন: HTL001',
+    timezone_placeholder: 'যেমন: Asia/Dhaka',
+    currency_placeholder: 'যেমন: BDT, USD',
+    email_placeholder: 'hotel@example.com',
+    phone_placeholder: '+880 1XXX-XXXXXX',
+    address_placeholder: 'হোটেলের পূর্ণ ঠিকানা',
+    delete_title: 'হোটেল মুছবেন?',
+    delete_message: 'হোটেল',
+    delete_warning: 'স্থায়ীভাবে মুছে যাবে। এটি আর ফেরানো যাবে না।',
+    created_at: 'তৈরির তারিখ',
+    updated_at: 'হালনাগাদের তারিখ',
+  },
   // Rooms
   rooms: {
     title: 'রুম',
@@ -298,3 +333,8 @@ export default {
     default: 'ডিফল্ট মুদ্রা',
   },
 };
+
+
+
+
+
