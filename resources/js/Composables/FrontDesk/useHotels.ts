@@ -11,6 +11,7 @@ import type {
     UpdateHotelDto,
 } from '@/Types/FrontDesk/hotel';
 
+// Options to control default composable behavior from page level.
 export interface UseHotelsOptions {
     autoFetch?: boolean;
     initialFilters?: Partial<HotelFilters>;
@@ -18,6 +19,7 @@ export interface UseHotelsOptions {
 }
 
 export function useHotels(options: UseHotelsOptions = {}) {
+    // Resolve options with safe defaults.
     const {
         autoFetch = false,
         initialFilters = {},
@@ -27,22 +29,26 @@ export function useHotels(options: UseHotelsOptions = {}) {
     const store = useHotelsStore();
     const toast = inject('toast') as typeof ToastType;
 
+    // Separate loading states for list fetching and data mutations.
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
 
+    // Optional polling for real-time style refreshes.
     const { start: startPolling, stop: stopPolling } = usePolling(
         () => fetchAll(),
         pollingInterval,
         () => pollingInterval > 0
     );
 
-    const hotels = computed(() => store.items);
-    const hotel = computed(() => store.selectedItem);
+    // Reactive data exposed to pages.
+    const hotels = computed(() => store.hotels);
+    const hotel = computed(() => store.selectedHotel);
     const loading = computed(() => _loading.value || store.loadingList || store.loadingDetail);
     const saving = computed(() => _saving.value || store.loading);
     const error = computed(() => store.error);
     const pagination = computed(() => store.pagination.meta);
 
+    // Load hotel list with optional filter overrides.
     async function fetchAll(page = 1, params?: Partial<HotelFilters>): Promise<void> {
         startLoading();
         if (params) {
@@ -59,6 +65,7 @@ export function useHotels(options: UseHotelsOptions = {}) {
         }
     }
 
+    // Load single hotel detail by id.
     async function fetchById(id: number): Promise<void> {
         startLoading();
         try {
@@ -71,6 +78,7 @@ export function useHotels(options: UseHotelsOptions = {}) {
         }
     }
 
+    // Create a new hotel record.
     async function create(payload: CreateHotelDto): Promise<ApiResponse<Hotel>> {
         startSaving();
         try {
@@ -92,6 +100,7 @@ export function useHotels(options: UseHotelsOptions = {}) {
         }
     }
 
+    // Update existing hotel record.
     async function update(id: number, payload: UpdateHotelDto): Promise<ApiResponse<Hotel>> {
         startSaving();
         try {
@@ -113,6 +122,7 @@ export function useHotels(options: UseHotelsOptions = {}) {
         }
     }
 
+    // Delete hotel record by id.
     async function deleteHotel(id: number): Promise<ApiResponse<void>> {
         startSaving();
         try {
@@ -134,14 +144,17 @@ export function useHotels(options: UseHotelsOptions = {}) {
         }
     }
 
+    // Update local filter state.
     function setFilters(filters: Partial<HotelFilters>): void {
         store.setFilters(filters);
     }
 
+    // Reset local filter state to defaults.
     function resetFilters(): void {
         store.resetFilters();
     }
 
+    // Auto-fetch lifecycle behavior when enabled.
     if (autoFetch) {
         onMounted(() => {
             if (Object.keys(initialFilters).length > 0) {

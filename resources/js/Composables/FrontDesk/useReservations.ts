@@ -11,6 +11,7 @@ import type {
     UpdateReservationDto,
 } from '@/Types/FrontDesk/reservation';
 
+// Options to control default composable behavior from page level.
 export interface UseReservationsOptions {
     autoFetch?: boolean;
     initialFilters?: Partial<ReservationFilters>;
@@ -18,6 +19,7 @@ export interface UseReservationsOptions {
 }
 
 export function useReservations(options: UseReservationsOptions = {}) {
+    // Resolve options with safe defaults.
     const {
         autoFetch = false,
         initialFilters = {},
@@ -27,27 +29,32 @@ export function useReservations(options: UseReservationsOptions = {}) {
     const store = useReservationsStore();
     const toast = inject('toast') as typeof ToastType;
 
+    // Separate loading states for list fetching and data mutations.
     const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
     const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
 
+    // Optional polling for real-time style refreshes.
     const { start: startPolling, stop: stopPolling } = usePolling(
         () => fetchAll(),
         pollingInterval,
         () => pollingInterval > 0
     );
 
-    const reservations = computed(() => store.items);
-    const reservation = computed(() => store.selectedItem);
+    // Reactive data exposed to pages.
+    const reservations = computed(() => store.reservations);
+    const reservation = computed(() => store.selectedReservation);
     const loading = computed(() => _loading.value || store.loadingList || store.loadingDetail);
     const saving = computed(() => _saving.value || store.loading);
     const error = computed(() => store.error);
     const pagination = computed(() => store.pagination.meta);
 
+    // Aggregated dashboard metrics from reservation list state.
     const pendingCount = computed(() => store.pendingCount);
     const confirmedCount = computed(() => store.confirmedCount);
     const checkedInCount = computed(() => store.checkedInCount);
     const todayCheckIns = computed(() => store.todayCheckIns);
 
+    // Load reservation list with optional filter overrides.
     async function fetchAll(page = 1, params?: Partial<ReservationFilters>): Promise<void> {
         startLoading();
         if (params) {
@@ -64,6 +71,7 @@ export function useReservations(options: UseReservationsOptions = {}) {
         }
     }
 
+    // Load single reservation detail by id.
     async function fetchById(id: number): Promise<void> {
         startLoading();
         try {
@@ -76,6 +84,7 @@ export function useReservations(options: UseReservationsOptions = {}) {
         }
     }
 
+    // Create a new reservation record.
     async function create(payload: CreateReservationDto): Promise<ApiResponse<Reservation>> {
         startSaving();
         try {
@@ -97,6 +106,7 @@ export function useReservations(options: UseReservationsOptions = {}) {
         }
     }
 
+    // Update existing reservation record.
     async function update(id: number, payload: UpdateReservationDto): Promise<ApiResponse<Reservation>> {
         startSaving();
         try {
@@ -118,6 +128,7 @@ export function useReservations(options: UseReservationsOptions = {}) {
         }
     }
 
+    // Cancel reservation by id.
     async function cancel(id: number): Promise<ApiResponse<void>> {
         startSaving();
         try {
@@ -139,6 +150,7 @@ export function useReservations(options: UseReservationsOptions = {}) {
         }
     }
 
+    // Delete reservation by id.
     async function deleteReservation(id: number): Promise<ApiResponse<void>> {
         startSaving();
         try {
@@ -160,14 +172,17 @@ export function useReservations(options: UseReservationsOptions = {}) {
         }
     }
 
+    // Update local filter state.
     function setFilters(filters: Partial<ReservationFilters>): void {
         store.setFilters(filters);
     }
 
+    // Reset local filter state to defaults.
     function resetFilters(): void {
         store.resetFilters();
     }
 
+    // Auto-fetch lifecycle behavior when enabled.
     if (autoFetch) {
         onMounted(() => {
             if (Object.keys(initialFilters).length > 0) {

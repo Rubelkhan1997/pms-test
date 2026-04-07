@@ -17,10 +17,12 @@ import {
     mapUpdateReservationToApi,
 } from '@/Utils/Mappers/reservation';
 
+// Keep runtime data shape safe even when API response is inconsistent.
 const normalizeReservations = (value: unknown): Reservation[] => (
     Array.isArray(value) ? value : []
 );
 
+// Default pagination values used before first API call.
 const DEFAULT_PAGINATION: ReservationPagination = {
     currentPage: 1,
     perPage: 15,
@@ -28,6 +30,7 @@ const DEFAULT_PAGINATION: ReservationPagination = {
     lastPage: 1,
 };
 
+// Default list filters for reservation index page.
 const DEFAULT_FILTERS: ReservationFilters = {
     status: '',
     checkInDate: '',
@@ -37,9 +40,10 @@ const DEFAULT_FILTERS: ReservationFilters = {
 };
 
 export const useReservationsStore = defineStore('reservations', {
+    // Store state for reservation list/detail + request states.
     state: () => ({
-        items: [] as Reservation[],
-        selectedItem: null as Reservation | null,
+        reservations: [] as Reservation[],
+        selectedReservation: null as Reservation | null,
         loading: false,
         loadingList: false,
         loadingDetail: false,
@@ -52,24 +56,27 @@ export const useReservationsStore = defineStore('reservations', {
     }),
 
     getters: {
-        pendingCount: (state): number => normalizeReservations(state.items).filter((r) => r.status === 'pending').length,
-        confirmedCount: (state): number => normalizeReservations(state.items).filter((r) => r.status === 'confirmed').length,
-        checkedInCount: (state): number => normalizeReservations(state.items).filter((r) => r.status === 'checked_in').length,
+        pendingCount: (state): number => normalizeReservations(state.reservations).filter((r) => r.status === 'pending').length,
+        confirmedCount: (state): number => normalizeReservations(state.reservations).filter((r) => r.status === 'confirmed').length,
+        checkedInCount: (state): number => normalizeReservations(state.reservations).filter((r) => r.status === 'checked_in').length,
         todayCheckIns: (state): Reservation[] => {
             const today = new Date().toISOString().split('T')[0];
-            return normalizeReservations(state.items).filter((r) => r.checkInDate === today);
+            return normalizeReservations(state.reservations).filter((r) => r.checkInDate === today);
         },
     },
 
     actions: {
+        // Merge partial filters without dropping existing values.
         setFilters(filters: Partial<ReservationFilters>): void {
             this.filters = { ...this.filters, ...filters };
         },
 
+        // Restore filter state to initial defaults.
         resetFilters(): void {
             this.filters = { ...DEFAULT_FILTERS };
         },
 
+        // Fetch reservation collection with filters + pagination.
         async fetchAll(page: number = 1): Promise<void> {
             this.loadingList = true;
             this.error = null;
@@ -90,9 +97,9 @@ export const useReservationsStore = defineStore('reservations', {
                         : [];
                 const pagination = payload.pagination ?? payload.meta ?? {};
 
-                this.items = normalizeReservations(items).map(mapReservationApiToReservation);
+                this.reservations = normalizeReservations(items).map(mapReservationApiToReservation);
                 this.pagination.meta = mapReservationPaginationApiToPagination(pagination);
-                this.pagination.data = this.items;
+                this.pagination.data = this.reservations;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch reservations');
                 throw err;
@@ -106,7 +113,7 @@ export const useReservationsStore = defineStore('reservations', {
             this.error = null;
             try {
                 const { data } = await apiClient.v1.get(`/front-desk/reservations/${id}`);
-                this.selectedItem = data.data
+                this.selectedReservation = data.data
                     ? mapReservationApiToReservation(data.data)
                     : null;
             } catch (err: unknown) {
@@ -128,7 +135,7 @@ export const useReservationsStore = defineStore('reservations', {
                 const response = data as ApiResponse<Record<string, any>>;
 
                 if (Number(response.status) === 1 && response.data) {
-                    this.addItem(mapReservationApiToReservation(response.data));
+                    this.addReservation(mapReservationApiToReservation(response.data));
                 }
 
                 return {
@@ -154,7 +161,7 @@ export const useReservationsStore = defineStore('reservations', {
                 const response = data as ApiResponse<Record<string, any>>;
 
                 if (Number(response.status) === 1 && response.data) {
-                    this.updateItem(id, mapReservationApiToReservation(response.data));
+                    this.updateReservation(id, mapReservationApiToReservation(response.data));
                 }
 
                 return {
@@ -177,7 +184,7 @@ export const useReservationsStore = defineStore('reservations', {
                 const response = data as ApiResponse<void>;
 
                 if (Number(response.status) === 1) {
-                    this.updateItem(id, { status: 'cancelled' } as Partial<Reservation>);
+                    this.updateReservation(id, { status: 'cancelled' } as Partial<Reservation>);
                 }
 
                 return response;
@@ -197,7 +204,7 @@ export const useReservationsStore = defineStore('reservations', {
                 const response = data as ApiResponse<void>;
 
                 if (Number(response.status) === 1) {
-                    this.removeItem(id);
+                    this.removeReservation(id);
                 }
 
                 return response;
@@ -209,46 +216,51 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
-        addItem(item: Reservation): void {
-            this.items = normalizeReservations(this.items);
-            this.items.unshift(item);
-            this.pagination.data = this.items;
+        // Insert new reservation at top of current list.
+        addReservation(reservation: Reservation): void {
+            this.reservations = normalizeReservations(this.reservations);
+            this.reservations.unshift(reservation);
+            this.pagination.data = this.reservations;
             this.pagination.meta.total++;
         },
 
-        updateItem(id: number, data: Partial<Reservation>): void {
-            this.items = normalizeReservations(this.items);
-            const index = this.items.findIndex((r) => r.id === id);
+        // Update existing reservation in list and selected detail if matched.
+        updateReservation(id: number, data: Partial<Reservation>): void {
+            this.reservations = normalizeReservations(this.reservations);
+            const index = this.reservations.findIndex((r) => r.id === id);
             if (index !== -1) {
-                this.items[index] = { ...this.items[index], ...data };
+                this.reservations[index] = { ...this.reservations[index], ...data };
             }
 
-            if (this.selectedItem?.id === id) {
-                this.selectedItem = { ...this.selectedItem, ...data };
+            if (this.selectedReservation?.id === id) {
+                this.selectedReservation = { ...this.selectedReservation, ...data };
             }
 
-            this.pagination.data = this.items;
+            this.pagination.data = this.reservations;
         },
 
-        removeItem(id: number): void {
-            this.items = normalizeReservations(this.items);
-            const index = this.items.findIndex((r) => r.id === id);
+        // Remove reservation from local list cache after successful delete.
+        removeReservation(id: number): void {
+            this.reservations = normalizeReservations(this.reservations);
+            const index = this.reservations.findIndex((r) => r.id === id);
             if (index !== -1) {
-                this.items.splice(index, 1);
+                this.reservations.splice(index, 1);
                 this.pagination.meta.total = Math.max(0, this.pagination.meta.total - 1);
             }
 
-            this.pagination.data = this.items;
+            this.pagination.data = this.reservations;
         },
 
+        // Clear current error message.
         clearError(): void {
             this.error = null;
         },
 
+        // Reset store state to initial values.
         $reset(): void {
             this.$patch({
-                items: [],
-                selectedItem: null,
+                reservations: [],
+                selectedReservation: null,
                 loading: false,
                 loadingList: false,
                 loadingDetail: false,

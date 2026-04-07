@@ -17,10 +17,12 @@ import {
     mapUpdateHotelToApi,
 } from '@/Utils/Mappers/hotel';
 
+// Keep runtime data shape safe even when API response is inconsistent.
 const normalizeHotels = (value: unknown): Hotel[] => (
     Array.isArray(value) ? value : []
 );
 
+// Default pagination values used before first API call.
 const DEFAULT_PAGINATION: HotelPagination = {
     currentPage: 1,
     perPage: 15,
@@ -28,15 +30,17 @@ const DEFAULT_PAGINATION: HotelPagination = {
     lastPage: 1,
 };
 
+// Default list filters for hotel index page.
 const DEFAULT_FILTERS: HotelFilters = {
     search: '',
     perPage: 15,
 };
 
 export const useHotelsStore = defineStore('hotels', {
+    // Store state for hotel list/detail + request states.
     state: () => ({
-        items: [] as Hotel[],
-        selectedItem: null as Hotel | null,
+        hotels: [] as Hotel[],
+        selectedHotel: null as Hotel | null,
         loading: false,
         loadingList: false,
         loadingDetail: false,
@@ -51,14 +55,17 @@ export const useHotelsStore = defineStore('hotels', {
     getters: {},
 
     actions: {
+        // Merge partial filters without dropping existing values.
         setFilters(filters: Partial<HotelFilters>): void {
             this.filters = { ...this.filters, ...filters };
         },
 
+        // Restore filter state to initial defaults.
         resetFilters(): void {
             this.filters = { ...DEFAULT_FILTERS };
         },
 
+        // Fetch hotel collection with filters + pagination.
         async fetchAll(page: number = 1): Promise<void> {
             this.loadingList = true;
             this.error = null;
@@ -79,9 +86,9 @@ export const useHotelsStore = defineStore('hotels', {
                         : [];
                 const pagination = payload.pagination ?? payload.meta ?? {};
 
-                this.items = normalizeHotels(items).map(mapToHotel);
+                this.hotels = normalizeHotels(items).map(mapToHotel);
                 this.pagination.meta = mapToHotelPagination(pagination);
-                this.pagination.data = this.items;
+                this.pagination.data = this.hotels;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch hotels');
                 throw err;
@@ -95,7 +102,7 @@ export const useHotelsStore = defineStore('hotels', {
             this.error = null;
             try {
                 const { data } = await apiClient.v1.get(`/front-desk/hotels/${id}`);
-                this.selectedItem = data.data
+                this.selectedHotel = data.data
                     ? mapToHotel(data.data)
                     : null;
             } catch (err: unknown) {
@@ -117,7 +124,7 @@ export const useHotelsStore = defineStore('hotels', {
                 const response = data as ApiResponse<Record<string, any>>;
 
                 if (Number(response.status) === 1 && response.data) {
-                    this.addItem(mapToHotel(response.data));
+                    this.addHotel(mapToHotel(response.data));
                 }
 
                 return {
@@ -143,7 +150,7 @@ export const useHotelsStore = defineStore('hotels', {
                 const response = data as ApiResponse<Record<string, any>>;
 
                 if (Number(response.status) === 1 && response.data) {
-                    this.updateItem(id, mapToHotel(response.data));
+                    this.updateHotel(id, mapToHotel(response.data));
                 }
 
                 return {
@@ -166,7 +173,7 @@ export const useHotelsStore = defineStore('hotels', {
                 const response = data as ApiResponse<void>;
 
                 if (Number(response.status) === 1) {
-                    this.removeItem(id);
+                    this.removeHotel(id);
                 }
 
                 return response;
@@ -178,45 +185,50 @@ export const useHotelsStore = defineStore('hotels', {
             }
         },
 
-        addItem(item: Hotel): void {
-            this.items = normalizeHotels(this.items);
-            this.items.unshift(item);
-            this.pagination.data = this.items;
+        // Insert new hotel at top of current list.
+        addHotel(hotel: Hotel): void {
+            this.hotels = normalizeHotels(this.hotels);
+            this.hotels.unshift(hotel);
+            this.pagination.data = this.hotels;
             this.pagination.meta.total++;
         },
 
-        updateItem(id: number, data: Partial<Hotel>): void {
-            this.items = normalizeHotels(this.items);
-            const index = this.items.findIndex((h) => h.id === id);
+        // Update existing hotel in list and selected detail if matched.
+        updateHotel(id: number, data: Partial<Hotel>): void {
+            this.hotels = normalizeHotels(this.hotels);
+            const index = this.hotels.findIndex((h) => h.id === id);
             if (index !== -1) {
-                this.items[index] = { ...this.items[index], ...data };
+                this.hotels[index] = { ...this.hotels[index], ...data };
             }
 
-            if (this.selectedItem?.id === id) {
-                this.selectedItem = { ...this.selectedItem, ...data };
+            if (this.selectedHotel?.id === id) {
+                this.selectedHotel = { ...this.selectedHotel, ...data };
             }
 
-            this.pagination.data = this.items;
+            this.pagination.data = this.hotels;
         },
 
-        removeItem(id: number): void {
-            this.items = normalizeHotels(this.items);
-            const index = this.items.findIndex((h) => h.id === id);
+        // Remove hotel from local list cache after successful delete.
+        removeHotel(id: number): void {
+            this.hotels = normalizeHotels(this.hotels);
+            const index = this.hotels.findIndex((h) => h.id === id);
             if (index !== -1) {
-                this.items.splice(index, 1);
+                this.hotels.splice(index, 1);
                 this.pagination.meta.total = Math.max(0, this.pagination.meta.total - 1);
             }
-            this.pagination.data = this.items;
+            this.pagination.data = this.hotels;
         },
 
+        // Clear current error message.
         clearError(): void {
             this.error = null;
         },
 
+        // Reset store state to initial values.
         $reset(): void {
             this.$patch({
-                items: [],
-                selectedItem: null,
+                hotels: [],
+                selectedHotel: null,
                 loading: false,
                 loadingList: false,
                 loadingDetail: false,
