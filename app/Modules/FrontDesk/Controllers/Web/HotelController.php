@@ -17,16 +17,14 @@ class HotelController extends Controller
     /**
      * Create a new controller instance.
      */
-    public function __construct(private readonly HotelService $service)
-    {
-    }
+    public function __construct(private readonly HotelService $service) {}
 
     /**
      * Display a listing page.
      */
     public function index(Request $request): Response
     {
-        return Inertia::render('Hotels/Index');
+        return Inertia::render('FrontDesk/Hotel/Index');
     }
 
     /**
@@ -34,7 +32,7 @@ class HotelController extends Controller
      */
     public function create(): Response
     {
-        return Inertia::render('Hotels/Create');
+        return Inertia::render('FrontDesk/Hotel/Create');
     }
 
     /**
@@ -45,7 +43,7 @@ class HotelController extends Controller
         try {
             $hotel = $this->service->find($id);
 
-            return Inertia::render('Hotels/Show', [
+            return Inertia::render('FrontDesk/Hotel/Show', [
                 'hotel' => new HotelResource($hotel),
             ]);
         } catch (Throwable $e) {
@@ -61,12 +59,12 @@ class HotelController extends Controller
     {
         try {
             $hotel = $this->service->find($id);
- 
-            return Inertia::render('Hotels/Edit', [
+
+            return Inertia::render('FrontDesk/Hotel/Edit', [
                 'hotel' => new HotelResource($hotel),
             ]);
         } catch (Throwable $e) {
-            logger()->error('Error loading hotel: ' . $e->getMessage());    
+            logger()->error('Error loading hotel: ' . $e->getMessage());
             abort(404, 'Hotel not found');
         }
     }

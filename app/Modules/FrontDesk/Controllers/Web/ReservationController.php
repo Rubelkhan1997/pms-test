@@ -20,16 +20,14 @@ class ReservationController extends Controller
     /**
      * Create a new controller instance.
      */
-    public function __construct(private readonly ReservationService $service)
-    {
-    }
+    public function __construct(private readonly ReservationService $service) {}
 
     /**
      * Display a listing page.
      */
     public function index(Request $request): Response
     {
-       return Inertia::render('Reservations/Index');
+        return Inertia::render('FrontDesk/Reservation/Index');
     }
 
     /**
@@ -42,7 +40,7 @@ class ReservationController extends Controller
             $guests = GuestProfile::orderBy('first_name')->get();
             $rooms = Room::where('status', 'available')->orderBy('number')->get();
 
-            return Inertia::render('Reservations/Create', [
+            return Inertia::render('FrontDesk/Reservation/Create', [
                 'hotels' => $hotels,
                 'guests' => $guests,
                 'rooms' => $rooms,
@@ -61,7 +59,7 @@ class ReservationController extends Controller
         try {
             $reservation = $this->service->find($id);
 
-            return Inertia::render('Reservations/Show', [
+            return Inertia::render('FrontDesk/Reservation/Show', [
                 'reservation' => new ReservationResource($reservation),
             ]);
         } catch (Throwable $e) {
@@ -82,7 +80,7 @@ class ReservationController extends Controller
             $guests = GuestProfile::orderBy('first_name')->get();
             $rooms  = Room::orderBy('number')->get();
 
-            return Inertia::render('Reservations/Edit', [
+            return Inertia::render('FrontDesk/Reservation/Edit', [
                 'reservation' => new ReservationResource($reservation),
                 'hotels' => $hotels,
                 'guests' => $guests,
@@ -94,4 +92,3 @@ class ReservationController extends Controller
         }
     }
 }
-
