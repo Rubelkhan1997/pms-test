@@ -108,6 +108,7 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
+        // Fetch a single reservation by id.
         async fetchById(id: number): Promise<void> {
             this.loadingDetail = true;
             this.error = null;
@@ -124,6 +125,7 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
+        // Create a new reservation.
         async create(payload: CreateReservationDto): Promise<ApiResponse<Reservation>> {
             this.loading = true;
             this.error = null;
@@ -150,6 +152,7 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
+        // Update an existing reservation.
         async update(id: number, payload: UpdateReservationDto): Promise<ApiResponse<Reservation>> {
             this.loading = true;
             this.error = null;
@@ -176,6 +179,7 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
+        // Cancel a reservation by id.
         async cancel(id: number): Promise<ApiResponse<void>> {
             this.loading = true;
             this.error = null;
@@ -196,6 +200,7 @@ export const useReservationsStore = defineStore('reservations', {
             }
         },
 
+        // Delete a reservation by id.
         async delete(id: number): Promise<ApiResponse<void>> {
             this.loading = true;
             this.error = null;

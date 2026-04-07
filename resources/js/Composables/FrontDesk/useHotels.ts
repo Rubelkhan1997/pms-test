@@ -173,10 +173,10 @@ export function useHotels(options: UseHotelsOptions = {}) {
     return {
         hotels,
         hotel,
+        pagination,
         loading,
         saving,
         error,
-        pagination,
 
         fetchAll,
         fetchById,

@@ -97,6 +97,7 @@ export const useHotelsStore = defineStore('hotels', {
             }
         },
 
+        // Fetch a single hotel by id.
         async fetchById(id: number): Promise<void> {
             this.loadingDetail = true;
             this.error = null;
@@ -113,6 +114,7 @@ export const useHotelsStore = defineStore('hotels', {
             }
         },
 
+        // Create a new hotel.
         async create(payload: CreateHotelDto): Promise<ApiResponse<Hotel>> {
             this.loading = true;
             this.error = null;
@@ -139,6 +141,7 @@ export const useHotelsStore = defineStore('hotels', {
             }
         },
 
+        // Update an existing hotel.
         async update(id: number, payload: UpdateHotelDto): Promise<ApiResponse<Hotel>> {
             this.loading = true;
             this.error = null;
@@ -165,6 +168,7 @@ export const useHotelsStore = defineStore('hotels', {
             }
         },
 
+        // Delete a hotel by id.
         async delete(id: number): Promise<ApiResponse<void>> {
             this.loading = true;
             this.error = null;

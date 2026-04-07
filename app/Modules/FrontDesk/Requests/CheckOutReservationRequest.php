@@ -13,7 +13,7 @@ class CheckOutReservationRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        return $this->user()->can('edit reservations');
     }
 
     /**
@@ -49,10 +49,8 @@ class CheckOutReservationRequest extends FormRequest
         throw new \Illuminate\Http\Exceptions\HttpResponseException(
             response()->json([
                 'status' => 0,
-                'data' => [
-                    'errors' => $validator->errors(),
-                ],
                 'message' => 'Validation failed',
+                'errors' => $validator->errors(),
             ], 422)
         );
     }

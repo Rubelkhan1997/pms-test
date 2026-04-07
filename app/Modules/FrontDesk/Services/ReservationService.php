@@ -60,9 +60,9 @@ readonly class ReservationService
     /**
      * Find a reservation by ID.
      */
-    public function find(int $id): ?Reservation
+    public function find(int $id): Reservation
     {
-        return Reservation::with(['hotel', 'guest', 'room'])->find($id);
+        return Reservation::with(['hotel', 'guest', 'room'])->findOrFail($id);
     }
 
     /**
@@ -79,13 +79,10 @@ readonly class ReservationService
     /**
      * Update an existing reservation.
      */
-    public function update(int $id, ReservationData $payload): ?Reservation
+    public function update(int $id, ReservationData $payload): Reservation
     {
-        return DB::transaction(function () use ($id, $payload): ?Reservation {
+        return DB::transaction(function () use ($id, $payload): Reservation {
             $reservation = $this->find($id);
-            if (!$reservation) {
-                return null;
-            }
             $reservation->update($payload->toArray());
             return $reservation->load(['hotel', 'room', 'guest']);
         });
@@ -105,16 +102,12 @@ readonly class ReservationService
     /**
      * Cancel a reservation.
      */
-    public function cancel(int $id): ?Reservation
+    public function cancel(int $id): Reservation
     { 
-        return DB::transaction(function () use ($id): ?Reservation {
+        return DB::transaction(function () use ($id): Reservation {
             $reservation = $this->find($id);
-            if (!$reservation) {
-                return null;
-            }
             $reservation->update(['status' => 'cancelled']);
             return $reservation->load(['hotel', 'room', 'guest']);
         });
     }
 }
-

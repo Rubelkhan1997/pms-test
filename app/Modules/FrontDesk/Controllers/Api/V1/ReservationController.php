@@ -140,14 +140,14 @@ class ReservationController extends Controller
      */
     public function cancel(int $id): JsonResponse
     {
-        $reservation = $this->service->cancel($id);
-
-        if (!$reservation) {
+        try {
+            $reservation = $this->service->cancel($id);
+        } catch (ModelNotFoundException $e) {
             return response()->json([
                 'status' => 0,
                 'data' => null,
-                'message' => 'Failed to cancel reservation',
-            ], 422);
+                'message' => 'Reservation not found',
+            ], 404);
         }
 
         return response()->json([

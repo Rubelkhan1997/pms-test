@@ -8,7 +8,6 @@ use App\Modules\FrontDesk\Actions\CreateHotelAction;
 use App\Modules\FrontDesk\Data\HotelData;
 use App\Modules\FrontDesk\Models\Hotel;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 
 readonly class HotelService
@@ -45,7 +44,7 @@ readonly class HotelService
      */
     public function find(int $id): Hotel
     {
-        return Hotel::query()->find($id); 
+        return Hotel::query()->findOrFail($id);
     }
 
     /**

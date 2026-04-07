@@ -18,6 +18,14 @@ class ReservationPolicy
     }
 
     /**
+     * Determine whether the user can view the model.
+     */
+    public function view(User $user, Reservation $entity): bool
+    {
+        return $user->can('view reservations');
+    }
+
+    /**
      * Determine whether the user can create models.
      */
     public function create(User $user): bool
@@ -57,4 +65,3 @@ class ReservationPolicy
         return false;
     }
 }
-
