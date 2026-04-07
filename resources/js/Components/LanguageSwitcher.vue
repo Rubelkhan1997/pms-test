@@ -1,5 +1,5 @@
 <template>
-  <div class="relative" v-if="languages.length > 1">
+  <div class="relative" v-if="languages.length > 1 && currentLanguage">
     <!-- Language Button -->
     <button
       @click="isOpen = !isOpen"
@@ -52,7 +52,6 @@
             <div class="font-medium text-slate-800">{{ lang.name }}</div>
             <div class="text-xs text-slate-500">{{ lang.nativeName }}</div>
           </div>
-          <!-- Check icon for current language -->
           <svg
             v-if="lang.code === currentLanguage.code"
             class="w-5 h-5 text-cyan-600"
@@ -81,69 +80,50 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, computed, onMounted, onUnmounted } from 'vue';
-  import { useLanguageStore } from '@/Stores/languageStore';
-  import type { Language } from '@/Stores/languageStore';
+import { computed, ref } from 'vue';
+import { useLanguageStore } from '@/Stores/languageStore';
+import type { Language } from '@/Stores/languageStore';
 
-  // ─────────────────────────────────────────────────────────
-  // Store
-  // ─────────────────────────────────────────────────────────
-  const languageStore = useLanguageStore();
+// Store
+const languageStore = useLanguageStore();
 
-  // ─────────────────────────────────────────────────────────
-  // State
-  // ─────────────────────────────────────────────────────────
-  const isOpen = ref(false);
+// State
+const isOpen = ref(false);
 
-  // ─────────────────────────────────────────────────────────
-  // Computed
-  // ─────────────────────────────────────────────────────────
-  const currentLanguage = computed(() => languageStore.currentLanguageObj ?? languageStore.availableLanguages[0]);
-  const languages = computed(() => languageStore.availableLanguages);
+// Computed
+const languages = computed(() => languageStore.availableLanguages);
+const currentLanguage = computed<Language | null>(() => {
+  return languageStore.currentLanguageObj ?? languages.value[0] ?? null;
+});
 
-  // ─────────────────────────────────────────────────────────
-  // Methods
-  // ─────────────────────────────────────────────────────────
-  async function selectLanguage(lang: Language) {
-    await languageStore.setLanguage(lang.code);
+// Methods
+async function selectLanguage(lang: Language) {
+  if (lang.code === languageStore.currentLanguage) {
     isOpen.value = false;
+    return;
   }
 
-  // ─────────────────────────────────────────────────────────
-  // Lifecycle
-  // ─────────────────────────────────────────────────────────
-  function handleKeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape') {
-      isOpen.value = false;
-    }
-  }
-
-  onMounted(() => {
-    document.addEventListener('keydown', handleKeydown);
-  });
-
-  onUnmounted(() => {
-    document.removeEventListener('keydown', handleKeydown);
-  });
+  await languageStore.setLanguage(lang.code);
+  isOpen.value = false;
+}
 </script>
 
 <style scoped>
-  /* Smooth transition for dropdown */
-  .overflow-y-auto {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
-  }
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
 
-  .overflow-y-auto::-webkit-scrollbar {
-    width: 6px;
-  }
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
 
-  .overflow-y-auto::-webkit-scrollbar-track {
-    background: transparent;
-  }
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
 
-  .overflow-y-auto::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    border-radius: 3px;
-  }
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 3px;
+}
 </style>

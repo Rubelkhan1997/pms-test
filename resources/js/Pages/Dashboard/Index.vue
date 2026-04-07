@@ -181,7 +181,7 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, onMounted, reactive } from 'vue';
+    import { computed } from 'vue';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useAuth } from '@/Composables/Auth/useAuth';
     import { useI18n } from '@/Composables/useI18n';
@@ -198,13 +198,6 @@
     // ─────────────────────────────────────────────────────────
     // Dashboard Stats
     // ─────────────────────────────────────────────────────────
-    const dashboardStats = reactive({
-        totalReservations: 0,
-        availableRooms: 0,
-        checkInsToday: 0,
-        checkOutsToday: 0,
-    });
-
     // ─────────────────────────────────────────────────────────
     // Computed
     // ─────────────────────────────────────────────────────────
@@ -217,25 +210,16 @@
     });
 
     // ─────────────────────────────────────────────────────────
-    // Initialize Dashboard
-    // ─────────────────────────────────────────────────────────
-    onMounted(() => {
-        calculateStats();
-    });
-
-    // ─────────────────────────────────────────────────────────
     // Calculate Stats
     // ─────────────────────────────────────────────────────────
-    function calculateStats() {
+    const dashboardStats = computed(() => {
         const today = new Date().toISOString().split('T')[0];
 
-        dashboardStats.totalReservations = reservations.value.length;
-        dashboardStats.availableRooms = 10; // TODO: Fetch from API
-        dashboardStats.checkInsToday = reservations.value.filter(
-            (r) => r.checkInDate === today
-        ).length;
-        dashboardStats.checkOutsToday = reservations.value.filter(
-            (r) => r.checkOutDate === today
-        ).length;
-    }
+        return {
+            totalReservations: reservations.value.length,
+            availableRooms: 10, // TODO: Fetch from API
+            checkInsToday: reservations.value.filter((r) => r.checkInDate === today).length,
+            checkOutsToday: reservations.value.filter((r) => r.checkOutDate === today).length,
+        };
+    });
 </script>
