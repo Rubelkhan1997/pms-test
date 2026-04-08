@@ -133,6 +133,7 @@
 </template>
 
 <script setup lang="ts">
+    // Vue 3 reactivity: computed for derived state, onMounted for lifecycle hook
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
@@ -142,34 +143,25 @@
     import { mapToHotel } from '@/Utils/Mappers/hotel';
     import { required, validateInertiaForm } from '@/Utils/validation';
 
-    // Props
-    const props = defineProps<{
-        hotel: Record<string, any>;
-    }>();
-
-    // Composable
-    const { update: updateHotel, saving } = useHotels();
+    // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
+    
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
+    
+    // canEdit: computed property that returns true if user has 'edit hotels' permission
     const canEdit = computed(() => permission.check('edit hotels'));
 
-    // Form
-    const hotel: Hotel = mapToHotel(props.hotel);
-
-    const form = useForm({
-        name:     hotel.name || '',
-        code:     hotel.code || '',
-        timezone: hotel.timezone || '',
-        currency: hotel.currency || '',
-        email:    hotel.email || '',
-        phone:    hotel.phone || '',
-        address:  hotel.address || '',
-    });
-
-    // Computed
-    const isSaving = computed(() => form.processing || saving.value);
-    const submitLabel = computed(() => isSaving.value ? t('actions.updating') : t('actions.update'));
-
+    // ─── Composables ─────────────────────────────────────────
+    // useHotels: provides CRUD operations for hotels
+    // update: function to send PUT/PATCH request to update an existing hotel
+    // saving: reactive boolean indicating if the API call is in progress
+    const { update: updateHotel, saving } = useHotels();
+    
+    // ─── Lifecycle ───────────────────────────────────────────
+    // Redirect to /hotels if user doesn't have edit permission
     onMounted(() => {
         if (!canEdit.value) {
             router.visit('/hotels');
@@ -177,16 +169,50 @@
         }
     });
 
-    // Submit
+    // ─── Props ───────────────────────────────────────────────
+    // Data passed from the backend controller
+    const props = defineProps<{
+        hotel: Record<string, any>;   // Raw hotel data from API
+    }>();
+
+    // ─── Form ────────────────────────────────────────────────
+    // Map the raw hotel API data to a typed Hotel object
+    const hotel: Hotel = mapToHotel(props.hotel);
+
+    // useForm: creates a reactive form object pre-filled with existing hotel data
+    // form.errors: tracks validation errors per field
+    // form.processing: true while form is being submitted
+    const form = useForm({
+        name:     hotel.name || '',
+        code:     hotel.code || '', 
+        timezone: hotel.timezone || '',
+        currency: hotel.currency || '',
+        email:    hotel.email || '',
+        phone:    hotel.phone || '',
+        address:  hotel.address || '',
+    });
+
+    // ─── Computed Properties ─────────────────────────────────
+    // isSaving: true if form is processing OR the update API call is in progress
+    const isSaving = computed(() => form.processing || saving.value);
+    
+    // submitLabel: dynamic button text
+    const submitLabel = computed(() => isSaving.value ? t('actions.updating') : t('actions.update'));
+
+    // ─── Submit ──────────────────────────────────────────────
+    // submit: called when user clicks the update button
     async function submit(): Promise<void> {
+        // Clear all previous validation errors
         form.clearErrors();
 
+        // Run client-side validation
         if (!validateForm()) {
             scrollToFirstError();
             return;
         }
 
         try {
+            // Send update data to backend API
             const result = await updateHotel(Number(hotel.id), {
                 name:     form.name,
                 code:     form.code,
@@ -197,15 +223,19 @@
                 address:  form.address || undefined,
             });
 
+            // Check if API response indicates success (status === 1)
             if (Number(result.status) === 1) {
-                router.visit('/hotels');
+                form.reset(); 
+                router.visit('/hotels');  // Navigate back to hotels list
             }
         } catch (err: unknown) {
+            // Handle API errors (e.g., 422 validation errors from backend)
             const apiErr = err as Record<string, any>;
 
             if (apiErr?.response?.data?.errors) {
                 const backendErrors: Record<string, string[]> = apiErr.response.data.errors;
                 Object.entries(backendErrors).forEach(([key, messages]) => {
+                    // mapBackendField converts backend keys to frontend form field keys
                     const mappedKey = mapBackendField(key);
                     form.setError(mappedKey as any, messages[0]);
                 });
@@ -214,7 +244,7 @@
         }
     }
 
-    // Validation
+    // ─── Validation ──────────────────────────────────────────
     function validateForm(): boolean {
         return validateInertiaForm(form, {
             name: [required],
@@ -222,6 +252,8 @@
         });
     }
 
+    // Backend uses snake_case keys; this maps them to local form keys.
+    // For hotels, the keys are the same (no snake_case to camelCase conversion needed)
     function mapBackendField(field: string): string {
         const map: Record<string, string> = {
             name:     'name',
@@ -235,6 +267,7 @@
         return map[field] ?? field;
     }
 
+    // Auto-scrolls the page to the first field with a validation error
     function scrollToFirstError(): void {
         setTimeout(() => {
             const firstError = document.querySelector('.border-red-500');

@@ -1,7 +1,12 @@
 <template>
+    <!-- Page title shown in browser tab -->
     <Head :title="t('reservations.edit_reservation')" />
+    
+    <!-- Show form only if user has permission to edit reservations -->
     <div v-if="canEdit" class="max-w-4xl mx-auto">
         <section class="space-y-6">
+            
+            <!-- Header Section: Title + Back button -->
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-semibold text-slate-800">{{ t('reservations.edit_reservation') }}</h1>
@@ -11,11 +16,12 @@
                     {{ t('navigation.reservations') }}
                 </Link>
             </div>
-            
-            <!-- Reservation Form -->
+
+            <!-- Reservation Edit Form -->
             <div class="bg-white rounded-lg shadow p-6">
                 <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Hotel Selection (Read-only - can't change hotel) -->
+                    
+                    <!-- Hotel Selection (Read-only - can't change hotel after creation) -->
                     <div>
                         <FormSelect
                             id="hotel_id"
@@ -31,8 +37,10 @@
                         <p class="mt-1 text-sm text-slate-500">{{ t('reservations.hotel_cannot_change') }}</p>
                     </div>
 
-                    <!-- Guest & Room Selection -->
+                    <!-- Guest & Room Selection (2 columns) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Guest Selection Dropdown -->
                         <FormSelect
                             id="guest_id"
                             v-model="form.guestId"
@@ -46,7 +54,7 @@
                             wrapper-class="mb-0"
                         />
 
-                        <!-- Room Selection -->
+                        <!-- Room Selection Dropdown -->
                         <FormSelect
                             id="room_id"
                             v-model="form.roomId"
@@ -60,9 +68,11 @@
                             wrapper-class="mb-0"
                         />
                     </div>
-                    <!-- Date Selection -->
+                    
+                    <!-- Date Selection (2 columns) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Check-in Date -->
+                        
+                        <!-- Check-in Date Picker -->
                         <DatePicker
                             id="check_in_date"
                             v-model="form.checkInDate"
@@ -71,7 +81,8 @@
                             :error="form.errors.checkInDate"
                             wrapper-class="mb-0"
                         />
-                        <!-- Check-out Date -->   
+                        
+                        <!-- Check-out Date Picker -->
                         <DatePicker
                             id="check_out_date"
                             v-model="form.checkOutDate"
@@ -83,9 +94,10 @@
                         />
                     </div>
 
-                    <!-- Amount & Status -->
+                    <!-- Amount & Status (2 columns) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Total Amount -->
+                        
+                        <!-- Total Amount Input -->
                         <FormInput
                             id="total_amount"
                             v-model="form.totalAmount"
@@ -99,7 +111,7 @@
                             wrapper-class="mb-0"
                         />
 
-                        <!-- Status -->
+                        <!-- Status Dropdown -->
                         <FormSelect
                             id="status"
                             v-model="form.status"
@@ -113,7 +125,7 @@
                         />
                     </div>
 
-                    <!-- Notes -->
+                    <!-- Notes Textarea -->
                     <FormTextarea
                         id="notes"
                         v-model="form.notes"
@@ -124,7 +136,7 @@
                         wrapper-class="mb-0"
                     />
 
-                    <!-- Submit Button -->
+                    <!-- Submit & Cancel Buttons -->
                     <div class="flex gap-4 pt-4">
                         <FormButton
                             type="submit"
@@ -141,6 +153,8 @@
             </div>
         </section>
     </div>
+    
+    <!-- Access Denied Message (shown when user lacks permission) -->
     <div v-else class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow p-6 text-center">
             <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
@@ -153,6 +167,7 @@
 </template>
 
 <script setup lang="ts">
+    // Vue 3 reactivity: watch for reactive changes, onMounted for lifecycle hook, computed for derived state
     import { computed, watch, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
@@ -163,26 +178,47 @@
     import { mapGuestOptionApi, mapHotelOptionApi, mapReservationApiToReservation, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
 
     // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
 
-    // ─── Props ───────────────────────────────────────────────
-    const props = defineProps<{
-        reservation: Record<string, any>;
-        hotels: Array<Record<string, any>>;
-        guests: Array<Record<string, any>>;
-        rooms: Array<Record<string, any>>;
-    }>();
-
-    // ─── Composable ──────────────────────────────────────────
-    const { update: updateReservation, saving } = useReservations();
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
+    
+    // canEdit: computed property that returns true if user has 'edit reservations' permission
     const canEdit = computed(() => permission.check('edit reservations'));
 
-    // ─── Available Rooms ─────────────────────────────────────
+    // ─── Composable ──────────────────────────────────────────
+    // useReservations: provides CRUD operations for reservations
+    // update: function to send PUT/PATCH request to update an existing reservation
+    // saving: reactive boolean indicating if the API call is in progress
+    const { update: updateReservation, saving } = useReservations();
+
+    // ─── Lifecycle ───────────────────────────────────────────
+    // Redirect to /reservations if user doesn't have edit permission
+    onMounted(() => {
+        if (!canEdit.value) {
+            router.visit('/reservations');
+            return;
+        }
+    });
+
+    // ─── Props ───────────────────────────────────────────────
+    // Data passed from the backend controller
+    const props = defineProps<{
+        reservation: Record<string, any>;   // Raw reservation data from API
+        hotels: Array<Record<string, any>>; // List of all hotels
+        guests: Array<Record<string, any>>; // List of all guests
+        rooms: Array<Record<string, any>>;  // List of all rooms
+    }>();
+ 
+    // ─── Mapped Options ──────────────────────────────────────
+    // Transform raw API data into typed frontend objects
     const hotelOptions = computed<HotelOption[]>(() => props.hotels.map(mapHotelOptionApi));
     const guestOptions = computed<GuestOption[]>(() => props.guests.map(mapGuestOptionApi));
     const roomOptions = computed<RoomOption[]>(() => props.rooms.map(mapRoomOptionApi));
 
+    // Format options for dropdown display
     const hotelSelectOptions = computed(() =>
         hotelOptions.value.map((hotel) => ({ value: hotel.id, label: `${hotel.name} (${hotel.code})` }))
     );
@@ -191,6 +227,7 @@
         guestOptions.value.map((guest) => ({ value: guest.id, label: `${guest.firstName} ${guest.lastName} (${guest.email || ''})` }))
     );
 
+    // Filter only available rooms (status === 'available')
     const availableRooms = computed(() => roomOptions.value.filter((room) => room.status === 'available'));
 
     const roomSelectOptions = computed(() =>
@@ -200,6 +237,7 @@
         }))
     );
 
+    // Define all possible reservation statuses for the dropdown
     const statusOptions = computed(() => ([
         { value: 'pending', label: t('status.pending') },
         { value: 'draft', label: t('status.draft') },
@@ -210,8 +248,12 @@
     ]));
 
     // ─── Form ────────────────────────────────────────────────
+    // Map the raw reservation API data to a typed Reservation object
     const reservation: Reservation = mapReservationApiToReservation(props.reservation);
 
+    // useForm: creates a reactive form object pre-filled with existing reservation data
+    // form.errors: tracks validation errors per field
+    // form.processing: true while form is being submitted
     const form = useForm({
         hotelId: reservation.hotelId,
         guestId: reservation.guestId,
@@ -225,34 +267,36 @@
         notes: reservation.notes || '',
     });
 
-    // ─── Computed ────────────────────────────────────────────
+    // ─── Computed Properties ────────────────────────────────────────────
+    // isSaving: true if form is processing OR the update API call is in progress
     const isSaving = computed(() => form.processing || saving.value);
+    
+    // submitLabel: dynamic button text
     const submitLabel = computed(() => isSaving.value ? t('actions.updating') : t('actions.update_reservation'));
 
-    // Watchers to validate check-out date when check-in date or check-out date changes
+    // ─── Watchers ────────────────────────────────────────────
+    // Watch for changes in checkInDate
+    // Why: When check-in date changes, re-validate check-out date to ensure it's still valid
+    // Example: If user picks a new check-in that's after the current check-out, it should show an error
     watch(() => form.checkInDate, () => {
         if (form.checkOutDate) {
             validateCheckOutDate();
         }
     });
 
-    onMounted(() => {
-        if (!canEdit.value) {
-            router.visit('/reservations');
-            return;
-        }
-    });
-
     // ─── Submit ──────────────────────────────────────────────
     async function submit(): Promise<void> {
+        // Clear all previous validation errors
         form.clearErrors();
 
+        // Run client-side validation
         if (!validateForm()) {
             scrollToFirstError();
             return;
         }
 
         try {
+            // Send update data to backend API
             const result = await updateReservation(reservation.id, {
                 hotelId: Number(form.hotelId),
                 guestId: Number(form.guestId),
@@ -266,15 +310,20 @@
                 notes: form.notes || undefined,
             });
 
+            // Check if API response indicates success (status === 1)
             if (Number(result.status) === 1) {
-                router.visit('/reservations');
+                form.reset();
+                router.visit('/reservations');  // Navigate back to reservations list
             }
         } catch (err: unknown) {
+            // Handle API errors (e.g., 422 validation errors from backend)
             const apiErr = err as Record<string, any>;
 
             if (apiErr?.response?.data?.errors) {
                 const backendErrors: Record<string, string[]> = apiErr.response.data.errors;
+                
                 Object.entries(backendErrors).forEach(([key, messages]) => {
+                    // mapBackendField converts snake_case (backend) to camelCase (frontend)
                     const mappedKey = mapBackendField(key);
                     form.setError(mappedKey as any, messages[0]);
                 });
@@ -295,6 +344,7 @@
         });
     }
 
+    // validateCheckOutDate: validates that check-out date is after check-in date
     function validateCheckOutDate(): void {
         if (form.checkOutDate && form.checkInDate) {
             const result = checkOutDate(form.checkOutDate, form.checkInDate);
@@ -306,6 +356,7 @@
         }
     }
 
+    // Convert backend snake_case keys to local camelCase keys
     function mapBackendField(field: string): string {
         const map: Record<string, string> = {
             hotel_id: 'hotelId',
@@ -319,6 +370,7 @@
         return map[field] ?? field;
     }
 
+    // Auto-scrolls the page to the first field with a validation error
     function scrollToFirstError(): void {
         setTimeout(() => {
             const firstError = document.querySelector('.border-red-500');

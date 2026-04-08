@@ -11,7 +11,7 @@
 
         <input
             :id="resolvedId"
-            :name="name"
+            :name="name || resolvedId"
             type="file"
             :accept="accept"
             :multiple="multiple"

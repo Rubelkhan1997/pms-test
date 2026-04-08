@@ -1,6 +1,11 @@
 <template>
+    <!-- Page title shown in browser tab -->
     <Head :title="t('navigation.reservations')" />
+    
+    <!-- Main container with max width -->
     <div class="max-w-6xl mx-auto">
+        
+        <!-- Header Section: Title + Create button (shown only if user has create permission) -->
         <div class="flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-semibold text-slate-800">{{ t('reservations.title') }}</h1>
@@ -15,27 +20,34 @@
             </Link>
         </div>
 
+        <!-- Status Summary Cards (4 columns) -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <!-- Pending Reservations Count -->
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
                 <div class="text-sm text-slate-500">{{ t('status.pending') }}</div>
                 <div class="text-2xl font-bold text-slate-800">{{ pendingCount }}</div>
             </div>
+            <!-- Confirmed Reservations Count -->
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
                 <div class="text-sm text-slate-500">{{ t('status.confirmed') }}</div>
                 <div class="text-2xl font-bold text-slate-800">{{ confirmedCount }}</div>
             </div>
+            <!-- Checked-in Reservations Count -->
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
                 <div class="text-sm text-slate-500">{{ t('status.checked_in') }}</div>
                 <div class="text-2xl font-bold text-slate-800">{{ checkedInCount }}</div>
             </div>
+            <!-- Today's Check-ins Count -->
             <div class="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
                 <div class="text-sm text-slate-500">{{ t('dashboard.check_ins_today') }}</div>
                 <div class="text-2xl font-bold text-slate-800">{{ todayCheckIns.length }}</div>
             </div>
         </div>
 
+        <!-- Search & Filter Bar (4 columns) -->
         <div class="bg-white p-4 rounded-lg shadow mb-4">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <!-- Search Input -->
                 <FormInput
                     id="search"
                     v-model="searchQuery"
@@ -45,6 +57,7 @@
                     @update:model-value="debouncedSearch"
                 />
 
+                <!-- Status Filter Dropdown -->
                 <FormSelect
                     id="status"
                     v-model="localFilters.status"
@@ -57,6 +70,7 @@
                     @update:model-value="applyFilters"
                 />
 
+                <!-- Check-in Date Filter -->
                 <DatePicker
                     id="check_in"
                     v-model="localFilters.checkInDate"
@@ -65,6 +79,7 @@
                     @update:model-value="applyFilters"
                 />
 
+                <!-- Check-out Date Filter -->
                 <DatePicker
                     id="check_out"
                     v-model="localFilters.checkOutDate"
@@ -74,6 +89,7 @@
                 />
             </div>
 
+            <!-- Reset Filters Button -->
             <div class="mt-4 flex justify-end">
                 <FormButton
                     @click="handleResetFilters"
@@ -85,6 +101,7 @@
             </div>
         </div>
 
+        <!-- Reservations Data Table -->
         <Table
             :headers="tableHeaders"
             :columns="tableColumns"
@@ -107,7 +124,7 @@
             @change-page="changePage"
             @change-per-page="changePerPage"
         >
-            <!-- Guest -->
+            <!-- Guest Column: Shows full name + email -->
             <template #cell-guest="{ row }">
                 <div class="text-sm font-medium text-slate-900">
                     {{ row.guest?.firstName && row.guest?.lastName
@@ -117,7 +134,7 @@
                 <div class="text-sm text-slate-500">{{ row.guest?.email || '' }}</div>
             </template>
 
-            <!-- Room -->
+            <!-- Room Column: Shows room number + type -->
             <template #cell-room="{ row }">
                 <div class="text-sm font-medium text-slate-900">
                     {{ t('reservations.room') }} {{ row.room?.number || t('na') }}
@@ -125,18 +142,18 @@
                 <div class="text-xs text-slate-500">{{ row.room?.type || '' }}</div>
             </template>
 
-            <!-- Check-in -->
+            <!-- Check-in Column: Shows formatted date + hotel name -->
             <template #cell-checkInDate="{ row }">
                 <div class="text-sm text-slate-600">{{ formatDate(row.checkInDate) }}</div>
                 <div class="text-xs text-slate-500">{{ row.hotel?.name || '' }}</div>
             </template>
 
-            <!-- Check-out -->
+            <!-- Check-out Column: Shows formatted date -->
             <template #cell-checkOutDate="{ row }">
                 <div class="text-sm text-slate-600">{{ formatDate(row.checkOutDate) }}</div>
             </template>
 
-            <!-- Status badge -->
+            <!-- Status Column: Shows colored badge based on status -->
             <template #cell-status="{ row }">
                 <span
                     :class="{
@@ -153,15 +170,16 @@
                 </span>
             </template>
 
-            <!-- Total amount -->
+            <!-- Total Amount Column: Shows formatted number with thousands separator -->
             <template #cell-totalAmount="{ row }">
                 <div class="text-sm font-medium text-slate-900">
                     {{ row.totalAmount?.toLocaleString() || '0' }}
                 </div>
             </template>
 
-            <!-- Actions -->
+            <!-- Actions Column: Edit, View, Delete buttons -->
             <template #actions="{ item }">
+                <!-- Edit button: shown only if user has edit permission -->
                 <Link
                     v-if="canEdit"
                     :href="`/reservations/${item.id}/edit`"
@@ -169,9 +187,11 @@
                 >
                     {{ t('reservations.edit') }}
                 </Link>
+                <!-- View button: always visible -->
                 <Link :href="`/reservations/${item.id}`" class="text-green-600 hover:text-green-900">
                     {{ t('reservations.view') }}
                 </Link>
+                <!-- Delete button: shown only if user has delete permission -->
                 <button
                     v-if="canDelete"
                     @click="handleDelete(item as Reservation)"
@@ -185,7 +205,9 @@
 </template>
 
 <script setup lang="ts">
-    import { ref, reactive, onMounted, inject, computed } from 'vue'; 
+    // Vue 3 reactivity: ref for mutable reactive values, reactive for objects, onMounted for lifecycle, inject for dependency injection, computed for derived state
+    import { ref, reactive, onMounted, inject, computed } from 'vue';
+    import { router } from '@inertiajs/vue3';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
@@ -194,27 +216,63 @@
     import { formatDate } from '@/Utils/date';
     import type { ReservationFilters, Reservation } from '@/Types/FrontDesk/reservation';
 
+    // ─── Dependency Injection ────────────────────────────────────────────────
+    // inject: gets the global confirm dialog plugin for delete confirmation
+    // The '!' tells TypeScript this will always be defined
     const confirm = inject<ConfirmType>('confirm')!;
-    const permission = usePermissionService();
+
+    // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
 
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
+    const permission = usePermissionService();
+    
+    // canCreate: true if user has 'create reservations' permission (controls "New Reservation" button)
+    const canCreate = computed(() => permission.check('create reservations'));
+    
+    // canView: true if user has 'view reservations' permission (controls page access and visibility of reservation list)
+    const canView = computed(() => permission.check('view reservations'));
+    
+    // canEdit: true if user has 'edit reservations' permission (controls "Edit" button in table)
+    const canEdit = computed(() => permission.check('edit reservations'));
+    
+    // canDelete: true if user has 'delete reservations' permission (controls "Delete" button in table)
+    const canDelete = computed(() => permission.check('delete reservations'));
+    
+    // ─── Composables ─────────────────────────────────────────
+    // useReservations: provides reservation list, loading state, pagination, CRUD operations, filters, status counts
     const {
-        reservations,
-        loading,
-        pagination,
-        pendingCount,
-        confirmedCount,
-        checkedInCount,
-        todayCheckIns,
-        fetchAll,
-        deleteReservation,
-        setFilters,
-        resetFilters,
+        reservations,     // Reactive array of reservation data
+        loading,          // Boolean: true while fetching data
+        pagination,       // Object with currentPage, lastPage, total, etc.
+        pendingCount,     // Count of reservations with status 'pending'
+        confirmedCount,   // Count of reservations with status 'confirmed'
+        checkedInCount,   // Count of reservations with status 'checked_in'
+        todayCheckIns,    // Array of reservations with check-in date = today
+       
+        fetchAll,         // Function to fetch all reservations with pagination
+        deleteReservation,// Function to delete a reservation
+        setFilters,       // Function to set search/filter parameters
+        resetFilters,     // Function to clear all filters
     } = useReservations();
 
-    const canCreate = computed(() => permission.check('create reservations'));
-    const canEdit = computed(() => permission.check('edit reservations'));
-    const canDelete = computed(() => permission.check('delete reservations'));
+    // ─── Lifecycle ───────────────────────────────────────────
+    // onMounted: runs when component is first loaded into the DOM
+    // Redirect to /dashboard if user doesn't have view permission
+    onMounted(() => {
+        if (!canView.value) {
+            router.visit('/dashboard');
+            return;
+        }
+
+        // Fetches first page of hotels when page loads
+        fetchAll(1);
+    });
+
+    // ─── Table Configuration ─────────────────────────────────────────
+    // tableHeaders: defines column headers for the table component
     const tableHeaders = computed(() => ([
         { key: 'guest', label: t('reservations.guest_name') },
         { key: 'room', label: t('reservations.room_number') },
@@ -224,6 +282,8 @@
         { key: 'amount', label: t('reservations.amount') },
         { key: 'actions', label: t('reservations.actions'), align: 'right' as const },
     ]));
+    
+    // tableColumns: defines column styling and fallback text for empty values
     const tableColumns = [
         { key: 'guest',     className: 'font-medium text-slate-900' },
         { key: 'room' },
@@ -233,8 +293,14 @@
         { key: 'amount',    fallback: t('na') },
     ]
 
+    // ─── Search & Filter State ─────────────────────────────────────────
+    // searchQuery: reactive string for the search input field
     const searchQuery = ref('');
+    
+    // perPage: number of items to show per page (default 15)
     const perPage = ref(15);
+    
+    // localFilters: reactive object to track current filter values 
     const localFilters = reactive<ReservationFilters>({
         status: '',
         checkInDate: '',
@@ -243,8 +309,7 @@
         perPage: 15,
     });
 
-    let searchTimeout: ReturnType<typeof setTimeout>;
-
+    // statusFilterOptions: defines all possible status filter options for the dropdown
     const statusFilterOptions = computed(() => ([
         { value: 'pending', label: t('status.pending') },
         { value: 'confirmed', label: t('status.confirmed') },
@@ -254,12 +319,20 @@
         { value: 'no_show', label: t('status.no_show') },
     ]));
 
+    // ─── Event Handlers ─────────────────────────────────────────
+    // searchTimeout: stores the setTimeout ID for debouncing search
+    let searchTimeout: ReturnType<typeof setTimeout>;
+
+    // changePerPage: called when user selects different items-per-page from dropdown
+    // Updates perPage value and fetches fresh data from page 1
     function changePerPage(value: number) {
         perPage.value = value;
         setFilters({ perPage: value });
         fetchAll(1, { perPage: value });
     }
 
+    // debouncedSearch: delays search API call by 500ms while user is typing
+    // Why: Prevents excessive API calls on every keystroke
     function debouncedSearch() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
@@ -268,11 +341,13 @@
         }, 500);
     }
 
+    // applyFilters: applies all current filter values and fetches filtered data from page 1
     function applyFilters() {
         setFilters({ ...localFilters, search: searchQuery.value });
         fetchAll(1);
     }
 
+    // handleResetFilters: clears all filter inputs and fetches fresh unfiltered data
     function handleResetFilters() {
         localFilters.status = '';
         localFilters.checkInDate = '';
@@ -282,9 +357,12 @@
         fetchAll(1);
     }
 
+    // handleDelete: shows confirmation dialog, then deletes the reservation if confirmed
     async function handleDelete(res: Reservation) {
+        // Check permission before allowing delete
         if (!canDelete.value) return;
 
+        // Show confirmation dialog
         const confirmed = await confirm.show({
             title: t('actions.delete'),
             message: t('messages.confirm_delete'),
@@ -293,10 +371,14 @@
             variant: 'danger',
         });
 
+        // If user clicked "Cancel", stop here
         if (!confirmed) return;
 
         try {
+            // Delete the reservation via API
             await deleteReservation(res.id);
+            
+            // After deletion, determine which page to fetch
             const targetPage = reservations.value.length === 0 && pagination.value.currentPage > 1
                 ? pagination.value.currentPage - 1
                 : pagination.value.currentPage;
@@ -306,12 +388,9 @@
         }
     }
 
+    // changePage: navigates to specified page number
     function changePage(page: number) {
         if (page < 1 || page > pagination.value.lastPage) return;
         fetchAll(page);
     }
-
-    onMounted(() => {
-        fetchAll(1);
-    });
 </script>

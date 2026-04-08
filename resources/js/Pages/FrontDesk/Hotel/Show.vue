@@ -96,6 +96,7 @@
 </template>
 
 <script setup lang="ts">
+    // Vue 3 reactivity: computed for derived state, onMounted for lifecycle hook
     import { computed, onMounted } from 'vue';
     import { router } from '@inertiajs/vue3';
     import { formatDate } from '@/Utils/date';
@@ -104,24 +105,38 @@
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
 
-    // Permissions
-    const permission = usePermissionService();
-    const canView = computed(() => permission.check('view hotels'));
-    const canEdit = computed(() => permission.check('edit hotels'));
+    // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
 
-    // Props
-    const props = defineProps<{
-        hotel: Record<string, any>;
-    }>();
-
-    // Computed
-    const hotel: Hotel = mapToHotel(props.hotel);
-
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
+    const permission = usePermissionService();
+    
+    // canView: true if user has 'view hotels' permission (controls page access)
+    const canView = computed(() => permission.check('view hotels'));
+    
+    // canEdit: true if user has 'edit hotels' permission (controls Edit button visibility)
+    const canEdit = computed(() => permission.check('edit hotels'));
+    
+    // ─── Lifecycle ───────────────────────────────────────────
+    // Redirect to /hotels if user doesn't have view permission
     onMounted(() => {
         if (!canView.value) {
             router.visit('/hotels');
             return;
         }
     });
+
+    // ─── Props ───────────────────────────────────────────────
+    // Data passed from the backend controller
+    const props = defineProps<{
+        hotel: Record<string, any>;   // Raw hotel data from API
+    }>();
+
+    // ─── Computed Properties ─────────────────────────────────
+    // Map the raw hotel API data to a typed Hotel object
+    // This is recomputed if props.hotel changes
+    const hotel: Hotel = mapToHotel(props.hotel);
+
 </script>

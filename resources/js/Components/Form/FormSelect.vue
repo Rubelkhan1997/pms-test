@@ -11,7 +11,7 @@
 
         <select
             :id="resolvedId"
-            :name="name"
+            :name="name || resolvedId"
             :required="required"
             :disabled="disabled"
             :class="[

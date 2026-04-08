@@ -1,9 +1,12 @@
 <template>
+    <!-- Page title shown in browser tab -->
     <Head :title="t('reservations.new_reservation')" />
+    
+    <!-- Show form only if user has permission to create reservations -->
     <div v-if="canCreate" class="max-w-4xl mx-auto">
         <section class="space-y-6">
 
-            <!-- Header -->
+            <!-- Header Section: Title + Back button -->
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-semibold text-slate-800">{{ t('reservations.new_reservation') }}</h1>
@@ -17,9 +20,11 @@
                 </Link>
             </div>
 
-            <!-- Reservation Form -->
+            <!-- Reservation Form Container -->
             <div class="bg-white rounded-lg shadow p-6">
                 <form @submit.prevent="submit" class="space-y-6">
+                    
+                    <!-- Hotel Selection Dropdown -->
                     <FormSelect
                         id="hotel_id"
                         v-model="form.hotelId"
@@ -33,9 +38,10 @@
                         wrapper-class="mb-0"
                     />
 
-                    <!-- Guest & Room -->
+                    <!-- Guest & Room Selection (2 columns on medium+ screens) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
+                        <!-- Guest Selection Dropdown -->
                         <FormSelect
                             id="guest_id"
                             v-model="form.guestId"
@@ -49,6 +55,7 @@
                             wrapper-class="mb-0"
                         />
 
+                        <!-- Room Selection Dropdown (only available rooms) -->
                         <FormSelect
                             id="room_id"
                             v-model="form.roomId"
@@ -63,7 +70,7 @@
                         />
                     </div>
 
-                    <!-- Dates -->
+                    <!-- Check-in & Check-out Date Pickers (2 columns) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         <DatePicker
@@ -86,7 +93,7 @@
                         />
                     </div>
 
-                    <!-- Amount & Status -->
+                    <!-- Total Amount & Reservation Status (2 columns) -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         <FormInput
@@ -115,7 +122,7 @@
                         />
                     </div>
 
-                    <!-- Notes -->
+                    <!-- Notes Textarea -->
                     <FormTextarea
                         id="notes"
                         v-model="form.notes"
@@ -126,7 +133,7 @@
                         wrapper-class="mb-0"
                     />
 
-                    <!-- Submit -->
+                    <!-- Submit & Cancel Buttons -->
                     <div class="flex gap-4 pt-4">
                         <FormButton
                             type="submit"
@@ -147,6 +154,8 @@
             </div>
         </section>
     </div>
+    
+    <!-- Access Denied Message (shown when user lacks permission) -->
     <div v-else class="max-w-4xl mx-auto">
         <div class="bg-white rounded-lg shadow p-6 text-center">
             <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
@@ -162,8 +171,9 @@
 </template>
 
 <script setup lang="ts">
-    import { computed, watch, onMounted } from 'vue';
-    import { useForm, router } from '@inertiajs/vue3';
+    // Vue 3 reactivity: watch for reactive changes, onMounted for lifecycle hook, computed for derived state
+    import { computed, watch, onMounted } from 'vue';    
+    import { useForm, router } from '@inertiajs/vue3';    
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
@@ -172,32 +182,47 @@
     import { mapGuestOptionApi, mapHotelOptionApi, mapRoomOptionApi } from '@/Utils/Mappers/reservation';
 
     // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
 
-    // ─── Props ───────────────────────────────────────────────
-    const props = defineProps<{
-        hotels: Array<Record<string, any>>;
-        guests: Array<Record<string, any>>;
-        rooms: Array<Record<string, any>>;
-    }>();
-
-    // ─── Composable ──────────────────────────────────────────
-    const { create: createReservation, saving } = useReservations();
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
+    
+    // canCreate: computed property that returns true if user has 'create reservations' permission
     const canCreate = computed(() => permission.check('create reservations'));
 
-    const hotelOptions = computed<HotelOption[]>(() =>
-        props.hotels.map(mapHotelOptionApi)
-    );
+    // ─── Composables ─────────────────────────────────────────
+    // useReservations: provides CRUD operations for reservations
+    // create: function to send POST request to create a new reservation
+    // saving: reactive boolean indicating if the API call is in progress
+    const { create: createReservation, saving } = useReservations();
 
-    const guestOptions = computed<GuestOption[]>(() =>
-        props.guests.map(mapGuestOptionApi)
-    );
+    // ─── Lifecycle ───────────────────────────────────────────
+    // onMounted: runs when component is first loaded into the DOM
+    // Redirects to /reservations page if user doesn't have create permission
+    onMounted(() => {
+        if (!canCreate.value) {
+            router.visit('/reservations');
+            return;
+        }
+    });
 
-    const roomOptions = computed<RoomOption[]>(() =>
-        props.rooms.map(mapRoomOptionApi)
-    );
+    // ─── Props ───────────────────────────────────────────────
+    // These are populated by the Laravel controller when rendering the page
+    const props = defineProps<{
+        hotels: Array<Record<string, any>>;   // Raw hotel data from API
+        guests: Array<Record<string, any>>;   // Raw guest data from API
+        rooms: Array<Record<string, any>>;    // Raw room data from API
+    }>();
 
+    // ─── Mapped Options ──────────────────────────────────────
+    // Transform raw API data into typed frontend objects
+    const hotelOptions = computed<HotelOption[]>(() => props.hotels.map(mapHotelOptionApi));
+    const guestOptions = computed<GuestOption[]>(() => props.guests.map(mapGuestOptionApi));
+    const roomOptions = computed<RoomOption[]>(() => props.rooms.map(mapRoomOptionApi));
+
+    // Format options for dropdown display
     const hotelSelectOptions = computed(() =>
         hotelOptions.value.map((hotel) => ({ value: hotel.id, label: `${hotel.name} (${hotel.code})` }))
     );
@@ -206,10 +231,8 @@
         guestOptions.value.map((guest) => ({ value: guest.id, label: `${guest.firstName} ${guest.lastName} (${guest.email || ''})` }))
     );
 
-    // ─── Available Rooms ─────────────────────────────────────
-    const availableRooms = computed(() =>
-        roomOptions.value.filter(room => room.status === 'available')
-    );
+    // Filter only available rooms (status === 'available')
+    const availableRooms = computed(() => roomOptions.value.filter((room) => room.status === 'available'));
 
     const roomSelectOptions = computed(() =>
         availableRooms.value.map((room) => ({
@@ -218,6 +241,7 @@
         }))
     );
 
+    // Define all possible reservation statuses for the dropdown
     const statusOptions = computed(() => ([
         { value: 'pending', label: t('status.pending') },
         { value: 'draft', label: t('status.draft') },
@@ -228,6 +252,9 @@
     ]));
 
     // ─── Form ────────────────────────────────────────────────
+    // useForm: creates a reactive form object with hotel fields
+    // form.errors: tracks validation errors per field
+    // form.processing: true while form is being submitted
     const form = useForm({
         hotelId:       '' as number | string,
         guestId:       '' as number | string,
@@ -240,32 +267,36 @@
         status:         'pending' as ReservationStatus,
         notes:          '',
     });
- 
-    const isSaving    = computed(() => form.processing || saving.value);
+
+
+    // ─── Computed Properties ─────────────────────────────────
+    // isSaving: true if form is currently being submitted OR the reservation API call is in progress
+    const isSaving = computed(() => form.processing || saving.value);
+    
+    // submitLabel: dynamic button text that changes based on saving state
     const submitLabel = computed(() => isSaving.value ? t('actions.creating') : t('actions.create'));
 
-    // Watchers to validate check-out date when check-in date or check-out date changes
+    // ─── WATCHERS - React to form field changes ─────────────────────────────────
+    // Watch for changes in checkInDate
+    // Why: When check-in date changes, re-validate check-out date to ensure it's still valid
+    // Example: If user picks a new check-in that's after the current check-out, it should show an error
     watch(() => form.checkInDate, () => {
         if (form.checkOutDate) validateCheckOutDate();
     });
 
-    onMounted(() => {
-        if (!canCreate.value) {
-            router.visit('/reservations');
-            return;
-        }
-    });
-
     // ─── Submit ──────────────────────────────────────────────
     async function submit(): Promise<void> {
+        // Clear all previous validation errors
         form.clearErrors();
-
+ 
+        // If any rule fails, validateForm returns false
         if (!validateForm()) {
             scrollToFirstError();
             return;
         }
 
         try {
+            // Send reservation data to backend API
             const result = await createReservation({
                 hotelId:       Number(form.hotelId),
                 guestId:       Number(form.guestId),
@@ -279,25 +310,30 @@
                 notes:         form.notes || undefined,
             });
 
+            // Check if API response indicates success (status === 1)
             if (Number(result.status) === 1) {
                 form.reset();
                 router.visit('/reservations');
             }
         } catch (err: unknown) {
+            // Handle API errors (e.g., 422 validation errors from backend)
             const apiErr = err as Record<string, any>;
 
             if (apiErr?.response?.data?.errors) {
                 const backendErrors: Record<string, string[]> = apiErr.response.data.errors;
+        
                 Object.entries(backendErrors).forEach(([key, messages]) => {
+                    // mapBackendField converts snake_case (backend) to camelCase (frontend)
+                    // Example: 'hotel_id' -> 'hotelId'
                     const mappedKey = mapBackendField(key);
                     form.setError(mappedKey as any, messages[0]);
                 });
                 scrollToFirstError();
-            } 
+            }
         }
     }
 
-    // ─── Validation ──────────────────────────────────────────
+    // ─── Validation ────────────────────────────────────────── 
     function validateForm(): boolean {
         return validateInertiaForm(form, {
             hotelId:      [required],
@@ -309,6 +345,7 @@
         });
     }
 
+    // validateCheckOutDate: validates that check-out date is after check-in date
     function validateCheckOutDate(): void {
         if (form.checkOutDate && form.checkInDate) {
             const result = checkOutDate(form.checkOutDate, form.checkInDate);
@@ -320,6 +357,7 @@
         }
     }
 
+    // Convert backend snake_case keys to local camelCase keys
     function mapBackendField(field: string): string {
         const map: Record<string, string> = {
             hotel_id: 'hotelId',
@@ -329,9 +367,10 @@
             check_out_date: 'checkOutDate',
             total_amount: 'totalAmount',
         };
-        return map[field] ?? field;
+        return map[field] ?? field;  // Return mapped value, or original if not in map
     }
 
+    // Auto-scrolls the page to the first field with a validation error
     function scrollToFirstError(): void {
         setTimeout(() => {
             const firstError = document.querySelector('.border-red-500');
@@ -339,9 +378,3 @@
         }, 100);
     }
 </script>
-
-<style scoped>
-    section.space-y-6 {
-        padding-bottom: 2rem;
-    }
-</style>

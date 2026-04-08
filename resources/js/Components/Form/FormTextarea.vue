@@ -11,7 +11,7 @@
 
         <textarea
             :id="resolvedId"
-            :name="name"
+            :name="name || resolvedId"
             :rows="rows"
             :required="required"
             :placeholder="placeholder"

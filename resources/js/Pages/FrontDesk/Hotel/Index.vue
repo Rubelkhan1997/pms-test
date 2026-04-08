@@ -1,6 +1,11 @@
 <template>
+    <!-- Page title shown in browser tab -->
     <Head :title="t('navigation.hotels')" />
+    
+    <!-- Main container with max width -->
     <div class="max-w-6xl mx-auto">
+        
+        <!-- Header Section: Title + Create button (shown only if user has create permission) -->
         <div class="flex justify-between items-center">
             <div>
                 <h1 class="text-2xl font-semibold text-slate-800">{{ t('hotels.title') }}</h1>
@@ -15,8 +20,10 @@
             </Link>
         </div>
 
+        <!-- Search & Filter Bar -->
         <div class="bg-white p-4 rounded-lg shadow mb-4 mt-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Search Input -->
                 <FormInput
                     id="search"
                     v-model="searchQuery"
@@ -27,6 +34,7 @@
                 />
             </div>
 
+            <!-- Reset Filters Button -->
             <div class="mt-4 flex justify-end">
                 <FormButton
                     @click="handleResetFilters"
@@ -38,6 +46,7 @@
             </div>
         </div>
 
+        <!-- Hotels Data Table -->
         <Table
             :headers="tableHeaders"
             :columns="tableColumns"
@@ -59,19 +68,24 @@
             @change-page="changePage"
             @change-per-page="changePerPage"
         >
+            <!-- Empty State Icon (shown when no hotels exist) -->
             <template #empty-icon>
                 <svg class="w-16 h-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
             </template>
 
+            <!-- Action Buttons for Each Row (View, Edit, Delete) -->
             <template #actions="{ item }">
+                <!-- View button: always visible -->
                 <Link :href="`/hotels/${item.id}`" class="text-green-600 hover:text-green-900">
                     {{ t('actions.view') }}
                 </Link>
+                <!-- Edit button: shown only if user has edit permission -->
                 <Link v-if="canEdit" :href="`/hotels/${item.id}/edit`" class="text-blue-600 hover:text-blue-900">
                     {{ t('actions.edit') }}
                 </Link>
+                <!-- Delete button: shown only if user has delete permission -->
                 <button v-if="canDelete" @click="handleDelete(item as Hotel)" class="text-red-600 hover:text-red-900">
                     {{ t('actions.delete') }}
                 </button>
@@ -81,30 +95,68 @@
 </template>
 
 <script setup lang="ts">
+    // Vue 3 reactivity: ref for mutable reactive values, reactive for objects, onMounted for lifecycle, inject for dependency injection, computed for derived state
     import { ref, reactive, onMounted, inject, computed } from 'vue';
+    import { router } from '@inertiajs/vue3';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
     import type { ConfirmType } from '@/Plugins/confirm';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
 
+    // ─── Dependency Injection ────────────────────────────────────────────────
+    // inject: gets the global confirm dialog plugin for delete confirmation
+    // The '!' tells TypeScript this will always be defined
     const confirm = inject<ConfirmType>('confirm')!;
-    const permission = usePermissionService();
+
+    // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
 
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
+    const permission = usePermissionService();
+    
+    // canCreate: true if user has 'create hotels' permission (controls "New Hotel" button)
+    const canCreate = computed(() => permission.check('create hotels'));
+
+    // canView: true if user has 'view hotels' permission (controls page access and visibility of hotel list)
+    const canView = computed(() => permission.check('view hotels'));
+    
+    // canEdit: true if user has 'edit hotels' permission (controls "Edit" button in table)
+    const canEdit = computed(() => permission.check('edit hotels'));
+    
+    // canDelete: true if user has 'delete hotels' permission (controls "Delete" button in table)
+    const canDelete = computed(() => permission.check('delete hotels'));
+    
+    // ─── Composables ─────────────────────────────────────────
+    // useHotels: provides hotel list, loading state, pagination, CRUD operations, filters
     const {
-        hotels,
-        loading,
-        pagination,
-        fetchAll,
-        deleteHotel,
-        setFilters,
-        resetFilters,
+        hotels,           // Reactive array of hotel data
+        loading,          // Boolean: true while fetching data
+        pagination,       // Object with currentPage, lastPage, total, etc.
+        
+        fetchAll,         // Function to fetch all hotels with pagination
+        deleteHotel,      // Function to delete a hotel
+        setFilters,       // Function to set search/filter parameters
+        resetFilters,     // Function to clear all filters
     } = useHotels();
 
-    const canCreate = computed(() => permission.check('create hotels'));
-    const canEdit = computed(() => permission.check('edit hotels'));
-    const canDelete = computed(() => permission.check('delete hotels'));
+    // ─── Lifecycle ───────────────────────────────────────────
+    // onMounted: runs when component is first loaded into the DOM
+    // Redirect to /dashboard if user doesn't have view permission
+    onMounted(() => {
+        if (!canView.value) {
+            router.visit('/dashboard');
+            return;
+        }
+
+        // Fetches first page of hotels when page loads
+        fetchAll(1);
+    });
+
+    // ─── Table Configuration ─────────────────────────────────────────
+    // tableHeaders: defines column headers for the table component
     const tableHeaders = computed(() => ([
         { key: 'name', label: t('hotels.name') },
         { key: 'code', label: t('hotels.code') },
@@ -113,6 +165,8 @@
         { key: 'currency', label: t('hotels.currency') },
         { key: 'actions', label: t('reservations.actions'), align: 'right' as const },
     ]));
+    
+    // tableColumns: defines column styling and fallback text for empty values
     const tableColumns = [
         { key: 'name',     className: 'font-medium text-slate-900' },
         { key: 'code' },
@@ -121,20 +175,33 @@
         { key: 'currency', fallback: t('na') },
     ]
 
+    // ─── Search & Filter State ─────────────────────────────────────────
+    // searchQuery: reactive string for the search input field
     const searchQuery = ref('');
+    
+    // perPage: number of items to show per page (default 15)
     const perPage = ref(15);
+    
+    // localFilters: reactive object to track current filter values
     const localFilters = reactive({
         search: '',
     });
-
+    
+    // ─── Event Handlers ─────────────────────────────────────────
+    // searchTimeout: stores the setTimeout ID for debouncing search
     let searchTimeout: ReturnType<typeof setTimeout>;
 
+    // changePerPage: called when user selects different items-per-page from dropdown
+    // Updates perPage value and fetches fresh data from page 1
     function changePerPage(value: number) {
         perPage.value = value;
         setFilters({ perPage: value });
         fetchAll(1, { perPage: value });
     }
 
+    // debouncedSearch: delays search API call by 500ms while user is typing
+    // Why: Prevents excessive API calls on every keystroke
+    // How: Clears previous timeout and sets a new one
     function debouncedSearch() {
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
@@ -143,6 +210,7 @@
         }, 500);
     }
 
+    // handleResetFilters: clears all filter inputs and fetches fresh unfiltered data
     function handleResetFilters() {
         localFilters.search = '';
         searchQuery.value = '';
@@ -150,7 +218,12 @@
         fetchAll(1);
     }
 
+    // handleDelete: shows confirmation dialog, then deletes the hotel if confirmed
     async function handleDelete(item: Hotel) {
+        // Check permission before allowing delete
+        if (!canDelete.value) return;
+        
+        // Show confirmation dialog with hotel details
         const confirmed = await confirm.show({
             title: t('hotels.delete_title'),
             message: `${t('hotels.delete_message')} "${item.name}". ${t('hotels.delete_warning')}`,
@@ -159,10 +232,15 @@
             variant: 'danger',
         });
 
+        // If user clicked "Cancel", stop here
         if (!confirmed) return;
 
         try {
+            // Delete the hotel via API
             await deleteHotel(item.id);
+            
+            // After deletion, determine which page to fetch:
+            // If current page has no items and we're not on page 1, go to previous page
             const targetPage = hotels.value.length === 0 && pagination.value.currentPage > 1
                 ? pagination.value.currentPage - 1
                 : pagination.value.currentPage;
@@ -172,12 +250,9 @@
         }
     }
 
+    // changePage: navigates to specified page number
     function changePage(page: number) {
         if (page < 1 || page > pagination.value.lastPage) return;
         fetchAll(page);
     }
-
-    onMounted(() => {
-        fetchAll(1);
-    });
 </script>

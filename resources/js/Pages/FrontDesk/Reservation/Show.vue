@@ -165,6 +165,7 @@
 </template>
 
 <script setup lang="ts">
+    // Vue 3 reactivity: computed for derived state, onMounted for lifecycle hook, inject for dependency injection
     import { computed, onMounted, inject } from 'vue';
     import { router } from '@inertiajs/vue3';
     import { HotelLayout } from '@/Layouts';
@@ -177,29 +178,53 @@
     import { mapReservationApiToReservation } from '@/Utils/Mappers/reservation';
     import type { Reservation } from '@/Types/FrontDesk/reservation';
 
-    // ─── Inject Confirm ─────────────────────────────────────
-    const confirm = inject<ConfirmType>('confirm')!;
-    const permission = usePermissionService();
-
     // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
 
-    // ─── Permissions ───────────────────────────────────────── 
+    // ─── Inject Confirm ─────────────────────────────────────
+    // inject: gets the global confirm dialog plugin for cancel confirmation
+    const confirm = inject<ConfirmType>('confirm')!;
+
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
+    const permission = usePermissionService();
+
+    // canView: true if user has 'view reservations' permission (controls page access)
     const canView = computed(() => permission.check('view reservations'));
+    
+    // canEdit: true if user has 'edit reservations' permission (controls Edit button visibility)
     const canEdit = computed(() => permission.check('edit reservations'));
+    
+    // canCancel: true if user has 'edit reservations' permission (reuses same permission for cancel)
     const canCancel = computed(() => permission.check('edit reservations'));
 
-    // ─── Props ───────────────────────────────────────────────
-    const props = defineProps<{
-        reservation: Record<string, any>;
-    }>();
-
+    // ─── Composables ─────────────────────────────────────────
+    // useReservations: provides reservation operations
+    // loading: boolean indicating if data is being fetched
+    // cancel: function to send cancel request for a reservation
     const { loading, cancel: cancelAction } = useReservations();
 
+    // ─── Lifecycle ───────────────────────────────────────────
+    // Redirect to /reservations if user doesn't have view permission
+    onMounted(() => {
+        if (!canView.value) {
+            router.visit('/reservations');
+        }
+    });
+
+    // ─── Props ───────────────────────────────────────────────
+    // Data passed from the backend controller
+    const props = defineProps<{
+        reservation: Record<string, any>;   // Raw reservation data from API
+    }>();
+
     // ─── Mapped Reservation ──────────────────────────────────
+    // Map the raw reservation API data to a typed Reservation object
     const reservation: Reservation = mapReservationApiToReservation(props.reservation);
 
-    // ─── Calculate number of nights ──────────────────────────────────
+    // Nights is derived from check-in/check-out dates
+    // Recomputes automatically if dates change
     const nights = computed(() => {
         if (!reservation?.checkInDate || !reservation?.checkOutDate) {
             return 0;
@@ -208,8 +233,10 @@
         return calculateNights(reservation.checkInDate, reservation.checkOutDate);
     });
 
-    // ─── Handle Cancel ──────────────────────────────────
+    // ─── Cancel Action ───────────────────────────────────────
+    // handleCancel: shows confirmation dialog, then cancels the reservation if confirmed
     async function handleCancel(): Promise<void> {
+        // Show confirmation dialog with reservation reference number
         const confirmed = await confirm.show({
             title: 'Cancel Reservation?',
             message: `Reservation ${reservation?.reference} will be cancelled. This cannot be undone.`,
@@ -218,22 +245,21 @@
             variant: 'danger',
         });
 
+        // If user clicked "Keep", stop here
         if (!confirmed) {
             return;
         }
 
         try {
-            await cancelAction(reservation.id);
-            router.reload();
+            // Cancel the reservation via API
+            const result = await cancelAction(reservation.id);
+
+            // Reload the page to show updated status
+            if (Number(result.status) === 1) {
+                router.visit(`/reservations/${reservation.id}`);
+            }
         } catch (e) {
             console.error('Delete failed:', e);
         }
     }
-
-    // ─── Load reservation on mount ──────────────────────────────────
-    onMounted(() => {
-        if (!canView.value) {
-            router.visit('/reservations');
-        }
-    });
 </script>

@@ -129,7 +129,8 @@
     </div>
 </template>
 
-<script setup lang="ts">
+<script setup lang="ts"> 
+    // Vue 3 reactivity: computed for derived state, onMounted for lifecycle hook
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
@@ -137,11 +138,37 @@
     import { usePermissionService } from '@/Composables/usePermissionService';
     import { required, validateInertiaForm } from '@/Utils/validation';
 
-    const { create: createHotel, saving } = useHotels();
+    // ─── i18n ────────────────────────────────────────────────
+    // useI18n: provides translation function 't'
     const { t } = useI18n();
+    
+    // ─── Permissions ─────────────────────────────────────────
+    // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
+    
+    // canCreate: computed property that returns true if user has 'create hotels' permission
     const canCreate = computed(() => permission.check('create hotels'));
 
+    // ─── Composables ─────────────────────────────────────────
+    // useHotels: provides CRUD operations for hotels
+    // create: function to send POST request to create a new hotel
+    // saving: reactive boolean indicating if the API call is in progress
+    const { create: createHotel, saving } = useHotels();
+    
+    // ─── Lifecycle ───────────────────────────────────────────
+    // onMounted: runs when component is first loaded into the DOM
+    // Redirect to /hotels if user doesn't have create permission
+    onMounted(() => {
+        if (!canCreate.value) {
+            router.visit('/hotels');
+            return;
+        }
+    });
+
+    // ─── Form ────────────────────────────────────────────────
+    // useForm: creates a reactive form object with hotel fields
+    // form.errors: tracks validation errors per field
+    // form.processing: true while form is being submitted
     const form = useForm({
         name: '',
         code: '',
@@ -152,45 +179,49 @@
         address: '',
     });
 
+    // ─── Computed Properties ─────────────────────────────────
+    // isSaving: true if form is processing OR the create API call is in progress
     const isSaving = computed(() => form.processing || saving.value);
+    
+    // submitLabel: dynamic button text
     const submitLabel = computed(() => isSaving.value ? t('actions.creating') : t('hotels.new_hotel'));
 
-    onMounted(() => {
-        if (!canCreate.value) {
-            router.visit('/hotels');
-            return;
-        }
-    });
-
+    // ─── Submit ──────────────────────────────────────────────
     async function submit(): Promise<void> {
+        // Clear all previous validation errors
         form.clearErrors();
 
+        // If any rule fails, validateForm returns false
         if (!validateForm()) {
             scrollToFirstError();
             return;
         }
 
         try {
+            // Send hotel data to backend API
             const result = await createHotel({
                 name: form.name,
                 code: form.code,
-                timezone: form.timezone || undefined,
+                timezone: form.timezone || undefined,     // Send undefined if empty
                 currency: form.currency || undefined,
                 email: form.email || undefined,
                 phone: form.phone || undefined,
                 address: form.address || undefined,
             });
 
+            // Check if API response indicates success (status === 1)
             if (Number(result.status) === 1) {
                 form.reset();
-                router.visit('/hotels');
+                router.visit('/hotels');                // Navigate to hotels list
             }
         } catch (err: unknown) {
+            // Handle API errors (e.g., 422 validation errors from backend)
             const apiErr = err as Record<string, any>;
 
             if (apiErr?.response?.data?.errors) {
                 const backendErrors: Record<string, string[]> = apiErr.response.data.errors;
                 Object.entries(backendErrors).forEach(([key, messages]) => {
+                    // mapBackendField converts backend keys to frontend form field keys
                     const mappedKey = mapBackendField(key);
                     form.setError(mappedKey as any, messages[0]);
                 });
@@ -199,6 +230,7 @@
         }
     }
 
+    // ─── Validation ────────────────────────────────────────── 
     function validateForm(): boolean {
         return validateInertiaForm(form, {
             name: [required],
@@ -206,6 +238,8 @@
         });
     }
 
+    // Backend uses snake_case keys; this maps them to local form keys.
+    // For hotels, the keys are the same (no snake_case to camelCase conversion needed)
     function mapBackendField(field: string): string {
         const map: Record<string, string> = {
             name: 'name',
@@ -220,6 +254,7 @@
         return map[field] ?? field;
     }
 
+    // Auto-scrolls the page to the first field with a validation error
     function scrollToFirstError(): void {
         setTimeout(() => {
             const firstError = document.querySelector('.border-red-500');
