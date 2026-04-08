@@ -5,16 +5,9 @@ import { createApp, h, DefineComponent } from 'vue';
 import { createInertiaApp, Head, Link } from '@inertiajs/vue3';
 import { createPinia } from 'pinia';
 import { toast, confirm, directives } from '@/Plugins';
-
-// Import default layout statically (used as fallback)
-import AppLayout from '@/Layouts/AppLayout.vue';
-
-// Import language store for i18n
 import { useLanguageStore } from '@/Stores/languageStore';
-
-// Import global components (truly universal components used everywhere)
-// TODO: Uncomment when components are implemented
-// import { AppButton, AppInput, AppModal } from '@/Components';
+import AppLayout from '@/Layouts/AppLayout.vue';
+import * as Components from '@/Components';
 
 createInertiaApp({
     title: (title) => title ? `${title} - PMS` : 'PMS',
@@ -44,17 +37,19 @@ createInertiaApp({
         app.component('Head', Head);
         app.component('Link', Link);
 
-        // TODO: Uncomment when components are implemented
-        // app.component('AppButton', AppButton);
-        // app.component('AppInput', AppInput);
-        // app.component('AppModal', AppModal);
+        // Custom global components
+        Object.entries(Components).forEach(([name, component]) => {
+            app.component(name, component);
+        });
 
+        // Use plugins
         app.use(plugin);
         app.use(createPinia());
         app.use(toast);
         app.use(confirm);
         app.use(directives);
 
+        // Initialize language settings and set document attributes
         const languageStore = useLanguageStore();
         languageStore.initialize();
 
@@ -64,6 +59,7 @@ createInertiaApp({
             document.documentElement.lang = languageStore.currentLanguage;
         }
 
+        // Mount the app
         app.mount(el);
     },
 

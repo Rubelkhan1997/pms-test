@@ -132,7 +132,6 @@
 <script setup lang="ts">
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
-    import { FormButton, FormInput, FormRadio, FormTextarea } from '@/Components/Form';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';

@@ -167,7 +167,6 @@
 <script setup lang="ts">
     import { computed, onMounted, inject } from 'vue';
     import { router } from '@inertiajs/vue3';
-    import { FormButton } from '@/Components/Form';
     import { HotelLayout } from '@/Layouts';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';

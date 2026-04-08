@@ -40,6 +40,7 @@
 
         <Table
             :headers="tableHeaders"
+            :columns="tableColumns"
             :rows="hotels"
             :loading="loading"
             :loading-title="t('hotels.loading')"
@@ -64,52 +65,16 @@
                 </svg>
             </template>
 
-            <template #rows="{ rows }">
-                <tr
-                    v-for="item in rows"
-                    :key="item.id"
-                    class="hover:bg-slate-50 transition"
-                >
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-slate-900">{{ item.name }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-slate-600">{{ item.code }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-slate-600">{{ item.email || t('na') }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-slate-600">{{ item.phone || t('na') }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-slate-600">{{ item.currency || t('na') }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div class="flex justify-end gap-2">
-                            <Link
-                                :href="`/hotels/${item.id}`"
-                                class="text-green-600 hover:text-green-900"
-                            >
-                                {{ t('actions.view') }}
-                            </Link>
-                            <Link
-                                v-if="canEdit"
-                                :href="`/hotels/${item.id}/edit`"
-                                class="text-blue-600 hover:text-blue-900"
-                            >
-                                {{ t('actions.edit') }}
-                            </Link>
-                            <button
-                                v-if="canDelete"
-                                @click="handleDelete(item)"
-                                class="text-red-600 hover:text-red-900"
-                            >
-                                {{ t('actions.delete') }}
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+            <template #actions="{ item }">
+                <Link :href="`/hotels/${item.id}`" class="text-green-600 hover:text-green-900">
+                    {{ t('actions.view') }}
+                </Link>
+                <Link v-if="canEdit" :href="`/hotels/${item.id}/edit`" class="text-blue-600 hover:text-blue-900">
+                    {{ t('actions.edit') }}
+                </Link>
+                <button v-if="canDelete" @click="handleDelete(item as Hotel)" class="text-red-600 hover:text-red-900">
+                    {{ t('actions.delete') }}
+                </button>
             </template>
         </Table>
     </div>
@@ -117,8 +82,6 @@
 
 <script setup lang="ts">
     import { ref, reactive, onMounted, inject, computed } from 'vue';
-    import { Table } from '@/Components';
-    import { FormButton, FormInput } from '@/Components/Form';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
@@ -150,6 +113,13 @@
         { key: 'currency', label: t('hotels.currency') },
         { key: 'actions', label: t('reservations.actions'), align: 'right' as const },
     ]));
+    const tableColumns = [
+        { key: 'name',     className: 'font-medium text-slate-900' },
+        { key: 'code' },
+        { key: 'email',    fallback: t('na') },
+        { key: 'phone',    fallback: t('na') },
+        { key: 'currency', fallback: t('na') },
+    ]
 
     const searchQuery = ref('');
     const perPage = ref(15);

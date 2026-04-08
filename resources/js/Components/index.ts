@@ -15,4 +15,10 @@ export { default as FormSelect } from './Form/FormSelect.vue';
 export { default as FormTextarea } from './Form/FormTextarea.vue';
 
 // Table components
-export { default as Table } from './Table/Table.vue';
+export { default as Table } from './Table.vue';
+
+// Modal components
+export { default as Modal } from './Modal.vue';
+ 
+ 
+  

@@ -98,7 +98,6 @@
 <script setup lang="ts">
     import { computed, onMounted } from 'vue';
     import { router } from '@inertiajs/vue3';
-    import { FormButton } from '@/Components/Form';
     import { formatDate } from '@/Utils/date';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
     import { mapToHotel } from '@/Utils/Mappers/hotel';

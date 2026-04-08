@@ -43,7 +43,39 @@
                         </td>
                     </tr>
 
-                    <slot v-else name="rows" :rows="rows"></slot>
+                    <!-- Custom rows slot (full override) -->
+                    <slot v-else-if="$slots['rows']" name="rows" :rows="rows" />
+
+                    <!-- Default auto-render with optional actions slot -->
+                    <template v-else>
+                        <tr
+                            v-for="row in rows"
+                            :key="row.id"
+                            class="hover:bg-slate-50 transition"
+                        >
+                            <td
+                                v-for="col in columns"
+                                :key="col.key"
+                                :class="[
+                                    'px-6 py-4 whitespace-nowrap',
+                                    col.align === 'right' ? 'text-right' : 'text-left',
+                                    col.tdClassName || '',
+                                ]"
+                            >
+                                <slot :name="`cell-${col.key}`" :value="row[col.key]" :row="row">
+                                    <div :class="['text-sm', col.className || 'text-slate-600']">
+                                        {{ row[col.key] ?? col.fallback ?? '' }}
+                                    </div>
+                                </slot>
+                            </td>
+
+                            <td v-if="$slots['actions']" class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex justify-end gap-2">
+                                    <slot name="actions" :item="row" />
+                                </div>
+                            </td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
@@ -60,11 +92,7 @@
                         @change="onPerPageChange"
                         class="px-2 py-1 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-blue-500"
                     >
-                        <option
-                            v-for="option in perPageOptions"
-                            :key="option"
-                            :value="option"
-                        >
+                        <option v-for="option in perPageOptions" :key="option" :value="option">
                             {{ option }}
                         </option>
                     </select>
@@ -104,6 +132,14 @@
         className?: string;
     }
 
+    export interface TableColumn {
+        key: string;
+        align?: 'left' | 'right';
+        className?: string;    // text style (font-medium, text-slate-900 etc.)
+        tdClassName?: string;  // td wrapper style
+        fallback?: string;     // value না থাকলে এটা দেখাবে (e.g. 'N/A')
+    }
+
     export interface TablePagination {
         currentPage: number;
         perPage: number;
@@ -114,6 +150,7 @@
     const props = withDefaults(defineProps<{
         headers: TableHeader[];
         rows: Record<string, any>[];
+        columns?: TableColumn[];
         loading?: boolean;
         loadingTitle?: string;
         loadingSubtitle?: string;
@@ -130,6 +167,7 @@
         previousLabel?: string;
         nextLabel?: string;
     }>(), {
+        columns: () => [],
         loading: false,
         loadingTitle: 'Loading',
         loadingSubtitle: 'Please wait',

@@ -87,6 +87,7 @@
 
         <Table
             :headers="tableHeaders"
+            :columns="tableColumns"
             :rows="reservations"
             :loading="loading"
             :loading-title="t('reservations.loading')"
@@ -106,83 +107,85 @@
             @change-page="changePage"
             @change-per-page="changePerPage"
         >
-            <template #rows="{ rows }">
-                <tr
-                    v-for="res in rows"
-                    :key="res.id"
-                    class="hover:bg-slate-50 transition"
+            <!-- Guest -->
+            <template #cell-guest="{ row }">
+                <div class="text-sm font-medium text-slate-900">
+                    {{ row.guest?.firstName && row.guest?.lastName
+                        ? row.guest.firstName + ' ' + row.guest.lastName
+                        : t('na') }}
+                </div>
+                <div class="text-sm text-slate-500">{{ row.guest?.email || '' }}</div>
+            </template>
+
+            <!-- Room -->
+            <template #cell-room="{ row }">
+                <div class="text-sm font-medium text-slate-900">
+                    {{ t('reservations.room') }} {{ row.room?.number || t('na') }}
+                </div>
+                <div class="text-xs text-slate-500">{{ row.room?.type || '' }}</div>
+            </template>
+
+            <!-- Check-in -->
+            <template #cell-checkInDate="{ row }">
+                <div class="text-sm text-slate-600">{{ formatDate(row.checkInDate) }}</div>
+                <div class="text-xs text-slate-500">{{ row.hotel?.name || '' }}</div>
+            </template>
+
+            <!-- Check-out -->
+            <template #cell-checkOutDate="{ row }">
+                <div class="text-sm text-slate-600">{{ formatDate(row.checkOutDate) }}</div>
+            </template>
+
+            <!-- Status badge -->
+            <template #cell-status="{ row }">
+                <span
+                    :class="{
+                        'bg-yellow-100 text-yellow-800': row.status === 'pending',
+                        'bg-green-100 text-green-800':   row.status === 'confirmed',
+                        'bg-blue-100 text-blue-800':     row.status === 'checked_in',
+                        'bg-purple-100 text-purple-800': row.status === 'checked_out',
+                        'bg-red-100 text-red-800':       row.status === 'cancelled',
+                        'bg-slate-100 text-slate-800':   row.status === 'no_show',
+                    }"
+                    class="px-2 py-1 text-xs font-medium rounded"
                 >
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-slate-900">
-                            {{ res.guest?.firstName && res.guest?.lastName
-                                ? res.guest.firstName + ' ' + res.guest.lastName
-                                : t('na')
-                            }}
-                        </div>
-                        <div class="text-sm text-slate-500">{{ res.guest?.email || '' }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm font-medium text-slate-900">
-                            {{ t('reservations.room') }} {{ res.room?.number || t('na') }}
-                        </div>
-                        <div class="text-xs text-slate-500">{{ res.room?.type || '' }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <div class="text-sm text-slate-600">{{ formatDate(res.checkInDate) }}</div>
-                        <div class="text-xs text-slate-500">{{ res.hotel?.name || '' }}</div>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-                        {{ formatDate(res.checkOutDate) }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <span
-                            :class="{
-                                'bg-yellow-100 text-yellow-800': res.status === 'pending',
-                                'bg-green-100 text-green-800':  res.status === 'confirmed',
-                                'bg-blue-100 text-blue-800':    res.status === 'checked_in',
-                                'bg-purple-100 text-purple-800':res.status === 'checked_out',
-                                'bg-red-100 text-red-800':      res.status === 'cancelled',
-                                'bg-slate-100 text-slate-800':  res.status === 'no_show',
-                            }"
-                            class="px-2 py-1 text-xs font-medium rounded"
-                        >
-                            {{ formatStatus(res.status) }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
-                        {{ res.totalAmount?.toLocaleString() || '0' }}
-                    </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div class="flex justify-end gap-2">
-                            <Link
-                                v-if="canEdit"
-                                :href="`/reservations/${res.id}/edit`"
-                                class="text-blue-600 hover:text-blue-900"
-                            >
-                                {{ t('reservations.edit') }}
-                            </Link>
-                            <Link :href="`/reservations/${res.id}`" class="text-green-600 hover:text-green-900">
-                                {{ t('reservations.view') }}
-                            </Link>
-                            <button
-                                v-if="canDelete"
-                                @click="handleDelete(res)"
-                                class="text-red-600 hover:text-red-900"
-                            >
-                                {{ t('reservations.delete') }}
-                            </button>
-                        </div>
-                    </td>
-                </tr>
+                    {{ formatStatus(row.status) }}
+                </span>
+            </template>
+
+            <!-- Total amount -->
+            <template #cell-totalAmount="{ row }">
+                <div class="text-sm font-medium text-slate-900">
+                    {{ row.totalAmount?.toLocaleString() || '0' }}
+                </div>
+            </template>
+
+            <!-- Actions -->
+            <template #actions="{ item }">
+                <Link
+                    v-if="canEdit"
+                    :href="`/reservations/${item.id}/edit`"
+                    class="text-blue-600 hover:text-blue-900"
+                >
+                    {{ t('reservations.edit') }}
+                </Link>
+                <Link :href="`/reservations/${item.id}`" class="text-green-600 hover:text-green-900">
+                    {{ t('reservations.view') }}
+                </Link>
+                <button
+                    v-if="canDelete"
+                    @click="handleDelete(item as Reservation)"
+                    class="text-red-600 hover:text-red-900"
+                >
+                    {{ t('reservations.delete') }}
+                </button>
             </template>
         </Table>
     </div>
 </template>
 
 <script setup lang="ts">
-    import { ref, reactive, onMounted, inject, computed } from 'vue';
-    import { Table } from '@/Components';
-    import { DatePicker, FormButton, FormInput, FormSelect } from '@/Components/Form';
+    import { ref, reactive, onMounted, inject, computed } from 'vue'; 
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
@@ -221,6 +224,14 @@
         { key: 'amount', label: t('reservations.amount') },
         { key: 'actions', label: t('reservations.actions'), align: 'right' as const },
     ]));
+    const tableColumns = [
+        { key: 'guest',     className: 'font-medium text-slate-900' },
+        { key: 'room' },
+        { key: 'check_in',  fallback: t('na') },
+        { key: 'check_out', fallback: t('na') },
+        { key: 'status',    fallback: t('na') },
+        { key: 'amount',    fallback: t('na') },
+    ]
 
     const searchQuery = ref('');
     const perPage = ref(15);
