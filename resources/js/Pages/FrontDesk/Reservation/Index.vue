@@ -276,10 +276,10 @@
     const tableHeaders = computed(() => ([
         { key: 'guest', label: t('reservations.guest_name') },
         { key: 'room', label: t('reservations.room_number') },
-        { key: 'check_in', label: t('reservations.check_in') },
-        { key: 'check_out', label: t('reservations.check_out') },
+        { key: 'checkInDate', label: t('reservations.check_in') },
+        { key: 'checkOutDate', label: t('reservations.check_out') },
         { key: 'status', label: t('reservations.status') },
-        { key: 'amount', label: t('reservations.amount') },
+        { key: 'totalAmount', label: t('reservations.amount') },
         { key: 'actions', label: t('reservations.actions'), align: 'right' as const },
     ]));
     
@@ -287,10 +287,10 @@
     const tableColumns = [
         { key: 'guest',     className: 'font-medium text-slate-900' },
         { key: 'room' },
-        { key: 'check_in',  fallback: t('na') },
-        { key: 'check_out', fallback: t('na') },
+        { key: 'checkInDate',  fallback: t('na') },
+        { key: 'checkOutDate', fallback: t('na') },
         { key: 'status',    fallback: t('na') },
-        { key: 'amount',    fallback: t('na') },
+        { key: 'totalAmount', fallback: t('na') },
     ]
 
     // ─── Search & Filter State ─────────────────────────────────────────
