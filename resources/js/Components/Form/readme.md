@@ -90,7 +90,7 @@
 
 ## `props`, `emit`, `onInput` সহজ ভাষায়
 - `props` = Parent থেকে Child-এ data/config আসে
-- `emit` = Child থেকে Parent-এ event/data যায়
+- `emit` = Vue.js এ emit মানে হলো — child component থেকে parent component কে event/data পাঠানো।
 - `onInput` / `onChange` = user field change করলে নতুন value emit করার function
 
 এই pattern এর কারণে `v-model` কাজ করে:

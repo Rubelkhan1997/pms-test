@@ -80,50 +80,50 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { useLanguageStore } from '@/Stores/languageStore';
-import type { Language } from '@/Stores/languageStore';
+  import { computed, ref } from 'vue';
+  import { useLanguageStore } from '@/Stores/languageStore';
+  import type { Language } from '@/Stores/languageStore';
 
-// Store
-const languageStore = useLanguageStore();
+  // Store
+  const languageStore = useLanguageStore();
 
-// State
-const isOpen = ref(false);
+  // State
+  const isOpen = ref(false);
 
-// Computed
-const languages = computed(() => languageStore.availableLanguages);
-const currentLanguage = computed<Language | null>(() => {
-  return languageStore.currentLanguageObj ?? languages.value[0] ?? null;
-});
+  // Computed
+  const languages = computed(() => languageStore.availableLanguages);
+  const currentLanguage = computed<Language | null>(() => {
+    return languageStore.currentLanguageObj ?? languages.value[0] ?? null;
+  });
 
-// Methods
-async function selectLanguage(lang: Language) {
-  if (lang.code === languageStore.currentLanguage) {
+  // Methods
+  async function selectLanguage(lang: Language) {
+    if (lang.code === languageStore.currentLanguage) {
+      isOpen.value = false;
+      return;
+    }
+
+    await languageStore.setLanguage(lang.code);
     isOpen.value = false;
-    return;
   }
-
-  await languageStore.setLanguage(lang.code);
-  isOpen.value = false;
-}
 </script>
 
 <style scoped>
-.overflow-y-auto {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 transparent;
-}
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
 
-.overflow-y-auto::-webkit-scrollbar {
-  width: 6px;
-}
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 6px;
+  }
 
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: transparent;
-}
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background-color: #cbd5e1;
-  border-radius: 3px;
-}
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+  }
 </style>

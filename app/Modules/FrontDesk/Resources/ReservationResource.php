@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Modules\FrontDesk\Resources;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,8 +24,8 @@ class ReservationResource extends JsonResource
             'guest_id' => $this->guest_id,
             'reference' => $this->reference,
             'status' => $this->status,
-            'check_in_date' => $this->check_in_date,
-            'check_out_date' => $this->check_out_date,
+            'check_in_date' => Carbon::parse($this->check_in_date)->format('Y-m-d'),
+            'check_out_date' => Carbon::parse($this->check_out_date)->format('Y-m-d'),
             'total_amount' => $this->total_amount,
             'adults' => $this->adults,
             'children' => $this->children,
