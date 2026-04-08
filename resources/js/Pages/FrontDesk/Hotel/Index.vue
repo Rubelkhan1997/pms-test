@@ -20,27 +20,24 @@
         <div class="bg-white p-4 rounded-lg shadow mb-4 mt-4">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- Search -->
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-1">
-                        {{ t('search') }}
-                    </label>
-                    <input
-                        v-model="searchQuery"
-                        @input="debouncedSearch"
-                        type="text"
-                        :placeholder="t('hotels.search_placeholder')"
-                        class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                </div>
+                <FormInput
+                    id="search"
+                    v-model="searchQuery"
+                    :label="t('search')"
+                    :placeholder="t('hotels.search_placeholder')"
+                    wrapper-class="mb-0"
+                    @update:model-value="debouncedSearch"
+                />
             </div>
 
             <div class="mt-4 flex justify-end">
-                <button
+                <FormButton
                     @click="handleResetFilters"
-                    class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition"
-                >
-                    {{ t('actions.reset') }}
-                </button>
+                    type="button"
+                    color="secondary"
+                    :name="t('actions.reset')"
+                    button-class="text-sm"
+                />
             </div>
         </div>
 
@@ -165,20 +162,22 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <button
+                    <FormButton
                         @click="changePage(pagination.currentPage - 1)"
                         :disabled="pagination.currentPage === 1"
-                        class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
-                    >
-                        {{ t('previous') }}
-                    </button>
-                    <button
+                        type="button"
+                        color="secondary"
+                        :name="t('previous')"
+                        button-class="px-3 py-1"
+                    />
+                    <FormButton
                         @click="changePage(pagination.currentPage + 1)"
                         :disabled="pagination.currentPage === pagination.lastPage"
-                        class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
-                    >
-                        {{ t('next') }}
-                    </button>
+                        type="button"
+                        color="secondary"
+                        :name="t('next')"
+                        button-class="px-3 py-1"
+                    />
                 </div>
             </div>
         </div>
@@ -187,6 +186,7 @@
 
 <script setup lang="ts">
     import { ref, reactive, onMounted, inject, computed } from 'vue';
+    import { FormButton, FormInput } from '@/Components/Form';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';

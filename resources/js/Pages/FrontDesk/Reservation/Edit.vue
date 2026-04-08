@@ -2,188 +2,138 @@
     <Head :title="t('reservations.edit_reservation')" />
     <div v-if="canEdit" class="max-w-4xl mx-auto">
         <section class="space-y-6">
-            <!-- Header -->
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-semibold text-slate-800">{{ t('reservations.edit_reservation') }}</h1>
                     <p class="text-sm text-slate-500 mt-1">{{ t('reservations.update_hint') }}</p>
                 </div>
-                <Link
-                    href="/reservations"
-                    class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-                >
-                    ← {{ t('navigation.reservations') }}
+                <Link href="/reservations" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
+                    {{ t('navigation.reservations') }}
                 </Link>
             </div>
-
+            
             <!-- Reservation Form -->
             <div class="bg-white rounded-lg shadow p-6">
                 <form @submit.prevent="submit" class="space-y-6">
                     <!-- Hotel Selection (Read-only - can't change hotel) -->
                     <div>
-                        <label for="hotel_id" class="block text-sm font-medium text-slate-700 mb-2">
-                            {{ t('navigation.hotels') }}
-                        </label>
-                        <select
+                        <FormSelect
                             id="hotel_id"
                             v-model="form.hotelId"
-                            disabled
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg bg-slate-100 text-slate-500 cursor-not-allowed"
-                        >
-                            <option value="">{{ t('reservations.select_hotel') }}</option>
-                            <option v-for="hotel in hotelOptions" :key="hotel.id" :value="hotel.id">
-                                {{ hotel.name }} ({{ hotel.code }})
-                            </option>
-                        </select>
+                            :label="t('navigation.hotels')"
+                            :placeholder="t('reservations.select_hotel')"
+                            :options="hotelSelectOptions"
+                            option-label="label"
+                            option-value="value"
+                            :disabled="true"
+                            wrapper-class="mb-0"
+                        />
                         <p class="mt-1 text-sm text-slate-500">{{ t('reservations.hotel_cannot_change') }}</p>
                     </div>
 
                     <!-- Guest & Room Selection -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Guest Selection -->
-                        <div>
-                            <label for="guest_id" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('guests.title') }} <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                                id="guest_id"
-                                v-model="form.guestId"
-                                :class="{ 'border-red-500': form.errors.guestId }"
-                                    class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                >
-                                <option value="">{{ t('reservations.select_guest') }}</option>
-                            <option v-for="guest in guestOptions" :key="guest.id" :value="guest.id">
-                                {{ guest.firstName }} {{ guest.lastName }} ({{ guest.email }})
-                            </option>
-                            </select>
-                            <p v-if="form.errors.guestId" class="mt-1 text-sm text-red-500">{{ form.errors.guestId }}</p>
-                        </div>
+                        <FormSelect
+                            id="guest_id"
+                            v-model="form.guestId"
+                            :label="t('guests.title')"
+                            :required="true"
+                            :placeholder="t('reservations.select_guest')"
+                            :options="guestSelectOptions"
+                            option-label="label"
+                            option-value="value"
+                            :error="form.errors.guestId"
+                            wrapper-class="mb-0"
+                        />
 
                         <!-- Room Selection -->
-                        <div>
-                            <label for="room_id" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('rooms.title') }} <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                                id="room_id"
+                        <FormSelect
+                            id="room_id"
                             v-model="form.roomId"
-                            :class="{ 'border-red-500': form.errors.roomId }"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="">{{ t('reservations.select_room') }}</option>
-                                <!-- ✅ Fix: base_rate → price -->
-                            <option v-for="room in availableRooms" :key="room.id" :value="room.id">
-                                {{ t('rooms.room_number') }} {{ room.number }} - {{ room.type }} ({{ room.price }} BDT)
-                            </option>
-                            </select>
-                            <p v-if="form.errors.roomId" class="mt-1 text-sm text-red-500">{{ form.errors.roomId }}</p>
-                        </div>
+                            :label="t('rooms.title')"
+                            :required="true"
+                            :placeholder="t('reservations.select_room')"
+                            :options="roomSelectOptions"
+                            option-label="label"
+                            option-value="value"
+                            :error="form.errors.roomId"
+                            wrapper-class="mb-0"
+                        />
                     </div>
-
                     <!-- Date Selection -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Check-in Date -->
-                        <div>
-                            <label for="check_in_date" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('reservations.check_in') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                id="check_in_date"
-                                type="date"
+                        <DatePicker
+                            id="check_in_date"
                             v-model="form.checkInDate"
-                            :class="{ 'border-red-500': form.errors.checkInDate }"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <p v-if="form.errors.checkInDate" class="mt-1 text-sm text-red-500">{{ form.errors.checkInDate }}</p>
-                        </div>
-
-                        <!-- Check-out Date -->
-                        <div>
-                            <label for="check_out_date" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('reservations.check_out') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                id="check_out_date"
-                                type="date"
+                            :label="t('reservations.check_in')"
+                            :required="true"
+                            :error="form.errors.checkInDate"
+                            wrapper-class="mb-0"
+                        />
+                        <!-- Check-out Date -->   
+                        <DatePicker
+                            id="check_out_date"
                             v-model="form.checkOutDate"
-                            :class="{ 'border-red-500': form.errors.checkOutDate }"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                            <p v-if="form.errors.checkOutDate" class="mt-1 text-sm text-red-500">{{ form.errors.checkOutDate }}</p>
-                        </div>
+                            :label="t('reservations.check_out')"
+                            :required="true"
+                            :error="form.errors.checkOutDate"
+                            wrapper-class="mb-0"
+                            @update:model-value="validateCheckOutDate"
+                        />
                     </div>
 
                     <!-- Amount & Status -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <!-- Total Amount -->
-                        <div>
-                            <label for="total_amount" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('reservations.total_price') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                id="total_amount"
-                                type="number"
-                                step="0.01"
-                                min="1"
+                        <FormInput
+                            id="total_amount"
                             v-model="form.totalAmount"
-                            :class="{ 'border-red-500': form.errors.totalAmount }"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="0.00"
-                            />
-                            <p v-if="form.errors.totalAmount" class="mt-1 text-sm text-red-500">{{ form.errors.totalAmount }}</p>
-                        </div>
+                            type="number"
+                            :label="t('reservations.total_price')"
+                            :required="true"
+                            placeholder="0.00"
+                            :step="0.01"
+                            :min="1"
+                            :error="form.errors.totalAmount"
+                            wrapper-class="mb-0"
+                        />
 
                         <!-- Status -->
-                        <div>
-                            <label for="status" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('reservations.status') }} <span class="text-red-500">*</span>
-                            </label>
-                            <select
-                                id="status"
-                                v-model="form.status"
-                                :class="{ 'border-red-500': form.errors.status }"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            >
-                                <option value="pending">{{ t('status.pending') }}</option>
-                                <option value="draft">{{ t('status.draft') }}</option>
-                                <option value="confirmed">{{ t('status.confirmed') }}</option>
-                                <option value="checked_in">{{ t('status.checked_in') }}</option>
-                                <option value="checked_out">{{ t('status.checked_out') }}</option>
-                                <option value="cancelled">{{ t('status.cancelled') }}</option>
-                            </select>
-                            <p v-if="form.errors.status" class="mt-1 text-sm text-red-500">{{ form.errors.status }}</p>
-                        </div>
+                        <FormSelect
+                            id="status"
+                            v-model="form.status"
+                            :label="t('reservations.status')"
+                            :required="true"
+                            :options="statusOptions"
+                            option-label="label"
+                            option-value="value"
+                            :error="form.errors.status"
+                            wrapper-class="mb-0"
+                        />
                     </div>
 
                     <!-- Notes -->
-                    <div>
-                        <label for="notes" class="block text-sm font-medium text-slate-700 mb-2">
-                            {{ t('reservations.notes') }}
-                        </label>
-                        <textarea
-                            id="notes"
-                            v-model="form.notes"
-                            :class="{ 'border-red-500': form.errors.notes }"
-                            rows="3"
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            :placeholder="t('reservations.notes_placeholder')"
-                        ></textarea>
-                        <p v-if="form.errors.notes" class="mt-1 text-sm text-red-500">{{ form.errors.notes }}</p>
-                    </div>
+                    <FormTextarea
+                        id="notes"
+                        v-model="form.notes"
+                        :label="t('reservations.notes')"
+                        :placeholder="t('reservations.notes_placeholder')"
+                        :error="form.errors.notes"
+                        :rows="3"
+                        wrapper-class="mb-0"
+                    />
 
                     <!-- Submit Button -->
                     <div class="flex gap-4 pt-4">
-                        <button
+                        <FormButton
                             type="submit"
+                            color="primary"
+                            :name="submitLabel"
                             :disabled="isSaving"
-                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {{ submitLabel }}
-                        </button>
-                        <Link
-                            href="/reservations"
-                            class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-                        >
+                            button-class="px-6"
+                        />
+                        <Link href="/reservations" class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
                             {{ t('actions.cancel') }}
                         </Link>
                     </div>
@@ -195,10 +145,7 @@
         <div class="bg-white rounded-lg shadow p-6 text-center">
             <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
             <p class="text-sm text-slate-500 mt-2">{{ t('messages.no_permission') }}</p>
-            <Link
-                href="/reservations"
-                class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-            >
+            <Link href="/reservations" class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
                 {{ t('actions.back') }}
             </Link>
         </div>
@@ -208,6 +155,7 @@
 <script setup lang="ts">
     import { computed, watch, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
+    import { DatePicker, FormButton, FormInput, FormSelect, FormTextarea } from '@/Components/Form';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
@@ -232,21 +180,35 @@
     const canEdit = computed(() => permission.check('edit reservations'));
 
     // ─── Available Rooms ─────────────────────────────────────
-    const hotelOptions = computed<HotelOption[]>(() =>
-        props.hotels.map(mapHotelOptionApi)
+    const hotelOptions = computed<HotelOption[]>(() => props.hotels.map(mapHotelOptionApi));
+    const guestOptions = computed<GuestOption[]>(() => props.guests.map(mapGuestOptionApi));
+    const roomOptions = computed<RoomOption[]>(() => props.rooms.map(mapRoomOptionApi));
+
+    const hotelSelectOptions = computed(() =>
+        hotelOptions.value.map((hotel) => ({ value: hotel.id, label: `${hotel.name} (${hotel.code})` }))
     );
 
-    const guestOptions = computed<GuestOption[]>(() =>
-        props.guests.map(mapGuestOptionApi)
+    const guestSelectOptions = computed(() =>
+        guestOptions.value.map((guest) => ({ value: guest.id, label: `${guest.firstName} ${guest.lastName} (${guest.email || ''})` }))
     );
 
-    const roomOptions = computed<RoomOption[]>(() =>
-        props.rooms.map(mapRoomOptionApi)
+    const availableRooms = computed(() => roomOptions.value.filter((room) => room.status === 'available'));
+
+    const roomSelectOptions = computed(() =>
+        availableRooms.value.map((room) => ({
+            value: room.id,
+            label: `${t('rooms.room_number')} ${room.number} - ${room.type} (${room.price} BDT)`,
+        }))
     );
 
-    const availableRooms = computed(() =>
-        roomOptions.value.filter(room => room.status === 'available')
-    );
+    const statusOptions = computed(() => ([
+        { value: 'pending', label: t('status.pending') },
+        { value: 'draft', label: t('status.draft') },
+        { value: 'confirmed', label: t('status.confirmed') },
+        { value: 'checked_in', label: t('status.checked_in') },
+        { value: 'checked_out', label: t('status.checked_out') },
+        { value: 'cancelled', label: t('status.cancelled') },
+    ]));
 
     // ─── Form ────────────────────────────────────────────────
     const reservation: Reservation = mapReservationApiToReservation(props.reservation);
@@ -265,22 +227,24 @@
     });
 
     // ─── Computed ────────────────────────────────────────────
-    const isSaving    = computed(() => form.processing || saving.value);
+    const isSaving = computed(() => form.processing || saving.value);
     const submitLabel = computed(() => isSaving.value ? t('actions.updating') : t('actions.update_reservation'));
 
     // Watchers to validate check-out date when check-in date or check-out date changes
     watch(() => form.checkInDate, () => {
-        if (form.checkOutDate) validateCheckOutDate();
+        if (form.checkOutDate) {
+            validateCheckOutDate();
+        }
     });
 
     onMounted(() => {
         if (!canEdit.value) {
             router.visit('/reservations');
+            return;
         }
     });
 
     // ─── Submit ──────────────────────────────────────────────
-
     async function submit(): Promise<void> {
         form.clearErrors();
 
@@ -291,16 +255,16 @@
 
         try {
             const result = await updateReservation(reservation.id, {
-                hotelId:       Number(form.hotelId),
-                guestId:       Number(form.guestId),
-                roomId:        Number(form.roomId),
-                checkInDate:   form.checkInDate,
-                checkOutDate:  form.checkOutDate,
-                totalAmount:   parseFloat(form.totalAmount as string),
-                adults:         form.adults,
-                children:       form.children,
-                status:         form.status,
-                notes:          form.notes || undefined,
+                hotelId: Number(form.hotelId),
+                guestId: Number(form.guestId),
+                roomId: Number(form.roomId),
+                checkInDate: form.checkInDate,
+                checkOutDate: form.checkOutDate,
+                totalAmount: parseFloat(form.totalAmount as string),
+                adults: form.adults,
+                children: form.children,
+                status: form.status,
+                notes: form.notes || undefined,
             });
 
             if (Number(result.status) === 1) {
@@ -321,15 +285,14 @@
     }
 
     // ─── Validation ──────────────────────────────────────────
-
     function validateForm(): boolean {
         return validateInertiaForm(form, {
-            hotelId:      [required],
-            guestId:      [required],
-            roomId:       [required],
-            checkInDate:  [required, checkInDate],
+            hotelId: [required],
+            guestId: [required],
+            roomId: [required],
+            checkInDate: [required, checkInDate],
             checkOutDate: [required],
-            totalAmount:  [required, minValue(0)],
+            totalAmount: [required, minValue(0)],
         });
     }
 
@@ -353,6 +316,7 @@
             check_out_date: 'checkOutDate',
             total_amount: 'totalAmount',
         };
+
         return map[field] ?? field;
     }
 

@@ -41,73 +41,55 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
                     <!-- Search -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            {{ t('search') }}
-                        </label>
-                        <input
-                            v-model="searchQuery"
-                            @input="debouncedSearch"
-                            type="text"
-                            :placeholder="t('reservations.search_placeholder')"
-                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                    </div>
+                    <FormInput
+                        id="search"
+                        v-model="searchQuery"
+                        :label="t('search')"
+                        :placeholder="t('reservations.search_placeholder')"
+                        wrapper-class="mb-0"
+                        @update:model-value="debouncedSearch"
+                    />
 
                     <!-- Status -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            {{ t('reservations.status') }}
-                        </label>
-                        <select
-                            v-model="localFilters.status"
-                            @change="applyFilters"
-                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">{{ t('reservations.all_status') }}</option>
-                            <option value="pending">{{ t('status.pending') }}</option>
-                            <option value="confirmed">{{ t('status.confirmed') }}</option>
-                            <option value="checked_in">{{ t('status.checked_in') }}</option>
-                            <option value="checked_out">{{ t('status.checked_out') }}</option>
-                            <option value="cancelled">{{ t('status.cancelled') }}</option>
-                            <option value="no_show">{{ t('status.no_show') }}</option>
-                        </select>
-                    </div>
+                    <FormSelect
+                        id="status"
+                        v-model="localFilters.status"
+                        :label="t('reservations.status')"
+                        :placeholder="t('reservations.all_status')"
+                        :options="statusFilterOptions"
+                        option-label="label"
+                        option-value="value"
+                        wrapper-class="mb-0"
+                        @update:model-value="applyFilters"
+                    />
 
                     <!-- Check-in From -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            {{ t('reservations.check_in') }}
-                        </label>
-                        <input
-                            v-model="localFilters.checkInDate"
-                            @change="applyFilters"
-                            type="date"
-                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
+                    <DatePicker
+                        id="check_in"
+                        v-model="localFilters.checkInDate"
+                        :label="t('reservations.check_in')"
+                        wrapper-class="mb-0"
+                        @update:model-value="applyFilters"
+                    />
 
                     <!-- Check-out To -->
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            {{ t('reservations.check_out') }}
-                        </label>
-                        <input
-                            v-model="localFilters.checkOutDate"
-                            @change="applyFilters"
-                            type="date"
-                            class="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
+                    <DatePicker
+                        id="check_out"
+                        v-model="localFilters.checkOutDate"
+                        :label="t('reservations.check_out')"
+                        wrapper-class="mb-0"
+                        @update:model-value="applyFilters"
+                    />
                 </div>
 
                 <div class="mt-4 flex justify-end">
-                    <button
+                    <FormButton
                         @click="handleResetFilters"
-                        class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition"
-                    >
-                        {{ t('actions.reset') }}
-                    </button>
+                        type="button"
+                        color="secondary"
+                        :name="t('actions.reset')"
+                        button-class="text-sm"
+                    />
                 </div>
             </div>
 
@@ -256,20 +238,22 @@
                     </div>
                     
                     <div class="flex gap-2">
-                        <button
+                        <FormButton
                             @click="changePage(pagination.currentPage - 1)"
                             :disabled="pagination.currentPage === 1"
-                            class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
-                        >
-                            {{ t('previous') }}
-                        </button>
-                        <button
+                            type="button"
+                            color="secondary"
+                            :name="t('previous')"
+                            button-class="px-3 py-1"
+                        />
+                        <FormButton
                             @click="changePage(pagination.currentPage + 1)"
                             :disabled="pagination.currentPage === pagination.lastPage"
-                            class="px-3 py-1 border border-slate-300 rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-50"
-                        >
-                            {{ t('next') }}
-                        </button>
+                            type="button"
+                            color="secondary"
+                            :name="t('next')"
+                            button-class="px-3 py-1"
+                        />
                     </div>
                 </div>
             </div>
@@ -279,6 +263,7 @@
 
 <script setup lang="ts">
     import { ref, reactive, onMounted, inject, computed } from 'vue';
+    import { DatePicker, FormButton, FormInput, FormSelect } from '@/Components/Form';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
@@ -326,6 +311,15 @@
     });
 
     let searchTimeout: ReturnType<typeof setTimeout>;
+
+    const statusFilterOptions = computed(() => ([
+        { value: 'pending', label: t('status.pending') },
+        { value: 'confirmed', label: t('status.confirmed') },
+        { value: 'checked_in', label: t('status.checked_in') },
+        { value: 'checked_out', label: t('status.checked_out') },
+        { value: 'cancelled', label: t('status.cancelled') },
+        { value: 'no_show', label: t('status.no_show') },
+    ]));
 
     function changePerPage() {
         setFilters({ perPage: perPage.value });

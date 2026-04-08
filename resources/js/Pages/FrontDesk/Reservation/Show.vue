@@ -1,13 +1,15 @@
-<template>
+﻿<template>
     <Head :title="`${t('reservations.reservation')} #${reservation?.reference || t('reservations.details')}`" />
     <HotelLayout v-if="canView" class="max-w-6xl mx-auto">
         <div class="space-y-6">
-            <!-- Header with Back Button -->
             <div class="flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <Link href="/reservations" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition">
-                        ← {{ t('navigation.reservations') }}
-                    </Link>
+                    <FormButton
+                        type="button"
+                        color="secondary"
+                        :name="t('navigation.reservations')"
+                        @click="router.visit('/reservations')"
+                    />
                     <div>
                         <h1 class="text-2xl font-semibold text-slate-800">
                             {{ t('reservations.reservation') }} #{{ reservation?.reference }}
@@ -16,8 +18,9 @@
                     </div>
                 </div>
 
-                <!-- Status Badge -->
-                <span v-if="reservation" class="px-4 py-2 rounded-full text-sm font-medium"
+                <span
+                    v-if="reservation"
+                    class="px-4 py-2 rounded-full text-sm font-medium"
                     :class="{
                         'bg-yellow-100 text-yellow-800': reservation.status === 'pending',
                         'bg-green-100 text-green-800': reservation.status === 'confirmed',
@@ -31,14 +34,11 @@
                 </span>
             </div>
 
-            <!-- Loading State -->
             <div v-if="loading" class="flex items-center justify-center py-12">
                 <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
 
-            <!-- Reservation Details -->
             <div v-else-if="reservation" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Guest Information -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h2 class="text-lg font-semibold text-slate-800 mb-4">{{ t('reservations.guest_information') }}</h2>
                     <div class="space-y-3">
@@ -62,7 +62,6 @@
                     </div>
                 </div>
 
-                <!-- Room Information -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h2 class="text-lg font-semibold text-slate-800 mb-4">{{ t('reservations.room_information') }}</h2>
                     <div class="space-y-3">
@@ -76,12 +75,11 @@
                         </div>
                         <div>
                             <label class="text-sm text-slate-500">{{ t('rooms.price') }}</label>
-                            <p class="text-slate-800 font-medium">৳{{ reservation.room?.price?.toLocaleString() || 'N/A' }}</p>
+                            <p class="text-slate-800 font-medium">{{ reservation.room?.price?.toLocaleString() || 'N/A' }}</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Booking Dates -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h2 class="text-lg font-semibold text-slate-800 mb-4">{{ t('reservations.booking_dates') }}</h2>
                     <div class="space-y-3">
@@ -100,20 +98,16 @@
                     </div>
                 </div>
 
-                <!-- Payment Information -->
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h2 class="text-lg font-semibold text-slate-800 mb-4">{{ t('reservations.payment_information') }}</h2>
                     <div class="space-y-3">
                         <div>
                             <label class="text-sm text-slate-500">{{ t('reservations.total_price') }}</label>
-                            <p class="text-slate-800 font-medium text-lg">৳{{ reservation.totalAmount?.toLocaleString() }}</p>
+                            <p class="text-slate-800 font-medium text-lg">{{ reservation.totalAmount?.toLocaleString() }}</p>
                         </div>
-
-
                     </div>
                 </div>
 
-                <!-- Additional Information -->
                 <div class="bg-white p-6 rounded-lg shadow md:col-span-2">
                     <h2 class="text-lg font-semibold text-slate-800 mb-4">{{ t('reservations.additional_information') }}</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -137,23 +131,21 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div v-if="reservation" class="flex gap-4 pt-4">
-
-                <button
+                <FormButton
                     v-if="canCancel && ['pending', 'confirmed'].includes(reservation.status)"
+                    type="button"
+                    color="danger"
+                    :name="t('reservations.cancel_reservation')"
                     @click="handleCancel"
-                    class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
-                >
-                    {{ t('reservations.cancel_reservation') }}
-                </button>
-                <Link
+                />
+                <FormButton
                     v-if="canEdit"
-                    :href="`/reservations/${reservation.id}/edit`"
-                    class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                >
-                    {{ t('reservations.edit_reservation') }}
-                </Link>
+                    type="button"
+                    color="primary"
+                    :name="t('reservations.edit_reservation')"
+                    @click="router.visit(`/reservations/${reservation.id}/edit`)"
+                />
             </div>
         </div>
     </HotelLayout>
@@ -161,12 +153,13 @@
         <div class="bg-white p-6 rounded-lg shadow text-center">
             <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
             <p class="text-sm text-slate-500 mt-2">{{ t('messages.no_permission') }}</p>
-            <Link
-                href="/reservations"
-                class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-            >
-                {{ t('actions.back') }}
-            </Link>
+            <FormButton
+                type="button"
+                color="secondary"
+                :name="t('actions.back')"
+                button-class="mt-4"
+                @click="router.visit('/reservations')"
+            />
         </div>
     </HotelLayout>
 </template>
@@ -174,6 +167,7 @@
 <script setup lang="ts">
     import { computed, onMounted, inject } from 'vue';
     import { router } from '@inertiajs/vue3';
+    import { FormButton } from '@/Components/Form';
     import { HotelLayout } from '@/Layouts';
     import { useReservations } from '@/Composables/FrontDesk/useReservations';
     import { useI18n } from '@/Composables/useI18n';
@@ -183,7 +177,7 @@
     import { formatStatus } from '@/Utils/format';
     import { mapReservationApiToReservation } from '@/Utils/Mappers/reservation';
     import type { Reservation } from '@/Types/FrontDesk/reservation';
-      
+
     // ─── Inject Confirm ─────────────────────────────────────
     const confirm = inject<ConfirmType>('confirm')!;
     const permission = usePermissionService();
@@ -191,7 +185,7 @@
     // ─── i18n ────────────────────────────────────────────────
     const { t } = useI18n();
 
-    // ─── Permissions ─────────────────────────────────────────
+    // ─── Permissions ───────────────────────────────────────── 
     const canView = computed(() => permission.check('view reservations'));
     const canEdit = computed(() => permission.check('edit reservations'));
     const canCancel = computed(() => permission.check('edit reservations'));
@@ -201,21 +195,22 @@
         reservation: Record<string, any>;
     }>();
 
-    const { loading, cancel: cancelAction} = useReservations();
-   
+    const { loading, cancel: cancelAction } = useReservations();
+
     // ─── Mapped Reservation ──────────────────────────────────
     const reservation: Reservation = mapReservationApiToReservation(props.reservation);
 
-    // Calculate number of nights
+    // ─── Calculate number of nights ──────────────────────────────────
     const nights = computed(() => {
         if (!reservation?.checkInDate || !reservation?.checkOutDate) {
             return 0;
         }
+
         return calculateNights(reservation.checkInDate, reservation.checkOutDate);
     });
 
-    //  Handle Cancel
-    async function handleCancel() {
+    // ─── Handle Cancel ──────────────────────────────────
+    async function handleCancel(): Promise<void> {
         const confirmed = await confirm.show({
             title: 'Cancel Reservation?',
             message: `Reservation ${reservation?.reference} will be cancelled. This cannot be undone.`,
@@ -224,23 +219,22 @@
             variant: 'danger',
         });
 
-        if (!confirmed) return;
+        if (!confirmed) {
+            return;
+        }
 
         try {
-            if (reservation) {
-                await cancelAction(reservation.id);
-                router.reload();
-            }
+            await cancelAction(reservation.id);
+            router.reload();
         } catch (e) {
             console.error('Delete failed:', e);
         }
     }
 
-    // Load reservation on mount
+    // ─── Load reservation on mount ──────────────────────────────────
     onMounted(() => {
         if (!canView.value) {
             router.visit('/reservations');
-            return;
         }
     });
 </script>

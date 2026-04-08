@@ -10,19 +10,19 @@
                     <p class="text-sm text-slate-500 mt-1">{{ t('hotels.hotel_details') }}</p>
                 </div>
                 <div class="flex gap-2">
-                    <Link
+                    <FormButton
                         v-if="canEdit"
-                        :href="`/hotels/${hotel.id}/edit`"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                    >
-                        {{ t('actions.edit') }}
-                    </Link>
-                    <Link
-                        href="/hotels"
-                        class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-                    >
-                        {{ t('actions.back') }}
-                    </Link>
+                        type="button"
+                        color="primary"
+                        :name="t('actions.edit')"
+                        @click="router.visit(`/hotels/${hotel.id}/edit`)"
+                    />
+                    <FormButton
+                        type="button"
+                        color="secondary"
+                        :name="t('actions.back')"
+                        @click="router.visit('/hotels')"
+                    />
                 </div>
             </div>
 
@@ -84,12 +84,13 @@
         <div class="bg-white rounded-lg shadow p-6 text-center">
             <h1 class="text-xl font-semibold text-slate-800">{{ t('messages.access_denied') }}</h1>
             <p class="text-sm text-slate-500 mt-2">{{ t('messages.no_permission') }}</p>
-            <Link
-                href="/hotels"
-                class="inline-flex mt-4 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
-            >
-                {{ t('actions.back') }}
-            </Link>
+            <FormButton
+                type="button"
+                color="secondary"
+                :name="t('actions.back')"
+                button-class="mt-4"
+                @click="router.visit('/hotels')"
+            />
         </div>
     </div>
 </template>
@@ -97,6 +98,7 @@
 <script setup lang="ts">
     import { computed, onMounted } from 'vue';
     import { router } from '@inertiajs/vue3';
+    import { FormButton } from '@/Components/Form';
     import { formatDate } from '@/Utils/date';
     import type { Hotel } from '@/Types/FrontDesk/hotel';
     import { mapToHotel } from '@/Utils/Mappers/hotel';

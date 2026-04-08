@@ -2,8 +2,6 @@
     <Head :title="t('hotels.new_hotel')" />
     <div v-if="canCreate" class="max-w-4xl mx-auto">
         <section class="space-y-6">
-
-            <!-- Header -->
             <div class="flex justify-between items-center">
                 <div>
                     <h1 class="text-2xl font-semibold text-slate-800">{{ t('hotels.new_hotel') }}</h1>
@@ -17,139 +15,95 @@
                 </Link>
             </div>
 
-            <!-- Hotel Form -->
             <div class="bg-white rounded-lg shadow p-6">
                 <form @submit.prevent="submit" class="space-y-6">
-                    <!-- Name & Code -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Name -->
-                        <div>
-                            <label for="name" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('hotels.name') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                id="name"
-                                v-model="form.name"
-                                :class="{ 'border-red-500': form.errors.name }"
-                                type="text"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                :placeholder="t('hotels.name_placeholder')"
-                            />
-                            <p v-if="form.errors.name" class="mt-1 text-sm text-red-500">{{ form.errors.name }}</p>
-                        </div>
+                        <FormInput
+                            id="name"
+                            v-model="form.name"
+                            :label="t('hotels.name')"
+                            :placeholder="t('hotels.name_placeholder')"
+                            :required="true"
+                            :error="form.errors.name"
+                            wrapper-class="mb-0"
+                        />
 
-                        <!-- Code -->
-                        <div>
-                            <label for="code" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('hotels.code') }} <span class="text-red-500">*</span>
-                            </label>
-                            <input
-                                id="code"
-                                v-model="form.code"
-                                :class="{ 'border-red-500': form.errors.code }"
-                                type="text"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                :placeholder="t('hotels.code_placeholder')"
-                            />
-                            <p v-if="form.errors.code" class="mt-1 text-sm text-red-500">{{ form.errors.code }}</p>
-                        </div>
+                        <FormInput
+                            id="code"
+                            v-model="form.code"
+                            :label="t('hotels.code')"
+                            :placeholder="t('hotels.code_placeholder')"
+                            :required="true"
+                            :error="form.errors.code"
+                            wrapper-class="mb-0"
+                        />
                     </div>
 
-                    <!-- Timezone & Currency -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Timezone -->
-                        <div>
-                            <label for="timezone" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('hotels.timezone') }}
-                            </label>
-                            <input
-                                id="timezone"
-                                v-model="form.timezone"
-                                :class="{ 'border-red-500': form.errors.timezone }"
-                                type="text"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                :placeholder="t('hotels.timezone_placeholder')"
-                            />
-                            <p v-if="form.errors.timezone" class="mt-1 text-sm text-red-500">{{ form.errors.timezone }}</p>
-                        </div>
+                        <FormInput
+                            id="timezone"
+                            v-model="form.timezone"
+                            :label="t('hotels.timezone')"
+                            :placeholder="t('hotels.timezone_placeholder')"
+                            :error="form.errors.timezone"
+                            wrapper-class="mb-0"
+                        />
 
-                        <!-- Currency -->
-                        <div>
-                            <label for="currency" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('hotels.currency') }}
-                            </label>
-                            <input
+                        <div class="mb-0">
+                            <label class="text-gray-700 font-medium mb-2 text-[16px] block">{{ t('hotels.currency') }}</label>
+                            <div class="flex items-center gap-4 mb-2">
+                                <FormRadio v-model="form.currency" name="currency" value="BDT" label="BDT" />
+                                <FormRadio v-model="form.currency" name="currency" value="USD" label="USD" />
+                            </div>
+                            <FormInput
                                 id="currency"
                                 v-model="form.currency"
-                                :class="{ 'border-red-500': form.errors.currency }"
-                                type="text"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 :placeholder="t('hotels.currency_placeholder')"
+                                :error="form.errors.currency"
+                                wrapper-class="mb-0"
                             />
-                            <p v-if="form.errors.currency" class="mt-1 text-sm text-red-500">{{ form.errors.currency }}</p>
                         </div>
                     </div>
 
-                    <!-- Email & Phone -->
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Email -->
-                        <div>
-                            <label for="email" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('hotels.email') }}
-                            </label>
-                            <input
-                                id="email"
-                                v-model="form.email"
-                                :class="{ 'border-red-500': form.errors.email }"
-                                type="email"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                :placeholder="t('hotels.email_placeholder')"
-                            />
-                            <p v-if="form.errors.email" class="mt-1 text-sm text-red-500">{{ form.errors.email }}</p>
-                        </div>
+                        <FormInput
+                            id="email"
+                            v-model="form.email"
+                            type="email"
+                            :label="t('hotels.email')"
+                            :placeholder="t('hotels.email_placeholder')"
+                            :error="form.errors.email"
+                            wrapper-class="mb-0"
+                        />
 
-                        <!-- Phone -->
-                        <div>
-                            <label for="phone" class="block text-sm font-medium text-slate-700 mb-2">
-                                {{ t('hotels.phone') }}
-                            </label>
-                            <input
-                                id="phone"
-                                v-model="form.phone"
-                                :class="{ 'border-red-500': form.errors.phone }"
-                                type="text"
-                                class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                :placeholder="t('hotels.phone_placeholder')"
-                            />
-                            <p v-if="form.errors.phone" class="mt-1 text-sm text-red-500">{{ form.errors.phone }}</p>
-                        </div>
+                        <FormInput
+                            id="phone"
+                            v-model="form.phone"
+                            :label="t('hotels.phone')"
+                            :placeholder="t('hotels.phone_placeholder')"
+                            :error="form.errors.phone"
+                            wrapper-class="mb-0"
+                        />
                     </div>
 
-                    <!-- Address -->
-                    <div>
-                        <label for="address" class="block text-sm font-medium text-slate-700 mb-2">
-                            {{ t('hotels.address') }}
-                        </label>
-                        <textarea
-                            id="address"
-                            v-model="form.address"
-                            :class="{ 'border-red-500': form.errors.address }"
-                            rows="3"
-                            class="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                            :placeholder="t('hotels.address_placeholder')"
-                        ></textarea>
-                        <p v-if="form.errors.address" class="mt-1 text-sm text-red-500">{{ form.errors.address }}</p>
-                    </div>
+                    <FormTextarea
+                        id="address"
+                        v-model="form.address"
+                        :label="t('hotels.address')"
+                        :placeholder="t('hotels.address_placeholder')"
+                        :rows="3"
+                        :error="form.errors.address"
+                        wrapper-class="mb-0"
+                    />
 
-                    <!-- Submit -->
                     <div class="flex gap-4 pt-4">
-                        <button
+                        <FormButton
                             type="submit"
+                            color="primary"
+                            :name="submitLabel"
                             :disabled="isSaving"
-                            class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {{ submitLabel }}
-                        </button>
+                            button-class="px-6"
+                        />
                         <Link
                             href="/hotels"
                             class="px-6 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition"
@@ -157,7 +111,6 @@
                             {{ t('actions.cancel') }}
                         </Link>
                     </div>
-
                 </form>
             </div>
         </section>
@@ -179,39 +132,37 @@
 <script setup lang="ts">
     import { computed, onMounted } from 'vue';
     import { useForm, router } from '@inertiajs/vue3';
+    import { FormButton, FormInput, FormRadio, FormTextarea } from '@/Components/Form';
     import { useHotels } from '@/Composables/FrontDesk/useHotels';
     import { useI18n } from '@/Composables/useI18n';
     import { usePermissionService } from '@/Composables/usePermissionService';
     import { required, validateInertiaForm } from '@/Utils/validation';
 
-    // Composable
     const { create: createHotel, saving } = useHotels();
     const { t } = useI18n();
     const permission = usePermissionService();
     const canCreate = computed(() => permission.check('create hotels'));
 
-    // Form
     const form = useForm({
-        name:     '',
-        code:     '',
+        name: '',
+        code: '',
         timezone: '',
         currency: '',
-        email:    '',
-        phone:    '',
-        address:  '',
+        email: '',
+        phone: '',
+        address: '',
     });
 
-    // Computed
     const isSaving = computed(() => form.processing || saving.value);
     const submitLabel = computed(() => isSaving.value ? t('actions.creating') : t('hotels.new_hotel'));
 
     onMounted(() => {
         if (!canCreate.value) {
             router.visit('/hotels');
+            return;
         }
     });
 
-    // Submit
     async function submit(): Promise<void> {
         form.clearErrors();
 
@@ -222,13 +173,13 @@
 
         try {
             const result = await createHotel({
-                name:     form.name,
-                code:     form.code,
+                name: form.name,
+                code: form.code,
                 timezone: form.timezone || undefined,
                 currency: form.currency || undefined,
-                email:    form.email || undefined,
-                phone:    form.phone || undefined,
-                address:  form.address || undefined,
+                email: form.email || undefined,
+                phone: form.phone || undefined,
+                address: form.address || undefined,
             });
 
             if (Number(result.status) === 1) {
@@ -249,7 +200,6 @@
         }
     }
 
-    // Validation
     function validateForm(): boolean {
         return validateInertiaForm(form, {
             name: [required],
@@ -259,14 +209,15 @@
 
     function mapBackendField(field: string): string {
         const map: Record<string, string> = {
-            name:     'name',
-            code:     'code',
+            name: 'name',
+            code: 'code',
             timezone: 'timezone',
             currency: 'currency',
-            email:    'email',
-            phone:    'phone',
-            address:  'address',
+            email: 'email',
+            phone: 'phone',
+            address: 'address',
         };
+
         return map[field] ?? field;
     }
 
