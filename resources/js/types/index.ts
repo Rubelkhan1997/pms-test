@@ -57,7 +57,7 @@ export type {
     LoginDto,
     RegisterDto,
     AuthState,
-    AuthResponse,
+    AuthUserResponse,
 } from './Auth/auth';
 
 

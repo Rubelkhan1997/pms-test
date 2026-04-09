@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Providers;
 
 use App\Modules\FrontDesk\Models\Reservation;
+use App\Modules\FrontDesk\Models\Room;
 use App\Modules\FrontDesk\Observers\ReservationObserver;
+use App\Modules\FrontDesk\Observers\RoomObserver;
 use App\Modules\Guest\Models\GuestProfile;
 use App\Modules\Guest\Observers\GuestProfileObserver;
 use Illuminate\Cache\RateLimiting\Limit;
@@ -35,6 +37,7 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Reservation::observe(ReservationObserver::class);
+        Room::observe(RoomObserver::class);
         GuestProfile::observe(GuestProfileObserver::class);
     }
 }

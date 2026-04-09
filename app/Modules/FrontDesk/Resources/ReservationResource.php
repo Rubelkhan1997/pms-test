@@ -44,8 +44,8 @@ class ReservationResource extends JsonResource
                 'id' => $this->room->id,
                 'number' => $this->room->number,
                 'type' => $this->room->type,
-                'price' => $this->room->price,
-                'status' => $this->room->status,
+                'price' => $this->room->base_rate,
+                'status' => $this->room->status?->value,
             ]),
             
             'guest' => $this->whenLoaded('guest', fn () => [
@@ -58,4 +58,3 @@ class ReservationResource extends JsonResource
         ];
     }
 }
-

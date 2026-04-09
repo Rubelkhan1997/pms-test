@@ -14,6 +14,7 @@ export { usePermissionService } from './usePermissionService';
 
 // FrontDesk module composables
 export { useReservations } from './FrontDesk/useReservations';
+export { useRooms } from './FrontDesk/useRooms';
 // export type {
 //     ReservationFilters,
 //     UseReservationOptions

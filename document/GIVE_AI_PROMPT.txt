@@ -1,6 +1,7 @@
 ## Ready-to-Use Prompt (Copy & Paste to AI Agent)
  
-Read and strictly follow AGENTS.md and resources/js/app.ts before generating anything.
+Read and strictly follow AGENTS.md, document/PROMPT_CRUD_OPERATION.txt and 
+resources/js/app.ts before generating anything.
  
 Generate full CRUD for:
 - Module:          [MODULE_NAME]

@@ -31,6 +31,7 @@ class RolePermissionSeeder extends Seeder
 
         $resources = [
             'reservations',
+            'rooms',
             'ota_syncs',
             'guest_profiles',
             'housekeeping_tasks',
@@ -61,6 +62,7 @@ class RolePermissionSeeder extends Seeder
                 'view reservations',
                 'create reservations',
                 'edit reservations',
+                'view rooms',
                 'view guest_profiles',
                 'view hotels',
             ],

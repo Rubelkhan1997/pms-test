@@ -36,7 +36,7 @@ export function mapReservationApiToReservation(api: Record<string, any>): Reserv
             id: source.room.id,
             number: source.room.number,
             type: source.room.type,
-            price: source.room.price,
+            price: source.room.price ?? source.room.base_rate,
             status: source.room.status,
         } : undefined,
         guest: source.guest ? {
@@ -72,7 +72,7 @@ export function mapRoomOptionApi(api: Record<string, any>): RoomOption {
         id: api.id,
         number: api.number,
         type: api.type,
-        price: api.price,
+        price: api.price ?? api.base_rate,
         status: api.status,
     };
 }

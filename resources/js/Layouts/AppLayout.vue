@@ -18,13 +18,19 @@
                                 href="/hotels"
                                 class="text-sm text-slate-600 hover:text-cyan-600 transition"
                             >
+                                Hotel
+                            </Link>
+                            <Link
+                                href="/rooms"
+                                class="text-sm text-slate-600 hover:text-cyan-600 transition"
+                            >
                                 Room
                             </Link>
                             <Link
                                 href="/reservations"
                                 class="text-sm text-slate-600 hover:text-cyan-600 transition"
                             >
-                                Reservations
+                                Reservation
                             </Link>
                         </nav>
                     </div>

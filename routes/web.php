@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Modules\Auth\Controllers\Web\AuthController;
 use App\Modules\FrontDesk\Controllers\Web\HotelController;
+use App\Modules\FrontDesk\Controllers\Web\RoomController;
 use App\Modules\FrontDesk\Controllers\Web\ReservationController as FrontDeskController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -35,6 +36,16 @@ Route::middleware(['auth.token'])->prefix('hotels')->name('hotels.')->group(func
     Route::get('/create', [HotelController::class, 'create'])->name('create')->middleware('permission:create hotels');
     Route::get('/{hotel}', [HotelController::class, 'show'])->name('show')->middleware('permission:view hotels');
     Route::get('/{hotel}/edit', [HotelController::class, 'edit'])->name('edit')->middleware('permission:edit hotels');
+});
+
+// ─────────────────────────────────────────────────────────
+// Rooms Routes (FrontDesk) - WEB ONLY (Page Views)
+// ─────────────────────────────────────────────────────────
+Route::middleware(['auth.token'])->prefix('rooms')->name('rooms.')->group(function (): void {
+    Route::get('/', [RoomController::class, 'index'])->name('index')->middleware('permission:view rooms');
+    Route::get('/create', [RoomController::class, 'create'])->name('create')->middleware('permission:create rooms');
+    Route::get('/{room}', [RoomController::class, 'show'])->name('show')->middleware('permission:view rooms');
+    Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('edit')->middleware('permission:edit rooms');
 });
 
 // ─────────────────────────────────────────────────────────

@@ -78,7 +78,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
         $viewerUser->syncRoles([]);
-        $viewerUser->syncPermissions(['view reservations']);
+        $viewerUser->syncPermissions(['view reservations', 'view rooms']);
         $this->command->info('✅ View-only user');
 
         // Seed rooms (20 rooms)
