@@ -228,17 +228,9 @@
     // ─── Permissions ─────────────────────────────────────────
     // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
-    
-    // canCreate: true if user has 'create reservations' permission (controls "New Reservation" button)
     const canCreate = computed(() => permission.check('create reservations'));
-    
-    // canView: true if user has 'view reservations' permission (controls page access and visibility of reservation list)
     const canView = computed(() => permission.check('view reservations'));
-    
-    // canEdit: true if user has 'edit reservations' permission (controls "Edit" button in table)
     const canEdit = computed(() => permission.check('edit reservations'));
-    
-    // canDelete: true if user has 'delete reservations' permission (controls "Delete" button in table)
     const canDelete = computed(() => permission.check('delete reservations'));
     
     // ─── Composables ─────────────────────────────────────────

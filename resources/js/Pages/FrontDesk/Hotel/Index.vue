@@ -116,17 +116,9 @@
     // ─── Permissions ─────────────────────────────────────────
     // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
-    
-    // canCreate: true if user has 'create hotels' permission (controls "New Hotel" button)
     const canCreate = computed(() => permission.check('create hotels'));
-
-    // canView: true if user has 'view hotels' permission (controls page access and visibility of hotel list)
     const canView = computed(() => permission.check('view hotels'));
-    
-    // canEdit: true if user has 'edit hotels' permission (controls "Edit" button in table)
     const canEdit = computed(() => permission.check('edit hotels'));
-    
-    // canDelete: true if user has 'delete hotels' permission (controls "Delete" button in table)
     const canDelete = computed(() => permission.check('delete hotels'));
     
     // ─── Composables ─────────────────────────────────────────

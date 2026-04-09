@@ -6,52 +6,64 @@
 - Pinia, Tailwind CSS
 - Sanctum session auth
 
-## Rules
-1. Always analyze existing code before writing anything new
-2. Match exact coding style, naming, and patterns from existing files
-3. Follow Module structure: app/Modules/[Module]/Controllers/Api/V1/
-4. API response format always: { status: 1|0, data: ..., message: string }
-5. No new libraries unless explicitly asked
-6. snake_case for PHP, camelCase for TypeScript/JS
-7. Helpers/ = Pure JavaScript/TypeScript functions
-8. Composables/ = Vue dependent (reactive)
-9. Utils/ = Utility functions
-10. Plugins/ = Vue plugins
-11. Enums live in app/Enums (not inside Modules)
-12. Pages live in resources/js/Pages/[FEATURE_NAME_PLURAL]/ (no module folder)
-13. Mappers live in resources/js/Utils/Mappers/ (Pascal folder)
+## Core Rules
+1. Always analyze existing code before writing new code.
+2. Match exact naming, folder structure, and coding style from existing files.
+3. Backend module pattern: `app/Modules/[Module]/...`
+4. API response format must be:
+   - `{ status: 1|0, data: ..., message: string }`
+5. Do not add new libraries unless explicitly requested.
+6. Naming:
+   - PHP: snake_case fields, class names PascalCase
+   - TS/JS: camelCase variables/functions, PascalCase types/interfaces
+7. `Helpers/` = pure JS/TS helper functions
+8. `Composables/` = Vue reactive logic
+9. `Utils/` = utility + formatting + validation functions
+10. `Plugins/` = Vue plugins/directives
+11. Enums live in `app/Enums` (not in module folders)
+12. Frontend pages: `resources/js/Pages/[Module]/[Feature]/*`
+    (e.g. `Pages/FrontDesk/Reservation/`, `Pages/FrontDesk/Hotel/`)
+
+13. Mappers live in `resources/js/Utils/Mappers/` (lowercase filenames, e.g. `hotel.ts`, `reservation.ts`)
 
 ## Routing Rules
-- NEVER use Ziggy or route() helper
-- NEVER use `import { route } from 'ziggy-js'`
-- For navigation: use Inertia `router.visit('/path')`
-- For form submissions: use `router.post('/path', data)`
-- Always use hardcoded URL strings or constants
+- NEVER use Ziggy or `route()` helper in frontend.
+- NEVER use `import { route } from 'ziggy-js'`.
+- For navigation use Inertia:
+  - `router.visit('/path')`
+- For form submit use Inertia:
+  - `router.post('/path', data)`
+  - `router.put('/path', data)`
+  - `router.delete('/path')`
+- Always use hardcoded URL strings or constants.
 
-## Important Bootstrap File (Must Analyze First)
-- App bootstrap: resources/js/app.ts
+## Must Analyze First (Frontend)
+- `resources/js/app.ts`
 
-Before generating any Vue, Inertia, Store, Plugin, or global setup related code:
-1. Must read and follow patterns from `resources/js/app.ts`
-2. Match:
-   - App initialization pattern
-   - Plugin registration (Pinia, Inertia, etc.)
-   - Global components or directives
-   - Layout or page resolver structure
-3. Do not introduce any setup that conflicts with existing `app.ts`
+Before generating any Vue/Store/Composable/Plugin/global setup code:
+1. Read and follow `resources/js/app.ts`.
+2. Match existing:
+   - Inertia app initialization
+   - plugin registration
+   - global component registration
+   - page resolver/layout pattern
+3. Do not introduce conflicting setup logic.
 
-## Reference Files (Always Follow These Patterns)
-- Controller: app/Modules/FrontDesk/Controllers/Api/V1/ReservationController.php
-- Service: app/Modules/FrontDesk/Services/ReservationService.php
-- Store: resources/js/Stores/FrontDesk/reservationStore.ts
-- Composable: resources/js/Composables/FrontDesk/useReservations.ts
-- Page: resources/js/Pages/Reservations/Index.vue
-- Types: resources/js/Types/FrontDesk/reservation.ts
-- Mappers: resources/js/Utils/Mappers/reservation.ts
+## Reference Files (Current Project)
+- API Controller: `app/Modules/FrontDesk/Controllers/Api/V1/ReservationController.php`
+- Web Controller: `app/Modules/FrontDesk/Controllers/Web/ReservationController.php`
+- Service: `app/Modules/FrontDesk/Services/ReservationService.php`
+- Store: `resources/js/Stores/FrontDesk/reservationStore.ts`
+- Composable: `resources/js/Composables/FrontDesk/useReservations.ts`
+- Page: `resources/js/Pages/FrontDesk/Reservation/Index.vue`
+- Types: `resources/js/Types/FrontDesk/reservation.ts`
+- Mappers: `resources/js/Utils/Mappers/reservation.ts`
+- Shared Table: `resources/js/Components/Table.vue`
 
 ## Output Rules
-- Code only — no unnecessary explanation
-- One file at a time
-- Start each file with: `// FILE: path/to/file`
+- Keep output practical and implementation-first.
+- If generating file content in chat, provide one file at a time.
+- Start each generated file with:
+  - `// FILE: path/to/file`
 
-Follow the rules in AGENTS.md and analyze the reference files before writing.
+Follow this AGENTS.md strictly.

@@ -112,11 +112,7 @@
     // ─── Permissions ─────────────────────────────────────────
     // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
-    
-    // canView: true if user has 'view hotels' permission (controls page access)
     const canView = computed(() => permission.check('view hotels'));
-    
-    // canEdit: true if user has 'edit hotels' permission (controls Edit button visibility)
     const canEdit = computed(() => permission.check('edit hotels'));
     
     // ─── Lifecycle ───────────────────────────────────────────

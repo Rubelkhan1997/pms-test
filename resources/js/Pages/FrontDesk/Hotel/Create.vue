@@ -145,8 +145,6 @@
     // ─── Permissions ─────────────────────────────────────────
     // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
-    
-    // canCreate: computed property that returns true if user has 'create hotels' permission
     const canCreate = computed(() => permission.check('create hotels'));
 
     // ─── Composables ─────────────────────────────────────────

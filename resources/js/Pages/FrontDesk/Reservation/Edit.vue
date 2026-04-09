@@ -184,8 +184,6 @@
     // ─── Permissions ─────────────────────────────────────────
     // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
-    
-    // canEdit: computed property that returns true if user has 'edit reservations' permission
     const canEdit = computed(() => permission.check('edit reservations'));
 
     // ─── Composable ──────────────────────────────────────────

@@ -1,0 +1,32 @@
+
+## Ready-to-Use Prompt (Copy & Paste to AI Agent)
+
+Read and strictly follow AGENTS.md and resources/js/app.ts before generating anything.
+
+Generate full CRUD for:
+- Module:          [MODULE_NAME]
+- Feature:         [FEATURE_NAME]
+- Feature plural:  [FEATURE_NAME_PLURAL]
+- Model:           [MODEL_NAME]
+- Table:           [TABLE_NAME]
+- API slug:        [API_SLUG]
+- Web slug:        [WEB_SLUG]
+- Route prefix:    [ROUTE_PREFIX]
+- Fields:          [FIELD_LIST]
+- Relationships:   [RELATIONSHIPS]
+- Is New Module:   [YES|NO]
+- Enum:            [YES|NO], Name: [ENUM_NAME_OR_EMPTY], Values: [ENUM_VALUES_OR_EMPTY]
+- Events/Jobs:     [YES|NO]
+
+Rules:
+- No Ziggy or route() in frontend
+- Use mapper functions in store layer
+- Use Table.vue in index pages
+- Use existing AppLayout, AppButton, AppInput components
+- API response must always be: { status: 1|0, data: ..., message: string }
+- All page strings via useI18n t() - no hardcoded strings
+- Permission check on every page via usePermission()
+- Form pages use useForm() + validateInertiaForm() - never reactive()
+
+Generate files strictly in order from AGENTS.md.
+One file at a time. Wait for confirmation after each file.

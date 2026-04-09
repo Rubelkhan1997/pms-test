@@ -189,14 +189,8 @@
     // ─── Permissions ─────────────────────────────────────────
     // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
-
-    // canView: true if user has 'view reservations' permission (controls page access)
     const canView = computed(() => permission.check('view reservations'));
-    
-    // canEdit: true if user has 'edit reservations' permission (controls Edit button visibility)
     const canEdit = computed(() => permission.check('edit reservations'));
-    
-    // canCancel: true if user has 'edit reservations' permission (reuses same permission for cancel)
     const canCancel = computed(() => permission.check('edit reservations'));
 
     // ─── Composables ─────────────────────────────────────────

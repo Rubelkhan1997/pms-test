@@ -188,8 +188,6 @@
     // ─── Permissions ─────────────────────────────────────────
     // usePermissionService: provides methods to check user permissions
     const permission = usePermissionService();
-    
-    // canCreate: computed property that returns true if user has 'create reservations' permission
     const canCreate = computed(() => permission.check('create reservations'));
 
     // ─── Composables ─────────────────────────────────────────
