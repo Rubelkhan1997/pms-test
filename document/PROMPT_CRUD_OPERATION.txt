@@ -1,11 +1,11 @@
 # CRUD Module Generator
-
+ 
 > Read ALL reference files before writing anything.
 > Replace every [PLACEHOLDER] before generating.
-> Generate files in the exact order listed. Wait for confirmation after each file.
-
+> Generate ALL files in the exact order listed without stopping.
+ 
 ---
-
+ 
 ## Module Info
 - Module Name:      [MODULE_NAME]         <- Namespace/Folder  -> e.g. FrontDesk
 - Feature Name:     [FEATURE_NAME]        <- Sub-feature name  -> e.g. Reservation
@@ -21,14 +21,14 @@
 - Enum Name:        [ENUM_NAME_OR_EMPTY]  <- e.g. ReservationStatus
 - Enum Values:      [ENUM_VALUES_OR_EMPTY]<- e.g. pending, confirmed, cancelled
 - Has Events/Jobs:  [YES|NO]
-
+ 
 ---
-
+ 
 ## MUST READ BEFORE GENERATION
-
+ 
 ### Core Bootstrap File (STRICT RULE)
 - resources/js/app.ts
-
+ 
 ### Reference Vue Pages (STRICT RULE - HIGHEST PRIORITY)
 - resources/js/Pages/FrontDesk/Hotel/Index.vue
 - resources/js/Pages/FrontDesk/Hotel/Create.vue
@@ -38,7 +38,7 @@
 - resources/js/Pages/FrontDesk/Reservation/Create.vue
 - resources/js/Pages/FrontDesk/Reservation/Edit.vue
 - resources/js/Pages/FrontDesk/Reservation/Show.vue
-
+ 
 ### Reference Frontend Files (STRICT RULE)
 - resources/js/Composables/FrontDesk/useHotels.ts
 - resources/js/Composables/FrontDesk/useReservations.ts
@@ -46,7 +46,7 @@
 - resources/js/Stores/FrontDesk/reservationStore.ts
 - resources/js/Utils/Mappers/hotel.ts
 - resources/js/Utils/Mappers/reservation.ts
-
+ 
 ### Reference Backend Files (STRICT RULE)
 - app/Modules/FrontDesk/Controllers/Api/V1/HotelController.php
 - app/Modules/FrontDesk/Controllers/Web/HotelController.php
@@ -54,10 +54,10 @@
 - app/Modules/FrontDesk/Controllers/Web/ReservationController.php
 - app/Modules/FrontDesk/Services/HotelService.php
 - app/Modules/FrontDesk/Services/ReservationService.php
-
+ 
 ### Instruction (MANDATORY)
 Before generating ANY frontend-related file (Store, Composable, Pages):
-
+ 
 1. MUST analyze resources/js/app.ts
 2. STRICTLY follow:
    - Inertia app initialization pattern
@@ -70,17 +70,17 @@ Before generating ANY frontend-related file (Store, Composable, Pages):
    - Re-register plugins
    - Introduce conflicting setup
 4. Layout handling MUST match app.ts pattern
-
+ 
 WRONG:
 - Creating new app instance logic
 - Adding duplicate plugin setup
 - Different page resolver
-
+ 
 CORRECT:
 - Reuse EXACT structure from app.ts
-
+ 
 ---
-
+ 
 ## Module Rules
 - Is New Module = YES -> Create Module folder, ServiceProvider, config
 - Is New Module = NO  -> Only create Feature files, do not touch module files
@@ -89,7 +89,7 @@ CORRECT:
 - Types path           -> resources/js/Types/[MODULE_NAME]/[model_name].ts
 - Composable path      -> resources/js/Composables/[MODULE_NAME]/use[MODEL_NAME]s.ts
 - Mapper path          -> resources/js/Utils/Mappers/[model_name].ts
-
+ 
 ## Routing Rules
 - NEVER use Ziggy or route() helper
 - NEVER use `import { route } from 'ziggy-js'`
@@ -98,14 +98,14 @@ CORRECT:
 -                      router.put('/path', data)
 -                      router.delete('/path')
 - Always use hardcoded URL strings or constants
-
+ 
 ---
-
+ 
 ## File Generation Order
-
+ 
 > Is New Module = YES -> generate all files
 > Is New Module = NO  -> skip Module-level files (ServiceProvider, config), generate Feature files only
-
+ 
 ### Backend
 1.  Migration
 2.  Enum              (app/Enums/[MODEL_NAME]Status.php) - if Enum Needed = YES
@@ -125,7 +125,7 @@ CORRECT:
 15. Event             ([MODEL_NAME]Created.php)
 16. Listener
 17. Job
-
+ 
 ### Frontend
 18. Types             (resources/js/Types/[MODULE_NAME]/[model_name].ts)
 19. Mappers           (resources/js/Utils/Mappers/[model_name].ts)
@@ -135,53 +135,53 @@ CORRECT:
 23. Create.vue        (resources/js/Pages/[MODULE_NAME]/[FEATURE_NAME]/Create.vue)
 24. Edit.vue          (resources/js/Pages/[MODULE_NAME]/[FEATURE_NAME]/Edit.vue)
 25. Show.vue          (resources/js/Pages/[MODULE_NAME]/[FEATURE_NAME]/Show.vue)
-
+ 
 ### Tests
 26. Feature Test      (tests/Feature/[MODULE_NAME]/[MODEL_NAME]Test.php)
-
+ 
 ---
-
+ 
 ## Backend Specs
-
+ 
 ### Namespace Convention (STRICT)
-
+ 
 API Controller : App\Modules\[MODULE_NAME]\Controllers\Api\V1\[MODEL_NAME]Controller
 Web Controller : App\Modules\[MODULE_NAME]\Controllers\Web\[MODEL_NAME]Controller
 Service        : App\Modules\[MODULE_NAME]\Services\[MODEL_NAME]Service
 Data/DTO       : App\Modules\[MODULE_NAME]\Data\[MODEL_NAME]Data
 Requests       : App\Modules\[MODULE_NAME]\Requests\Store[MODEL_NAME]Request
 Resource       : App\Modules\[MODULE_NAME]\Resources\[MODEL_NAME]Resource
-
+ 
 NEVER use Http\Controllers in namespace - it is just Controllers.
-
+ 
 ### Migration
 - id, [FIELD_LIST], timestamps, softDeletes if needed
 - foreignId -> constrained()
-
+ 
 ### Enum
 <?php declare(strict_types=1);
 namespace App\Enums;
-
+ 
 enum [MODEL_NAME]Status: string {
     case Pending = 'pending';
     // match [ENUM_VALUES]
     public function label(): string { ... }
 }
-
+ 
 ### Model
 - declare(strict_types=1)
 - $fillable, $casts (enum cast for status), relationships typed
 - SoftDeletes if applicable
-
+ 
 ### Data/DTO
 - Typed properties for all [FIELD_LIST]
 - Match pattern in app/Modules/FrontDesk/Data/HotelData.php
-
+ 
 ### Requests
 - authorize() -> $this->user()->can(...)
 - rules() fully typed
 - UpdateRequest uses sometimes where appropriate
-
+ 
 ### Resource
 Always output:
 'id'           => $this->id,
@@ -191,18 +191,18 @@ Always output:
 // if status enum exists:
 'status'       => $this->status->value,
 'status_label' => $this->status->label(),
-
+ 
 ### Policy
 - viewAny, view, create, update, delete, restore, forceDelete
-
+ 
 ### Observer
 - created, updated, deleted hooks
 - Dispatch events if Has Events = YES
-
+ 
 ### Action
 - Single public handle() method
 - Receives Data object, returns Model
-
+ 
 ### Service
 // EXACT signature - match HotelService pattern
 public function paginate(array $filters, int $page = 1, int $perPage = 15): LengthAwarePaginator
@@ -210,9 +210,9 @@ public function find(int $id): [MODEL_NAME]                            // throws
 public function create([MODEL_NAME]Data $data): [MODEL_NAME]           // uses Action
 public function update(int $id, [MODEL_NAME]Data $data): [MODEL_NAME]
 public function delete(int $id): void
-
+ 
 - DB::transaction() when writing multiple tables
-
+ 
 ### API Controller
 - Thin - only: authorize, validate, call service, return response
 - Constructor: private readonly [MODEL_NAME]Service $service
@@ -228,7 +228,7 @@ public function delete(int $id): void
 }
 - HTTP codes: 200 / 201 / 204 / 422 / 404
 - Catch ModelNotFoundException -> return status: 0, 404
-
+ 
 index() pattern:
 public function index(Request $request): JsonResponse
 {
@@ -237,7 +237,7 @@ public function index(Request $request): JsonResponse
         page:     (int) $request->get('page', 1),
         perPage:  (int) $request->get('per_page', 15)
     );
-
+ 
     return response()->json([
         'status' => 1,
         'data'   => [
@@ -252,23 +252,23 @@ public function index(Request $request): JsonResponse
         'message' => '[MODEL_NAME]s fetched successfully',
     ]);
 }
-
+ 
 ### Web Controller
 - Returns Inertia responses only
 - Constructor: private readonly [MODEL_NAME]Service $service
 - Prop key = lowercase model name (NOT generic 'item')
 - Use Throwable catch -> logger()->error() -> abort(404)
-
+ 
 public function index(): Response
 {
     return Inertia::render('[MODULE_NAME]/[FEATURE_NAME]/Index');
 }
-
+ 
 public function create(): Response
 {
     return Inertia::render('[MODULE_NAME]/[FEATURE_NAME]/Create');
 }
-
+ 
 public function show(int $id): Response
 {
     try {
@@ -281,7 +281,7 @@ public function show(int $id): Response
         abort(404, '[MODEL_NAME] not found');
     }
 }
-
+ 
 public function edit(int $id): Response
 {
     try {
@@ -294,12 +294,12 @@ public function edit(int $id): Response
         abort(404, '[MODEL_NAME] not found');
     }
 }
-
+ 
 ### Routes
-
+ 
 // api.php
 use App\Modules\[MODULE_NAME]\Controllers\Api\V1\[MODEL_NAME]Controller as [MODEL_NAME]ApiController;
-
+ 
 Route::middleware('auth:sanctum')
     ->prefix('v1/[API_SLUG]')
     ->name('[ROUTE_PREFIX].')
@@ -310,10 +310,10 @@ Route::middleware('auth:sanctum')
         Route::put('/{id}',    [[MODEL_NAME]ApiController::class, 'update']) ->name('update'),
         Route::delete('/{id}', [[MODEL_NAME]ApiController::class, 'destroy'])->name('destroy'),
     ]);
-
+ 
 // web.php
 use App\Modules\[MODULE_NAME]\Controllers\Web\[MODEL_NAME]Controller as [MODEL_NAME]WebController;
-
+ 
 Route::middleware('auth')
     ->prefix('[WEB_SLUG]')
     ->name('[ROUTE_PREFIX].')
@@ -323,55 +323,55 @@ Route::middleware('auth')
         Route::get('/{id}',      [[MODEL_NAME]WebController::class, 'show'])  ->name('show'),
         Route::get('/{id}/edit', [[MODEL_NAME]WebController::class, 'edit'])  ->name('edit'),
     ]);
-
+ 
 ---
-
+ 
 ## Frontend Specs
-
+ 
 ### Types
-
+ 
 // resources/js/Types/[MODULE_NAME]/[model_name].ts
-
+ 
 export interface [MODEL_NAME] {
     id: number
     // all [FIELD_LIST] in camelCase
     createdAt: string
     updatedAt: string
 }
-
+ 
 export interface Create[MODEL_NAME]Dto {
     // required + optional fields
 }
-
+ 
 export interface Update[MODEL_NAME]Dto {
     // same as Create but all optional
 }
-
+ 
 export interface [MODEL_NAME]Filters {
     search?: string
     perPage?: number
 }
-
+ 
 export interface [MODEL_NAME]Pagination {
     currentPage: number
     perPage: number
     total: number
     lastPage: number
 }
-
+ 
 ### Mappers
 All 5 functions required:
-
+ 
 // resources/js/Utils/Mappers/[model_name].ts
 export function mapTo[MODEL_NAME](api: Record<string, any>): [MODEL_NAME]
 export function mapTo[MODEL_NAME]Pagination(api: Record<string, any>): [MODEL_NAME]Pagination
 export function mapTo[MODEL_NAME]FiltersApi(filters: [MODEL_NAME]Filters): Record<string, any>
 export function mapCreate[MODEL_NAME]ToApi(dto: Create[MODEL_NAME]Dto): Record<string, any>
 export function mapUpdate[MODEL_NAME]ToApi(dto: Update[MODEL_NAME]Dto): Record<string, any>
-
+ 
 ### Pinia Store
 Match hotelStore.ts pattern exactly.
-
+ 
 State shape:
 items:        [MODEL_NAME][]
 selectedItem: [MODEL_NAME] | null
@@ -383,12 +383,12 @@ pagination: {
     data: [MODEL_NAME][]
     meta: [MODEL_NAME]Pagination
 }
-
+ 
 - Constants at top: DEFAULT_PAGINATION, DEFAULT_FILTERS
 - normalizeItems guard: const normalize = (v: unknown): [MODEL_NAME][] => Array.isArray(v) ? v : []
 - API base path: /[API_SLUG]  e.g. /front-desk/hotels
 - All actions use mapper functions
-
+ 
 Required actions:
 setFilters(filters: Partial<[MODEL_NAME]Filters>): void
 resetFilters(): void
@@ -399,49 +399,49 @@ update(id: number, payload: Update[MODEL_NAME]Dto): Promise<ApiResponse<[MODEL_N
 delete(id: number): Promise<ApiResponse<void>>
 clearError(): void
 $reset(): void
-
+ 
 ### Composable
 Match useHotels.ts pattern exactly.
-
+ 
 - File name: use[MODEL_NAME]s.ts (plural)
 - Options: { autoFetch?, initialFilters?, pollingInterval? }
 - Toast inject: inject('toast') as typeof ToastType  - NOT inject('$toast')
 - Use useLoading twice: _loading for fetch, _saving for write
 - Use usePolling for autoFetch
 - Never expose store directly - expose computed refs only
-
+ 
 Required public API:
 // State (all computed refs)
 [model_name_plural], [model_name], loading, saving, error, pagination
-
+ 
 // Actions
 fetchAll(page?, params?)
 fetchById(id)
 create(payload)
 update(id, payload)
 delete[MODEL_NAME](id)   // e.g. deleteHotel - NOT just delete
-
+ 
 setFilters(filters)
 resetFilters()
-
+ 
 ### Pages - MANDATORY PATTERN
 Before writing ANY .vue page:
 1. MUST read resources/js/Pages/FrontDesk/Hotel/Create.vue (highest priority)
 2. MUST read resources/js/Pages/FrontDesk/Reservation/Create.vue (i18n pattern reference)
 3. STRICTLY follow:
-
+ 
    Permission (MANDATORY):
    - usePermission() -> permission.check('create [MODEL_NAME_PLURAL]')
    - canCreate computed -> wrap entire form in v-if="canCreate"
    - onMounted -> redirect to /[WEB_SLUG] if no permission
-
+ 
    i18n Translations (MANDATORY):
    - import { useI18n } from '@/Composables/useI18n'
    - const { t } = useI18n()
    - ALL user-facing strings MUST use t('key') - NO hardcoded strings
    - Labels, placeholders, button text, page title, hints - all via t()
    - submitLabel computed -> t('actions.creating') / t('actions.create')
-
+ 
    Form (MANDATORY):
    - useForm() shape and field typing (e.g. '' as number | string)
    - validateForm() + validateInertiaForm() pattern
@@ -453,14 +453,14 @@ Before writing ANY .vue page:
    - Number(result.status) === 1 check
    - form.reset() before router.visit()
    - watch() for dependent field re-validation if applicable
-
+ 
 4. DO NOT:
    - Use reactive() for form state
    - Use reactive() for errors
    - Skip form.reset() before router.visit()
-
+ 
 ### Page Pattern (Create/Edit)
-
+ 
 // Standard pattern - MUST match Hotels/Create.vue
 import { computed, watch, onMounted } from 'vue'
 import { useForm, router } from '@inertiajs/vue3'
@@ -468,40 +468,40 @@ import { usePermission } from '@/Plugins/directives/permission'
 import { useI18n } from '@/Composables/useI18n'
 import { required, minValue, validateInertiaForm } from '@/Utils/validation'
 import { use[MODEL_NAME]s } from '@/Composables/[MODULE_NAME]/use[MODEL_NAME]s'
-
+ 
 // i18n (MANDATORY - no hardcoded strings)
 const { t } = useI18n()
-
+ 
 // Permission (MANDATORY)
 const permission = usePermission()
 const canCreate  = computed(() => permission.check('create [MODEL_NAME_PLURAL]'))
-
+ 
 // Composable
 const { create, saving } = use[MODEL_NAME]s()
-
+ 
 // Form (MANDATORY - useForm, NEVER reactive)
 const form = useForm({
     field1: '' as number | string,
     field2: '',
     // ... all [FIELD_LIST] fields with proper TS types
 })
-
+ 
 // Computed
 const isSaving    = computed(() => form.processing || saving.value)
 const submitLabel = computed(() =>
     isSaving.value ? t('actions.creating') : t('actions.create')
 )
-
+ 
 // watch for dependent field re-validation (if needed)
 watch(() => form.dependentField, () => {
     if (form.otherField) validateOtherField()
 })
-
+ 
 // onMounted permission guard
 onMounted(() => {
     if (!canCreate.value) router.visit('/[WEB_SLUG]')
 })
-
+ 
 // Submit
 async function submit(): Promise<void> {
     form.clearErrors()
@@ -529,7 +529,7 @@ async function submit(): Promise<void> {
         }
     }
 }
-
+ 
 // Validation
 function validateForm(): boolean {
     return validateInertiaForm(form, {
@@ -537,7 +537,7 @@ function validateForm(): boolean {
         field2: [required, minValue(0)],
     })
 }
-
+ 
 // snake_case -> camelCase mapping
 function mapBackendField(field: string): string {
     const map: Record<string, string> = {
@@ -546,7 +546,7 @@ function mapBackendField(field: string): string {
     }
     return map[field] ?? field
 }
-
+ 
 // Scroll to first error
 function scrollToFirstError(): void {
     setTimeout(() => {
@@ -554,16 +554,16 @@ function scrollToFirstError(): void {
         firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }, 100)
 }
-
+ 
 ### Page Summary
 - Index.vue  : search, status filter (if enum exists), <Table>, pagination, edit/delete per row
 - Create.vue : useForm() + usePermission() + useI18n() - follow Hotels/Create.vue exactly
 - Edit.vue   : receives [model_name] as Inertia prop (NOT item), pre-filled form, same pattern as Create
 - Show.vue   : read-only detail view, back + edit buttons
 - All use AppLayout, AppButton, AppInput
-
+ 
 ---
-
+ 
 ## Conventions
 - PHP       -> snake_case fields, PascalCase class names
 - TS/JS     -> camelCase variables/functions, PascalCase types/interfaces
@@ -571,13 +571,13 @@ function scrollToFirstError(): void {
 - Inertia prop key -> lowercase model name (e.g. hotel, NOT item)
 - Helpers/  -> pure functions only (no side effects)
 - Utils/    -> utility + formatting + validation + side effects (localStorage, DOM)
-
+ 
 ## Auth Flow
 - Web (Inertia) -> session auth
 - API           -> Sanctum token
-
+ 
 ---
-
+ 
 ## Tests
 - unauthenticated -> 401 on all endpoints
 - index returns paginated list
@@ -591,16 +591,18 @@ function scrollToFirstError(): void {
 - destroy -> 204
 - destroy -> 404 for missing id
 - unauthorized user -> 403
-
+ 
 ---
-
+ 
 ## Output Rules
-1. Generate one file at a time.
-2. Wait for confirmation before next file.
-3. Start each file with: // FILE: path/to/file
-4. Do not skip required files.
+1. Generate ALL files in order without stopping or asking for confirmation.
+2. Start each file with: // FILE: path/to/file
+3. After ALL files are done, print a summary checklist:
+   [x] File 1  - path/to/file
+   [x] File 2  - path/to/file
+   ... (all files listed)
+4. Do not skip any required file.
 5. Do not invent new architecture.
 6. Do not change unrelated files.
-7. After each file, briefly state why it matches existing pattern.
-
+ 
 ---
