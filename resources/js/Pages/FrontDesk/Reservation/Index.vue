@@ -259,8 +259,9 @@
             return;
         }
 
-        // Fetches first page of hotels when page loads
-        fetchAll(1);
+        // Fetches first page of reservations when page loads
+        // Only fetch if data is not already cached in Pinia
+        fetchAll(1, false);  // forceRefresh = false (use cache if available)
     });
 
     // ─── Table Configuration ─────────────────────────────────────────
@@ -320,7 +321,7 @@
     function changePerPage(value: number) {
         perPage.value = value;
         setFilters({ perPage: value });
-        fetchAll(1, { perPage: value });
+        fetchAll(1, true, { perPage: value });  // forceRefresh = true (new perPage means fresh data)
     }
 
     // debouncedSearch: delays search API call by 500ms while user is typing
@@ -329,14 +330,14 @@
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             setFilters({ ...localFilters, search: searchQuery.value });
-            fetchAll(1);
+            fetchAll(1, true);  // forceRefresh = true (new search means fresh data)
         }, 500);
     }
 
     // applyFilters: applies all current filter values and fetches filtered data from page 1
     function applyFilters() {
         setFilters({ ...localFilters, search: searchQuery.value });
-        fetchAll(1);
+        fetchAll(1, true);  // forceRefresh = true (new filter means fresh data)
     }
 
     // handleResetFilters: clears all filter inputs and fetches fresh unfiltered data
@@ -346,7 +347,7 @@
         localFilters.checkOutDate = '';
         localFilters.search = '';
         resetFilters();
-        fetchAll(1);
+        fetchAll(1, true);  // forceRefresh = true (reset means fresh data)
     }
 
     // handleDelete: shows confirmation dialog, then deletes the reservation if confirmed
@@ -369,12 +370,12 @@
         try {
             // Delete the reservation via API
             await deleteReservation(res.id);
-            
+
             // After deletion, determine which page to fetch
             const targetPage = reservations.value.length === 0 && pagination.value.currentPage > 1
                 ? pagination.value.currentPage - 1
                 : pagination.value.currentPage;
-            await fetchAll(targetPage);
+            await fetchAll(targetPage, true);  // forceRefresh = true (data changed)
         } catch (e) {
             console.error('Delete failed:', e);
         }
@@ -383,6 +384,6 @@
     // changePage: navigates to specified page number
     function changePage(page: number) {
         if (page < 1 || page > pagination.value.lastPage) return;
-        fetchAll(page);
+        fetchAll(page, false);  // forceRefresh = false (may use cache)
     }
 </script>

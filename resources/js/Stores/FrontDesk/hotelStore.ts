@@ -66,7 +66,12 @@ export const useHotelsStore = defineStore('hotels', {
         },
 
         // Fetch hotel collection with filters + pagination.
-        async fetchAll(page: number = 1): Promise<void> {
+        async fetchAll(page: number = 1, forceRefresh: boolean = false): Promise<void> {
+            // Skip API call if data already loaded and not forcing refresh
+            if (!forceRefresh && this.hotels.length > 0 && page === this.pagination.meta.currentPage) {
+                return;
+            }
+
             this.loadingList = true;
             this.error = null;
             try {
@@ -87,7 +92,10 @@ export const useHotelsStore = defineStore('hotels', {
                 const pagination = payload.pagination ?? payload.meta ?? {};
 
                 this.hotels = normalizeHotels(items).map(mapToHotel);
-                this.pagination.meta = mapToHotelPagination(pagination);
+                this.pagination.meta = {
+                    ...mapToHotelPagination(pagination),
+                    currentPage: page,
+                };
                 this.pagination.data = this.hotels;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch hotels');

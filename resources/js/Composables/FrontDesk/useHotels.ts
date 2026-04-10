@@ -49,14 +49,14 @@ export function useHotels(options: UseHotelsOptions = {}) {
     const pagination = computed(() => store.pagination.meta);
 
     // Load hotel list with optional filter overrides.
-    async function fetchAll(page = 1, params?: Partial<HotelFilters>): Promise<void> {
+    async function fetchAll(page = 1, forceRefresh = false, params?: Partial<HotelFilters>): Promise<void> {
         startLoading();
         if (params) {
             store.setFilters(params);
         }
 
         try {
-            await store.fetchAll(page);
+            await store.fetchAll(page, forceRefresh);
         } catch (err: unknown) {
             toast.error(getApiError(err, 'Failed to fetch hotels'));
             throw err;

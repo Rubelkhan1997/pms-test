@@ -144,7 +144,8 @@
         }
 
         // Fetches first page of hotels when page loads
-        fetchAll(1);
+        // Only fetch if data is not already cached in Pinia
+        fetchAll(1, false);  // forceRefresh = false (use cache if available)
     });
 
     // ─── Table Configuration ─────────────────────────────────────────
@@ -188,7 +189,7 @@
     function changePerPage(value: number) {
         perPage.value = value;
         setFilters({ perPage: value });
-        fetchAll(1, { perPage: value });
+        fetchAll(1, true, { perPage: value });  // forceRefresh = true (new perPage means fresh data)
     }
 
     // debouncedSearch: delays search API call by 500ms while user is typing
@@ -198,7 +199,7 @@
         clearTimeout(searchTimeout);
         searchTimeout = setTimeout(() => {
             setFilters({ ...localFilters, search: searchQuery.value });
-            fetchAll(1);
+            fetchAll(1, true);  // forceRefresh = true (new search means fresh data)
         }, 500);
     }
 
@@ -207,7 +208,7 @@
         localFilters.search = '';
         searchQuery.value = '';
         resetFilters();
-        fetchAll(1);
+        fetchAll(1, true);  // forceRefresh = true (reset means fresh data)
     }
 
     // handleDelete: shows confirmation dialog, then deletes the hotel if confirmed
@@ -230,13 +231,13 @@
         try {
             // Delete the hotel via API
             await deleteHotel(item.id);
-            
+
             // After deletion, determine which page to fetch:
             // If current page has no items and we're not on page 1, go to previous page
             const targetPage = hotels.value.length === 0 && pagination.value.currentPage > 1
                 ? pagination.value.currentPage - 1
                 : pagination.value.currentPage;
-            await fetchAll(targetPage);
+            await fetchAll(targetPage, true);  // forceRefresh = true (data changed)
         } catch (e) {
             console.error('Delete failed:', e);
         }
@@ -245,6 +246,6 @@
     // changePage: navigates to specified page number
     function changePage(page: number) {
         if (page < 1 || page > pagination.value.lastPage) return;
-        fetchAll(page);
+        fetchAll(page, false);  // forceRefresh = false (may use cache)
     }
 </script>

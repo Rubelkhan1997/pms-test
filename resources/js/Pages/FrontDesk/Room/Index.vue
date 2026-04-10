@@ -136,7 +136,9 @@
             return;
         }
 
-        fetchAll(1);
+        // Fetches first page of rooms when page loads
+        // Only fetch if data is not already cached in Pinia
+        fetchAll(1, false);  // forceRefresh = false (use cache if available)
     });
 
     const tableHeaders = computed(() => ([
@@ -194,7 +196,7 @@
     function changePerPage(value: number) {
         perPage.value = value;
         setFilters({ perPage: value });
-        fetchAll(1, { perPage: value });
+        fetchAll(1, true, { perPage: value });  // forceRefresh = true (new perPage means fresh data)
     }
 
     function debouncedSearch() {
@@ -204,7 +206,7 @@
             localFilters.search = searchQuery.value;
             localFilters.status = statusFilter.value;
             setFilters({ ...localFilters, status: statusFilter.value || '' });
-            fetchAll(1);
+            fetchAll(1, true);  // forceRefresh = true (new search means fresh data)
         }, 500);
     }
 
@@ -214,7 +216,7 @@
         searchQuery.value = '';
         statusFilter.value = '';
         resetFilters();
-        fetchAll(1);
+        fetchAll(1, true);  // forceRefresh = true (reset means fresh data)
     }
 
     async function handleDelete(item: Room) {
@@ -236,7 +238,7 @@
             const targetPage = rooms.value.length === 0 && pagination.value.currentPage > 1
                 ? pagination.value.currentPage - 1
                 : pagination.value.currentPage;
-            await fetchAll(targetPage);
+            await fetchAll(targetPage, true);  // forceRefresh = true (data changed)
         } catch (error) {
             console.error('Delete failed:', error);
         }
@@ -244,6 +246,6 @@
 
     function changePage(page: number) {
         if (page < 1 || page > pagination.value.lastPage) return;
-        fetchAll(page);
+        fetchAll(page, false);  // forceRefresh = false (may use cache)
     }
 </script>

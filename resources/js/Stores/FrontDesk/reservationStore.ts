@@ -77,7 +77,12 @@ export const useReservationsStore = defineStore('reservations', {
         },
 
         // Fetch reservation collection with filters + pagination.
-        async fetchAll(page: number = 1): Promise<void> {
+        async fetchAll(page: number = 1, forceRefresh: boolean = false): Promise<void> {
+            // Skip API call if data already loaded and not forcing refresh
+            if (!forceRefresh && this.reservations.length > 0 && page === this.pagination.meta.currentPage) {
+                return;
+            }
+
             this.loadingList = true;
             this.error = null;
             try {
@@ -98,7 +103,10 @@ export const useReservationsStore = defineStore('reservations', {
                 const pagination = payload.pagination ?? payload.meta ?? {};
 
                 this.reservations = normalizeReservations(items).map(mapReservationApiToReservation);
-                this.pagination.meta = mapReservationPaginationApiToPagination(pagination);
+                this.pagination.meta = {
+                    ...mapReservationPaginationApiToPagination(pagination),
+                    currentPage: page,
+                };
                 this.pagination.data = this.reservations;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch reservations');

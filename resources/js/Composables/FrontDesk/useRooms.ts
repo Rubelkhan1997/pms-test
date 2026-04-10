@@ -43,15 +43,14 @@ export function useRooms(options: UseRoomsOptions = {}) {
     const error = computed(() => store.error);
     const pagination = computed(() => store.pagination.meta);
 
-    async function fetchAll(page = 1, params?: Partial<RoomFilters>): Promise<void> {
+    async function fetchAll(page = 1, forceRefresh = false, params?: Partial<RoomFilters>): Promise<void> {
         startLoading();
-
         if (params) {
             store.setFilters(params);
         }
 
         try {
-            await store.fetchAll(page);
+            await store.fetchAll(page, forceRefresh);
         } catch (err: unknown) {
             toast.error(getApiError(err, 'Failed to fetch rooms'));
             throw err;

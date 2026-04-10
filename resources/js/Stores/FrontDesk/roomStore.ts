@@ -61,7 +61,12 @@ export const useRoomsStore = defineStore('rooms', {
             this.filters = { ...DEFAULT_FILTERS };
         },
 
-        async fetchAll(page: number = 1): Promise<void> {
+        async fetchAll(page: number = 1, forceRefresh: boolean = false): Promise<void> {
+            // Skip API call if data already loaded and not forcing refresh
+            if (!forceRefresh && this.rooms.length > 0 && page === this.pagination.meta.currentPage) {
+                return;
+            }
+
             this.loadingList = true;
             this.error = null;
 
@@ -83,7 +88,10 @@ export const useRoomsStore = defineStore('rooms', {
                 const pagination = payload.pagination ?? payload.meta ?? {};
 
                 this.rooms = normalizeRooms(items).map(mapToRoom);
-                this.pagination.meta = mapToRoomPagination(pagination);
+                this.pagination.meta = {
+                    ...mapToRoomPagination(pagination),
+                    currentPage: page,
+                };
                 this.pagination.data = this.rooms;
             } catch (err: unknown) {
                 this.error = getErrorMessage(err, 'Failed to fetch rooms');

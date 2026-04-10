@@ -55,14 +55,14 @@ export function useReservations(options: UseReservationsOptions = {}) {
     const todayCheckIns = computed(() => store.todayCheckIns);
 
     // Load reservation list with optional filter overrides.
-    async function fetchAll(page = 1, params?: Partial<ReservationFilters>): Promise<void> {
+    async function fetchAll(page = 1, forceRefresh = false, params?: Partial<ReservationFilters>): Promise<void> {
         startLoading();
         if (params) {
             store.setFilters(params);
         }
 
         try {
-            await store.fetchAll(page);
+            await store.fetchAll(page, forceRefresh);
         } catch (err: unknown) {
             toast.error(getApiError(err, 'Failed to fetch reservations'));
             throw err;
