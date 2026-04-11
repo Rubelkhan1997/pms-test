@@ -1,0 +1,1026 @@
+# Master CRUD Prompt - Complete & Self-Contained
+
+> **This prompt generates 100% working code for Laravel 13 + Vue 3 + Pinia**
+> **SELF-CONTAINED** - All patterns included. No reference files needed.
+> Works on EMPTY new projects.
+
+---
+
+## 📋 HOW TO USE
+
+1. Copy the prompt below
+2. Replace ALL placeholders marked with `[...]`
+3. Paste to AI
+4. ALL files generated automatically (including initial setup)
+5. Run `php artisan migrate` and `npm run dev`
+6. Done!
+
+---
+
+## MASTER PROMPT (COPY FROM HERE)
+
+```
+Create a complete CRUD module for my Laravel 13 + Vue 3 + Inertia + Pinia application.
+
+**IMPORTANT:** This is a NEW EMPTY project. No reference files exist.
+You must generate EVERYTHING from scratch using the patterns defined in this prompt.
+
+## Module Configuration
+- Feature Name: [FEATURE_NAME]         (e.g., Hotel, Room, Guest, Reservation)
+- Module Name: [MODULE_NAME]           (e.g., FrontDesk, Admin, Billing)
+- Model Name: [MODEL_NAME]             (e.g., Hotel, Room, Guest)
+- Table Name: [TABLE_NAME]             (e.g., hotels, rooms, guests)
+- API Route: /[api-prefix]/[feature]   (e.g., /front-desk/hotels)
+- Web Route: /[web-route]              (e.g., /hotels)
+- Route Name: [route.name]             (e.g., hotels)
+
+## Database Fields
+- [field_name]: [type] [constraints]
+- [field_name]: [type] [constraints]
+- [field_name]: [type] [constraints]
+
+## Relationships (if any)
+- [relationship_type]: [related_model]  (e.g., belongsTo: Hotel, hasMany: Rooms)
+
+## Enums (if any)
+- Enum Name: [ENUM_NAME]
+- Enum Values: [value1, value2, value3]
+- Field Name: [enum_field_name]
+
+## Permissions
+- Permission name: [feature-name] (e.g., hotels, rooms, guests)
+
+## Special Requirements
+- [Any special validation, unique fields, default values, etc.]
+
+---
+
+## REQUIREMENTS
+
+Generate ALL files in the exact order specified.
+**This is a new project - ALL files must be created from scratch.**
+
+### Initial Setup Files (4 files)
+1. Helper: useLoading composable
+2. Helper: usePolling composable
+3. Template: Pinia store template
+4. Template: Composable template
+
+### Backend Files (10 files)
+5. Migration (database/migrations/)
+6. Model (app/Modules/[MODULE_NAME]/Models/)
+7. Service (app/Modules/[MODULE_NAME]/Services/)
+8. API Controller (app/Modules/[MODULE_NAME]/Controllers/Api/V1/)
+9. Web Controller (app/Modules/[MODULE_NAME]/Controllers/Web/)
+10. Store Request (app/Modules/[MODULE_NAME]/Http/Requests/)
+11. Update Request (app/Modules/[MODULE_NAME]/Http/Requests/)
+12. Resource (app/Modules/[MODULE_NAME]/Resources/)
+13. API Routes snippet (routes/api.php)
+14. Web Routes snippet (routes/web.php)
+
+### Frontend Files (9 files)
+15. Types (resources/js/Types/[MODULE_NAME]/)
+16. Mappers (resources/js/Utils/Mappers/)
+17. Pinia Store (resources/js/Stores/[MODULE_NAME]/)
+18. Composable (resources/js/Composables/[MODULE_NAME]/)
+19. Index.vue (resources/js/Pages/[MODULE_NAME]/[FEATURE_NAME]/)
+20. Create.vue (resources/js/Pages/[MODULE_NAME]/[FEATURE_NAME]/)
+21. Edit.vue (resources/js/Pages/[MODULE_NAME]/[FEATURE_NAME]/)
+22. Show.vue (resources/js/Pages/[MODULE_NAME]/[FEATURE_NAME]/)
+
+### Test File (1 file)
+23. Feature Test (tests/Feature/)
+
+**Total: 23 files**
+
+---
+
+## COMPLETE CODE PATTERNS
+
+### Pattern 1: Backend API Response Format
+
+ALL API responses MUST use this format:
+```json
+{
+  "status": 1,
+  "data": { ... },
+  "message": "Success message"
+}
+```
+
+For errors:
+```json
+{
+  "status": 0,
+  "data": null,
+  "message": "Error message"
+}
+```
+
+---
+
+### Pattern 2: Backend Service Structure
+
+```php
+<?php
+
+namespace App\Modules\[MODULE_NAME]\Services;
+
+use App\Modules\[MODULE_NAME]\Models\[MODEL_NAME];
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+
+class [MODEL_NAME]Service
+{
+    public function paginate(array $filters, int $page = 1, int $perPage = 15): LengthAwarePaginator
+    {
+        return [MODEL_NAME]::query()
+            ->search($filters['search'] ?? null)
+            ->status($filters['status'] ?? null)
+            ->latest()
+            ->paginate($perPage)
+            ->withQueryString();
+    }
+
+    public function find(int $id): [MODEL_NAME]
+    {
+        return [MODEL_NAME]::findOrFail($id);
+    }
+
+    public function create(array $data): [MODEL_NAME]
+    {
+        return DB::transaction(function () use ($data) {
+            return [MODEL_NAME]::create($data);
+        });
+    }
+
+    public function update(int $id, array $data): [MODEL_NAME]
+    {
+        $model = $this->find($id);
+        return DB::transaction(function () use ($model, $data) {
+            $model->update($data);
+            return $model->fresh();
+        });
+    }
+
+    public function delete(int $id): void
+    {
+        $model = $this->find($id);
+        DB::transaction(function () use ($model) {
+            $model->delete();
+        });
+    }
+}
+```
+
+---
+
+### Pattern 3: Backend API Controller Structure
+
+```php
+<?php
+
+namespace App\Modules\[MODULE_NAME]\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Modules\[MODULE_NAME]\Models\[MODEL_NAME];
+use App\Modules\[MODULE_NAME]\Services\[MODEL_NAME]Service;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class [MODEL_NAME]Controller extends Controller
+{
+    public function __construct(
+        private readonly [MODEL_NAME]Service $service
+    ) {}
+
+    public function index(Request $request): JsonResponse
+    {
+        $paginator = $this->service->paginate(
+            filters: $request->only(['search', 'status']),
+            page: (int) $request->get('page', 1),
+            perPage: (int) $request->get('per_page', 15)
+        );
+
+        return response()->json([
+            'status' => 1,
+            'data' => [
+                'items' => \App\Modules\[MODULE_NAME]\Resources\[MODEL_NAME]Resource::collection($paginator),
+                'pagination' => [
+                    'current_page' => $paginator->currentPage(),
+                    'per_page' => $paginator->perPage(),
+                    'total' => $paginator->total(),
+                    'last_page' => $paginator->lastPage(),
+                ],
+            ],
+            'message' => '[MODEL_NAME]s fetched successfully',
+        ]);
+    }
+
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            // [VALIDATION_RULES]
+        ]);
+
+        $model = $this->service->create($validated);
+
+        return response()->json([
+            'status' => 1,
+            'data' => new \App\Modules\[MODULE_NAME]\Resources\[MODEL_NAME]Resource($model),
+            'message' => '[MODEL_NAME] created successfully',
+        ], 201);
+    }
+
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $model = $this->service->find($id);
+
+            return response()->json([
+                'status' => 1,
+                'data' => new \App\Modules\[MODULE_NAME]\Resources\[MODEL_NAME]Resource($model),
+                'message' => '[MODEL_NAME] fetched successfully',
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 0,
+                'data' => null,
+                'message' => '[MODEL_NAME] not found',
+            ], 404);
+        }
+    }
+
+    public function update(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            // [VALIDATION_RULES]
+        ]);
+
+        $model = $this->service->update($id, $validated);
+
+        return response()->json([
+            'status' => 1,
+            'data' => new \App\Modules\[MODULE_NAME]\Resources\[MODEL_NAME]Resource($model),
+            'message' => '[MODEL_NAME] updated successfully',
+        ]);
+    }
+
+    public function destroy(int $id): JsonResponse
+    {
+        try {
+            $this->service->delete($id);
+
+            return response()->json([
+                'status' => 1,
+                'data' => null,
+                'message' => '[MODEL_NAME] deleted successfully',
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'status' => 0,
+                'data' => null,
+                'message' => '[MODEL_NAME] not found',
+            ], 404);
+        }
+    }
+}
+```
+
+---
+
+### Pattern 4: Backend Web Controller Structure
+
+```php
+<?php
+
+namespace App\Modules\[MODULE_NAME]\Controllers\Web;
+
+use App\Http\Controllers\Controller;
+use App\Modules\[MODULE_NAME]\Models\[MODEL_NAME];
+use App\Modules\[MODULE_NAME]\Services\[MODEL_NAME]Service;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
+use Throwable;
+
+class [MODEL_NAME]Controller extends Controller
+{
+    public function __construct(
+        private readonly [MODEL_NAME]Service $service
+    ) {}
+
+    public function index(): Response
+    {
+        return Inertia::render('[MODULE_NAME]/[FEATURE_NAME]/Index');
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('[MODULE_NAME]/[FEATURE_NAME]/Create');
+    }
+
+    public function show(int $id): Response
+    {
+        try {
+            $model = $this->service->find($id);
+            return Inertia::render('[MODULE_NAME]/[FEATURE_NAME]/Show', [
+                '[model_name]' => new \App\Modules\[MODULE_NAME]\Resources\[MODEL_NAME]Resource($model),
+            ]);
+        } catch (Throwable $e) {
+            logger()->error('Error loading [model_name]: ' . $e->getMessage());
+            abort(404, '[MODEL_NAME] not found');
+        }
+    }
+
+    public function edit(int $id): Response
+    {
+        try {
+            $model = $this->service->find($id);
+            return Inertia::render('[MODULE_NAME]/[FEATURE_NAME]/Edit', [
+                '[model_name]' => new \App\Modules\[MODULE_NAME]\Resources\[MODEL_NAME]Resource($model),
+            ]);
+        } catch (Throwable $e) {
+            logger()->error('Error loading [model_name]: ' . $e->getMessage());
+            abort(404, '[MODEL_NAME] not found');
+        }
+    }
+}
+```
+
+---
+
+### Pattern 5: Pinia Store (FRONTEND - CRITICAL)
+
+```typescript
+import { defineStore } from 'pinia';
+import apiClient from '@/Services/apiClient';
+import { getErrorMessage } from '@/Helpers/error';
+import type { ApiResponse } from '@/Types/api';
+import type {
+    [MODEL_NAME],
+    [MODEL_NAME]Filters,
+    [MODEL_NAME]Pagination,
+    Create[MODEL_NAME]Dto,
+    Update[MODEL_NAME]Dto,
+} from '@/Types/[MODULE_NAME]/[model_name]';
+import {
+    mapTo[MODEL_NAME],
+    mapTo[MODEL_NAME]Pagination,
+    mapTo[MODEL_NAME]FiltersApi,
+    mapCreate[MODEL_NAME]ToApi,
+    mapUpdate[MODEL_NAME]ToApi,
+} from '@/Utils/Mappers/[model_name]';
+
+// Normalize data safely
+const normalize[MODEL_NAME]s = (value: unknown): [MODEL_NAME][] => (
+    Array.isArray(value) ? value : []
+);
+
+// Default pagination
+const DEFAULT_PAGINATION: [MODEL_NAME]Pagination = {
+    currentPage: 1,
+    perPage: 15,
+    total: 0,
+    lastPage: 1,
+};
+
+// Default filters
+const DEFAULT_FILTERS: [MODEL_NAME]Filters = {
+    search: '',
+    perPage: 15,
+};
+
+export const use[MODEL_NAME]sStore = defineStore('[feature_name]s', {
+    state: () => ({
+        [feature_plural]: [] as [MODEL_NAME][],
+        selected[MODEL_NAME]: null as [MODEL_NAME] | null,
+        loading: false,
+        loadingList: false,
+        loadingDetail: false,
+        error: null as string | null,
+        filters: { ...DEFAULT_FILTERS } as [MODEL_NAME]Filters,
+        pagination: {
+            data: [] as [MODEL_NAME][],
+            meta: { ...DEFAULT_PAGINATION },
+        },
+    }),
+
+    actions: {
+        setFilters(filters: Partial<[MODEL_NAME]Filters>): void {
+            this.filters = { ...this.filters, ...filters };
+        },
+
+        resetFilters(): void {
+            this.filters = { ...DEFAULT_FILTERS };
+        },
+
+        // CRITICAL: fetchAll with caching
+        async fetchAll(page: number = 1, forceRefresh: boolean = false): Promise<void> {
+            // Skip API call if data already loaded and not forcing refresh
+            if (!forceRefresh && this.[feature_plural].length > 0 && page === this.pagination.meta.currentPage) {
+                return;
+            }
+
+            this.loadingList = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.get('/[api-prefix]/[feature_plural]', {
+                    params: {
+                        ...mapTo[MODEL_NAME]FiltersApi(this.filters),
+                        page,
+                        per_page: this.filters.perPage,
+                    },
+                });
+
+                const payload = data?.data ?? {};
+                const items = Array.isArray(payload.items)
+                    ? payload.items
+                    : Array.isArray(payload.data)
+                        ? payload.data
+                        : [];
+                const pagination = payload.pagination ?? payload.meta ?? {};
+
+                this.[feature_plural] = normalize[MODEL_NAME]s(items).map(mapTo[MODEL_NAME]);
+                this.pagination.meta = {
+                    ...mapTo[MODEL_NAME]Pagination(pagination),
+                    currentPage: page, // Track current page
+                };
+                this.pagination.data = this.[feature_plural];
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Failed to fetch [feature_plural]');
+                throw err;
+            } finally {
+                this.loadingList = false;
+            }
+        },
+
+        async fetchById(id: number): Promise<void> {
+            this.loadingDetail = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.get(`/[api-prefix]/[feature_plural]/${id}`);
+                this.selected[MODEL_NAME] = data.data
+                    ? mapTo[MODEL_NAME](data.data)
+                    : null;
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Failed to fetch [feature_name]');
+                throw err;
+            } finally {
+                this.loadingDetail = false;
+            }
+        },
+
+        async create(payload: Create[MODEL_NAME]Dto): Promise<ApiResponse<[MODEL_NAME]>> {
+            this.loading = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.post(
+                    '/[api-prefix]/[feature_plural]',
+                    mapCreate[MODEL_NAME]ToApi(payload)
+                );
+                const response = data as ApiResponse<Record<string, any>>;
+
+                if (Number(response.status) === 1 && response.data) {
+                    this.add[MODEL_NAME](mapTo[MODEL_NAME](response.data));
+                }
+
+                return {
+                    ...response,
+                    data: response.data ? mapTo[MODEL_NAME](response.data) : null,
+                };
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Failed to create [feature_name]');
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async update(id: number, payload: Update[MODEL_NAME]Dto): Promise<ApiResponse<[MODEL_NAME]>> {
+            this.loading = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.put(
+                    `/[api-prefix]/[feature_plural]/${id}`,
+                    mapUpdate[MODEL_NAME]ToApi(payload)
+                );
+                const response = data as ApiResponse<Record<string, any>>;
+
+                if (Number(response.status) === 1 && response.data) {
+                    this.update[MODEL_NAME](id, mapTo[MODEL_NAME](response.data));
+                }
+
+                return {
+                    ...response,
+                    data: response.data ? mapTo[MODEL_NAME](response.data) : null,
+                };
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Failed to update [feature_name]');
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async delete(id: number): Promise<ApiResponse<void>> {
+            this.loading = true;
+            this.error = null;
+            try {
+                const { data } = await apiClient.v1.delete(`/[api-prefix]/[feature_plural]/${id}`);
+                const response = data as ApiResponse<void>;
+
+                if (Number(response.status) === 1) {
+                    this.remove[MODEL_NAME](id);
+                }
+
+                return response;
+            } catch (err: unknown) {
+                this.error = getErrorMessage(err, 'Failed to delete [feature_name]');
+                throw err;
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        // Local state update methods
+        add[MODEL_NAME](item: [MODEL_NAME]): void {
+            this.[feature_plural] = normalize[MODEL_NAME]s(this.[feature_plural]);
+            this.[feature_plural].unshift(item);
+            this.pagination.data = this.[feature_plural];
+            this.pagination.meta.total++;
+        },
+
+        update[MODEL_NAME](id: number, data: Partial<[MODEL_NAME]>): void {
+            this.[feature_plural] = normalize[MODEL_NAME]s(this.[feature_plural]);
+            const index = this.[feature_plural].findIndex((i) => i.id === id);
+            if (index !== -1) {
+                this.[feature_plural][index] = { ...this.[feature_plural][index], ...data };
+            }
+
+            if (this.selected[MODEL_NAME]?.id === id) {
+                this.selected[MODEL_NAME] = { ...this.selected[MODEL_NAME], ...data };
+            }
+
+            this.pagination.data = this.[feature_plural];
+        },
+
+        remove[MODEL_NAME](id: number): void {
+            this.[feature_plural] = normalize[MODEL_NAME]s(this.[feature_plural]);
+            const index = this.[feature_plural].findIndex((i) => i.id === id);
+            if (index !== -1) {
+                this.[feature_plural].splice(index, 1);
+                this.pagination.meta.total = Math.max(0, this.pagination.meta.total - 1);
+            }
+            this.pagination.data = this.[feature_plural];
+        },
+
+        clearError(): void {
+            this.error = null;
+        },
+
+        $reset(): void {
+            this.$patch({
+                [feature_plural]: [],
+                selected[MODEL_NAME]: null,
+                loading: false,
+                loadingList: false,
+                loadingDetail: false,
+                error: null,
+                filters: { ...DEFAULT_FILTERS },
+                pagination: {
+                    data: [],
+                    meta: { ...DEFAULT_PAGINATION },
+                },
+            });
+        },
+    },
+});
+```
+
+---
+
+### Pattern 6: Composable (FRONTEND - CRITICAL)
+
+```typescript
+import { computed, onMounted, onUnmounted, inject } from 'vue';
+import { use[MODEL_NAME]sStore } from '@/Stores/[MODULE_NAME]/[model_name]Store';
+import { useLoading, usePolling } from '@/Composables';
+import { getApiError } from '@/Helpers/error';
+import type { ApiResponse } from '@/Types/api';
+import type { toast as ToastType } from '@/Plugins/toast';
+import type {
+    [MODEL_NAME],
+    [MODEL_NAME]Filters,
+    Create[MODEL_NAME]Dto,
+    Update[MODEL_NAME]Dto,
+} from '@/Types/[MODULE_NAME]/[model_name]';
+
+export interface Use[MODEL_NAME]sOptions {
+    autoFetch?: boolean;
+    initialFilters?: Partial<[MODEL_NAME]Filters>;
+    pollingInterval?: number;
+}
+
+export function use[MODEL_NAME]s(options: Use[MODEL_NAME]sOptions = {}) {
+    const {
+        autoFetch = false,
+        initialFilters = {},
+        pollingInterval = 0,
+    } = options;
+
+    const store = use[MODEL_NAME]sStore();
+    const toast = inject('toast') as typeof ToastType;
+
+    const { loading: _loading, start: startLoading, stop: stopLoading } = useLoading();
+    const { loading: _saving, start: startSaving, stop: stopSaving } = useLoading();
+
+    const { start: startPolling, stop: stopPolling } = usePolling(
+        () => fetchAll(),
+        pollingInterval,
+        () => pollingInterval > 0
+    );
+
+    const [feature_plural] = computed(() => store.[feature_plural]);
+    const [model_name] = computed(() => store.selected[MODEL_NAME]);
+    const loading = computed(() => _loading.value || store.loadingList || store.loadingDetail);
+    const saving = computed(() => _saving.value || store.loading);
+    const error = computed(() => store.error);
+    const pagination = computed(() => store.pagination.meta);
+
+    // CRITICAL: forceRefresh is SECOND parameter
+    async function fetchAll(page = 1, forceRefresh = false, params?: Partial<[MODEL_NAME]Filters>): Promise<void> {
+        startLoading();
+        if (params) {
+            store.setFilters(params);
+        }
+
+        try {
+            await store.fetchAll(page, forceRefresh);
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Failed to fetch [feature_plural]'));
+            throw err;
+        } finally {
+            stopLoading();
+        }
+    }
+
+    async function fetchById(id: number): Promise<void> {
+        startLoading();
+        try {
+            await store.fetchById(id);
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Failed to fetch [feature_name]'));
+            throw err;
+        } finally {
+            stopLoading();
+        }
+    }
+
+    async function create(payload: Create[MODEL_NAME]Dto): Promise<ApiResponse<[MODEL_NAME]>> {
+        startSaving();
+        try {
+            const result = await store.create(payload);
+            const isSuccess = Number(result.status) === 1;
+
+            if (isSuccess) {
+                toast.success(result.message || '[MODEL_NAME] created successfully');
+            } else {
+                toast.error(result.message || 'Failed to create [feature_name]');
+            }
+
+            return result;
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Failed to create [feature_name]'));
+            throw err;
+        } finally {
+            stopSaving();
+        }
+    }
+
+    async function update(id: number, payload: Update[MODEL_NAME]Dto): Promise<ApiResponse<[MODEL_NAME]>> {
+        startSaving();
+        try {
+            const result = await store.update(id, payload);
+            const isSuccess = Number(result.status) === 1;
+
+            if (isSuccess) {
+                toast.success(result.message || '[MODEL_NAME] updated successfully');
+            } else {
+                toast.error(result.message || 'Failed to update [feature_name]');
+            }
+
+            return result;
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Failed to update [feature_name]'));
+            throw err;
+        } finally {
+            stopSaving();
+        }
+    }
+
+    async function delete[MODEL_NAME](id: number): Promise<ApiResponse<void>> {
+        startSaving();
+        try {
+            const result = await store.delete(id);
+            const isSuccess = Number(result.status) === 1;
+
+            if (isSuccess) {
+                toast.success(result.message || '[MODEL_NAME] deleted successfully');
+            } else {
+                toast.error(result.message || 'Failed to delete [feature_name]');
+            }
+
+            return result;
+        } catch (err: unknown) {
+            toast.error(getApiError(err, 'Failed to delete [feature_name]'));
+            throw err;
+        } finally {
+            stopSaving();
+        }
+    }
+
+    function setFilters(filters: Partial<[MODEL_NAME]Filters>): void {
+        store.setFilters(filters);
+    }
+
+    function resetFilters(): void {
+        store.resetFilters();
+    }
+
+    if (autoFetch) {
+        onMounted(() => {
+            if (Object.keys(initialFilters).length > 0) {
+                store.setFilters(initialFilters);
+            }
+            fetchAll();
+            startPolling();
+        });
+
+        onUnmounted(() => {
+            stopPolling();
+        });
+    }
+
+    return {
+        [feature_plural],
+        [model_name],
+        pagination,
+        loading,
+        saving,
+        error,
+        fetchAll,
+        fetchById,
+        create,
+        update,
+        delete[MODEL_NAME],
+        setFilters,
+        resetFilters,
+    };
+}
+```
+
+---
+
+### Pattern 7: Frontend Page Usage
+
+#### Index.vue - forceRefresh Guide
+```typescript
+// Initial load (uses cache if available)
+fetchAll(1, false);
+
+// Search (forces refresh)
+setFilters({ search: query.value });
+fetchAll(1, true);
+
+// Filter change (forces refresh)
+setFilters({ status: 'pending' });
+fetchAll(1, true);
+
+// Per page change (forces refresh)
+fetchAll(1, true, { perPage: 25 });
+
+// Pagination (may use cache)
+fetchAll(page, false);
+
+// After delete (forces refresh - data changed)
+await delete[MODEL_NAME](id);
+await fetchAll(targetPage, true);
+```
+
+#### Create/Edit.vue - Form Pattern
+```typescript
+// Form state (use useForm, NEVER reactive)
+const form = useForm({
+    name: '',
+    code: '',
+    email: '',
+});
+
+// Submit pattern
+async function submit(): Promise<void> {
+    form.clearErrors();
+
+    if (!validateForm()) {
+        scrollToFirstError();
+        return;
+    }
+
+    try {
+        const result = await create({
+            name: form.name,
+            code: form.code,
+            email: form.email || undefined, // Send undefined for empty optional fields
+        });
+
+        if (Number(result.status) === 1) {
+            form.reset();
+            router.visit('/[web_route]');
+        }
+    } catch (err: unknown) {
+        const apiErr = err as Record<string, any>;
+        if (apiErr?.response?.data?.errors) {
+            const backendErrors: Record<string, string[]> = apiErr.response.data.errors;
+            Object.entries(backendErrors).forEach(([key, messages]) => {
+                form.setError(mapBackendField(key) as any, messages[0]);
+            });
+            scrollToFirstError();
+        }
+    }
+}
+
+// Map backend snake_case to frontend camelCase
+function mapBackendField(field: string): string {
+    const map: Record<string, string> = {
+        first_name: 'firstName',
+        last_name: 'lastName',
+    };
+    return map[field] ?? field;
+}
+
+// Scroll to first error
+function scrollToFirstError(): void {
+    setTimeout(() => {
+        const firstError = document.querySelector('.border-red-500');
+        firstError?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+}
+```
+
+---
+
+### Pattern 8: Naming Conventions
+
+**Backend (PHP):**
+- snake_case: fields, methods, variables
+- PascalCase: class names
+- kebab-case: API routes
+
+**Frontend (TypeScript):**
+- camelCase: variables, functions
+- PascalCase: types, interfaces, components
+- kebab-case: file names (for pages)
+
+**File Naming:**
+- Store: `[feature]Store.ts` (lowercase, singular)
+- Composable: `use[Feature]s.ts` (PascalCase, plural)
+- Pages: `Index.vue`, `Create.vue`, `Edit.vue`, `Show.vue`
+
+---
+
+### Pattern 9: API Routes Format
+
+**API Routes (routes/api.php):**
+```php
+use App\Modules\[MODULE_NAME]\Controllers\Api\V1\[MODEL_NAME]Controller as [MODEL_NAME]ApiController;
+
+Route::middleware('auth:sanctum')
+    ->prefix('v1/[api-prefix]')
+    ->name('[route_name].')
+    ->group(function () {
+        Route::get('/', [[MODEL_NAME]ApiController::class, 'index'])->name('index');
+        Route::post('/', [[MODEL_NAME]ApiController::class, 'store'])->name('store');
+        Route::get('/{id}', [[MODEL_NAME]ApiController::class, 'show'])->name('show');
+        Route::put('/{id}', [[MODEL_NAME]ApiController::class, 'update'])->name('update');
+        Route::delete('/{id}', [[MODEL_NAME]ApiController::class, 'destroy'])->name('destroy');
+    });
+```
+
+**Web Routes (routes/web.php):**
+```php
+use App\Modules\[MODULE_NAME]\Controllers\Web\[MODEL_NAME]Controller as [MODEL_NAME]WebController;
+
+Route::middleware('auth')
+    ->prefix('[web_route]')
+    ->name('[route_name].')
+    ->group(function () {
+        Route::get('/', [[MODEL_NAME]WebController::class, 'index'])->name('index');
+        Route::get('/create', [[MODEL_NAME]WebController::class, 'create'])->name('create');
+        Route::get('/{id}', [[MODEL_NAME]WebController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [[MODEL_NAME]WebController::class, 'edit'])->name('edit');
+    });
+```
+
+---
+
+## RULES
+
+1. **NEVER use Ziggy or route() helper in frontend**
+2. **Always use hardcoded URL strings or constants**
+3. **Use Inertia router for navigation:**
+   - `router.visit('/path')`
+   - `router.post('/path', data)`
+   - `router.put('/path', data)`
+   - `router.delete('/path')`
+
+4. **Store → Composable → Page pattern**
+5. **Pages NEVER use stores directly**
+6. **forceRefresh is SECOND parameter in composable**
+7. **fetchAll has caching with forceRefresh check**
+8. **All user-facing strings use t() for i18n**
+9. **Permission checks on all pages**
+10. **Form validation: client + server side**
+
+---
+
+## OUTPUT RULES
+
+1. Generate ALL 23 files in order without stopping
+2. Start each file with: `// FILE: path/to/file`
+3. Include all necessary imports
+4. Add comments for complex logic
+5. Do NOT skip any file
+6. Do NOT invent new architecture
+7. After all files, print summary checklist:
+   ```
+   ✅ File 1 - path
+   ✅ File 2 - path
+   ...
+   ```
+
+---
+
+Generate ALL files now.
+```
+
+---
+
+## 📝 EXAMPLE: Hotel Module
+
+```
+Create a complete CRUD module for my Laravel 13 + Vue 3 + Inertia + Pinia application.
+
+**IMPORTANT:** This is a NEW EMPTY project. No reference files exist.
+You must generate EVERYTHING from scratch using the patterns defined in this prompt.
+
+## Module Configuration
+- Feature Name: Hotel
+- Module Name: FrontDesk
+- Model Name: Hotel
+- Table Name: hotels
+- API Route: /front-desk/hotels
+- Web Route: /hotels
+- Route Name: hotels
+
+## Database Fields
+- name: string required
+- code: string required unique
+- email: string nullable
+- phone: string nullable
+- timezone: string nullable
+- currency: string nullable
+- address: text nullable
+
+## Relationships
+- None
+
+## Enums
+- None
+
+## Permissions
+- Permission name: hotels
+
+Generate ALL files now.
+```
+
+---
+
+## ✅ AFTER GENERATION
+
+```bash
+# 1. Run migration
+php artisan migrate
+
+# 2. Clear config cache
+php artisan config:clear
+
+# 3. Build frontend
+npm run dev
+
+# 4. Test
+# Visit: http://localhost:8000/[web_route]
+```
+
+---
+
+**Copy the MASTER PROMPT, replace placeholders, paste to AI, and ALL 23 files generated!**
