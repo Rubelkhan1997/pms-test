@@ -5,7 +5,10 @@
       "Bash(php *)",
       "Bash(move *)",
       "Bash(npm uninstall *)",
-      "Bash(findstr *)"
+      "Bash(findstr *)",
+      "Bash(mkdir *)",
+      "Bash(dir *)",
+      "Bash(xcopy *)"
     ]
   },
   "$version": 3

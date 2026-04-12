@@ -6,6 +6,11 @@
       "sourceType": "github",
       "computedHash": "609d456c9d92ca136589a0d89cc60e76b1619731521892a5f707f58589fc2473"
     },
+    "laravel-packages": {
+      "source": "leeovery/agentic-skills",
+      "sourceType": "github",
+      "computedHash": "81952bf4a75c7c11f256e93a73013b26e40883e7db5d30dfbb32b6e7d4113d5c"
+    },
     "laravel-security": {
       "source": "affaan-m/everything-claude-code",
       "sourceType": "github",
