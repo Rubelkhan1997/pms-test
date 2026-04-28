@@ -4,7 +4,7 @@
 
 **Goal:** Build a complete multi-tenant SaaS Hotel Property Management System on Laravel 13 + Inertia v2 + Vue 3 + TypeScript.
 
-**Architecture:** DB-per-tenant via `spatie/laravel-multitenancy`. Domain-based tenant resolution (`hotel.pms.com`). Super Admin on a separate landlord domain (`admin.pms.com`). Each plan below is independently executable and produces working, testable software.
+**Architecture:** DB-per-tenant via `spatie/laravel-multitenancy`. Domain-based tenant resolution (`hotel.pms.test`). Super Admin on a separate landlord domain (`admin.pms.test`). Each plan below is independently executable and produces working, testable software.
 
 **Tech Stack:** Laravel 13, Inertia.js v2, Vue 3 + TypeScript, Pinia, Tailwind CSS v4, MySQL 8, Redis, Laravel Horizon, Laravel Reverb, Sanctum, Spatie Permission, Spatie Multitenancy, Spatie Laravel Data, Pest PHP, Vitest.
 
@@ -107,7 +107,7 @@ php artisan test --filter=FooTest       # by class
 
 ### Tenant DB Switching Sequence
 ```
-HTTP Request (hotel.pms.com)
+HTTP Request (hotel.pms.test)
   → TenantFinder::findForRequest()        reads domain → queries landlord DB
     → SwitchTenantDatabaseTask::makeCurrent()  switches mysql connection
       → NeedsTenant middleware             aborts 404 if no tenant

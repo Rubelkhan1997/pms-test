@@ -2,31 +2,26 @@
 
 declare(strict_types=1);
 
-use App\Modules\Auth\Controllers\Web\AuthController;
-use App\Modules\FrontDesk\Controllers\Web\HotelController;
-use App\Modules\FrontDesk\Controllers\Web\RoomController;
-use App\Modules\FrontDesk\Controllers\Web\ReservationController as FrontDeskController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-// ─────────────────────────────────────────────────────────
-// Dashboard & Home Routes
-// ─────────────────────────────────────────────────────────
-Route::get('/', function () {
-    return redirect()->route('dashboard');
-})->name('home');
+/*
+|--------------------------------------------------------------------------
+| Super Admin Routes  (admin.pms.test)
+|--------------------------------------------------------------------------
+*/
+Route::domain(config('app.admin_domain', 'admin.pms.test'))
+    ->middleware(['super.admin.only'])
+    ->group(base_path('routes/super-admin.php'));
 
-Route::middleware(['auth.token'])->get('/dashboard', function () {
-    return Inertia::render('Dashboard/Index');
-})->name('dashboard');
-
-// ─────────────────────────────────────────────────────────
-// Authentication Routes (Inertia Pages)
-// ─────────────────────────────────────────────────────────
-Route::middleware(['guest'])->group(function (): void {
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-});
+/*
+|--------------------------------------------------------------------------
+| Tenant PMS Routes  ({tenant}.pms.test)
+|--------------------------------------------------------------------------
+*/
+Route::middleware([
+    'needs.tenant',
+    'ensure.subscription.active',
+])->group(base_path('routes/tenant.php'));
 
 // ─────────────────────────────────────────────────────────
 // Hotels Routes (FrontDesk) - WEB ONLY (Page Views)
@@ -57,4 +52,4 @@ Route::middleware(['auth.token'])->prefix('reservations')->name('reservations.')
     Route::get('/{reservation}', [FrontDeskController::class, 'show'])->name('show')->middleware('permission:view reservations');
     Route::get('/{reservation}/edit', [FrontDeskController::class, 'edit'])->name('edit')->middleware('permission:edit reservations');
 });
- 
+

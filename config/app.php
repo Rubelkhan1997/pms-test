@@ -28,6 +28,8 @@ return [
 
     'env' => env('APP_ENV', 'production'),
 
+    'admin_domain' => env('ADMIN_DOMAIN', 'admin.pms.test'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode

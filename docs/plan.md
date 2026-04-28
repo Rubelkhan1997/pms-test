@@ -76,8 +76,8 @@ Each tenant (hotel client) gets their own isolated MySQL database. The platform 
 ```
 
 **Domain routing:**
-- `admin.pms.com` → Super Admin panel (landlord DB only)
-- `hotelname.pms.com` → Tenant PMS (switches to that tenant's DB)
+- `admin.pms.test` → Super Admin panel (landlord DB only)
+- `hotelname.pms.test` → Tenant PMS (switches to that tenant's DB)
 
 ### Application Layers
 
@@ -117,7 +117,7 @@ app/
     Tenant.php                    ← extends Spatie\Multitenancy\Models\Tenant
     User.php
   Modules/
-    SuperAdmin/                   ← Landlord-level (admin.pms.com only)
+    SuperAdmin/                   ← Landlord-level (admin.pms.test only)
       Tenants/
         Controllers/
           Api/V1/TenantController.php
@@ -234,7 +234,7 @@ resources/js/
 | id | BIGINT PK | |
 | name | VARCHAR | Hotel client name |
 | slug | VARCHAR unique | URL-safe identifier |
-| domain | VARCHAR unique | e.g. `marriott.pms.com` |
+| domain | VARCHAR unique | e.g. `marriott.pms.test` |
 | database | VARCHAR unique | e.g. `pms_marriott` |
 | status | ENUM | `pending\|active\|trial\|suspended\|cancelled` |
 | trial_ends_at | TIMESTAMP nullable | |
@@ -318,7 +318,7 @@ Route::middleware(['needs.tenant', 'ensure.subscription.active'])->group(
 ## Phase 1 — Super Admin Panel
 
 **Module:** `app/Modules/SuperAdmin/`  
-**Access:** `admin.pms.com` only  
+**Access:** `admin.pms.test` only  
 **Middleware:** `SuperAdminOnly`  
 **Layout:** `SuperAdminLayout.vue`
 

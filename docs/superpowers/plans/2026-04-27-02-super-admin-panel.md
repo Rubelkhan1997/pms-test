@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the Super Admin panel at `admin.pms.com` for platform operators to manage tenants, subscription plans, billing, and global settings — completely isolated from the tenant PMS.
+**Goal:** Build the Super Admin panel at `admin.pms.test` for platform operators to manage tenants, subscription plans, billing, and global settings — completely isolated from the tenant PMS.
 
 **Architecture:** A new `SuperAdmin` module under `app/Modules/SuperAdmin/`. All routes live in `routes/super-admin.php` behind the `SuperAdminOnly` middleware. The panel uses its own `SuperAdminLayout.vue`. All data reads from the **landlord** DB connection via the custom Tenant model. Tenant creation triggers the `tenant:create` provisioning command internally.
 
@@ -144,7 +144,7 @@ In the `->withRouting(...)` call, add:
     web: __DIR__.'/../routes/web.php',
     api: __DIR__.'/../routes/api.php',
     then: function (): void {
-        Route::domain(config('app.admin_domain', 'admin.pms.com'))
+        Route::domain(config('app.admin_domain', 'admin.pms.test'))
             ->middleware(['super.admin.only', 'api'])
             ->prefix('api')
             ->group(base_path('routes/super-admin-api.php'));
@@ -1387,8 +1387,8 @@ Run these checks before starting Phase 2:
 
 - [ ] `php artisan test` → all tests PASS
 - [ ] `./vendor/bin/pint` → no violations
-- [ ] Visit `admin.pms.com/dashboard` → Super Admin dashboard renders
-- [ ] Visit `admin.pms.com/tenants` → Tenant list renders with pagination
+- [ ] Visit `admin.pms.test/dashboard` → Super Admin dashboard renders
+- [ ] Visit `admin.pms.test/tenants` → Tenant list renders with pagination
 - [ ] POST `/api/v1/admin/tenants` → creates tenant and provisions DB
 - [ ] PATCH `/api/v1/admin/tenants/{id}/suspend` → status changes to `suspended`
 - [ ] A suspended tenant accessing their PMS domain → returns 403

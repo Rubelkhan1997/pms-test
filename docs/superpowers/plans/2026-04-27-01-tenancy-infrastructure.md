@@ -806,7 +806,7 @@ class TenantFinder extends BaseTenantFinder
         $host = $request->getHost();
 
         // Admin domain does not resolve to any tenant
-        if ($host === config('app.admin_domain', 'admin.pms.com')) {
+        if ($host === config('app.admin_domain', 'admin.pms.test')) {
             return null;
         }
 
@@ -822,12 +822,12 @@ class TenantFinder extends BaseTenantFinder
 
 In `config/app.php`, add:
 ```php
-'admin_domain' => env('ADMIN_DOMAIN', 'admin.pms.com'),
+'admin_domain' => env('ADMIN_DOMAIN', 'admin.pms.test'),
 ```
 
 Add to `.env.example`:
 ```dotenv
-ADMIN_DOMAIN=admin.pms.com
+ADMIN_DOMAIN=admin.pms.test
 ```
 
 - [ ] **Step 6.5: Run test to verify it passes**
@@ -949,7 +949,7 @@ class SuperAdminOnly
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $adminDomain = config('app.admin_domain', 'admin.pms.com');
+        $adminDomain = config('app.admin_domain', 'admin.pms.test');
 
         if ($request->getHost() !== $adminDomain) {
             abort(404);
@@ -1094,16 +1094,16 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Super Admin Routes  (admin.pms.com)
+| Super Admin Routes  (admin.pms.test)
 |--------------------------------------------------------------------------
 */
-Route::domain(config('app.admin_domain', 'admin.pms.com'))
+Route::domain(config('app.admin_domain', 'admin.pms.test'))
     ->middleware(['super.admin.only'])
     ->group(base_path('routes/super-admin.php'));
 
 /*
 |--------------------------------------------------------------------------
-| Tenant PMS Routes  ({tenant}.pms.com)
+| Tenant PMS Routes  ({tenant}.pms.test)
 |--------------------------------------------------------------------------
 */
 Route::middleware([
@@ -1273,7 +1273,7 @@ use Illuminate\Support\Str;
 
 class TenantCreate extends Command
 {
-    protected $signature   = 'tenant:create {name : The hotel name} {domain : The subdomain (e.g. marriott.pms.com)}';
+    protected $signature   = 'tenant:create {name : The hotel name} {domain : The subdomain (e.g. marriott.pms.test)}';
     protected $description = 'Provision a new tenant with an isolated database';
 
     public function handle(): int
