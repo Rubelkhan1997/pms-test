@@ -61,7 +61,7 @@
 - Modify: `routes/super-admin.php`
 - Create: `routes/super-admin-api.php`
 
-- [ ] **Step 1.1: Create module directory structure**
+- [x] **Step 1.1: Create module directory structure**
 
 ```bash
 mkdir -p app/Modules/SuperAdmin/Controllers/Web
@@ -73,7 +73,7 @@ mkdir -p app/Modules/SuperAdmin/Requests
 mkdir -p app/Modules/SuperAdmin/Resources
 ```
 
-- [ ] **Step 1.2: Update routes/super-admin.php with all web routes**
+- [x] **Step 1.2: Update routes/super-admin.php with all web routes**
 
 ```php
 <?php
@@ -107,7 +107,7 @@ Route::middleware(['auth:sanctum'])->group(function (): void {
 });
 ```
 
-- [ ] **Step 1.3: Create routes/super-admin-api.php**
+- [x] **Step 1.3: Create routes/super-admin-api.php**
 
 ```php
 <?php
@@ -136,7 +136,7 @@ Route::middleware(['auth:sanctum'])->prefix('v1/admin')->group(function (): void
 });
 ```
 
-- [ ] **Step 1.4: Register the API routes file in bootstrap/app.php**
+- [x] **Step 1.4: Register the API routes file in bootstrap/app.php**
 
 In the `->withRouting(...)` call, add:
 ```php
@@ -173,7 +173,7 @@ git commit -m "feat: scaffold SuperAdmin module directory and route groups"
 - Create: `app/Modules/SuperAdmin/Resources/SubscriptionPlanResource.php`
 - Create: `tests/Feature/SuperAdmin/SubscriptionPlanTest.php`
 
-- [ ] **Step 2.1: Write failing tests**
+- [x] **Step 2.1: Write failing tests**
 
 Create `tests/Feature/SuperAdmin/SubscriptionPlanTest.php`:
 
@@ -225,7 +225,7 @@ it('rejects plan creation with missing name', function (): void {
 });
 ```
 
-- [ ] **Step 2.2: Run tests to verify they fail**
+- [x] **Step 2.2: Run tests to verify they fail**
 
 ```bash
 php artisan test tests/Feature/SuperAdmin/SubscriptionPlanTest.php
@@ -233,7 +233,7 @@ php artisan test tests/Feature/SuperAdmin/SubscriptionPlanTest.php
 
 Expected: FAIL.
 
-- [ ] **Step 2.3: Create SubscriptionPlan model**
+- [x] **Step 2.3: Create SubscriptionPlan model**
 
 Create `app/Models/SubscriptionPlan.php`:
 
@@ -270,7 +270,7 @@ class SubscriptionPlan extends Model
 }
 ```
 
-- [ ] **Step 2.4: Create SubscriptionPlanData DTO**
+- [x] **Step 2.4: Create SubscriptionPlanData DTO**
 
 Create `app/Modules/SuperAdmin/Data/SubscriptionPlanData.php`:
 
@@ -300,7 +300,7 @@ class SubscriptionPlanData extends Data
 }
 ```
 
-- [ ] **Step 2.5: Create StoreSubscriptionPlanRequest**
+- [x] **Step 2.5: Create StoreSubscriptionPlanRequest**
 
 Create `app/Modules/SuperAdmin/Requests/StoreSubscriptionPlanRequest.php`:
 
@@ -339,7 +339,7 @@ class StoreSubscriptionPlanRequest extends FormRequest
 }
 ```
 
-- [ ] **Step 2.6: Create SubscriptionPlanResource**
+- [x] **Step 2.6: Create SubscriptionPlanResource**
 
 Create `app/Modules/SuperAdmin/Resources/SubscriptionPlanResource.php`:
 
@@ -375,7 +375,7 @@ class SubscriptionPlanResource extends JsonResource
 }
 ```
 
-- [ ] **Step 2.7: Create CreateSubscriptionPlanAction**
+- [x] **Step 2.7: Create CreateSubscriptionPlanAction**
 
 Create `app/Modules/SuperAdmin/Actions/CreateSubscriptionPlanAction.php`:
 
@@ -398,7 +398,7 @@ class CreateSubscriptionPlanAction
 }
 ```
 
-- [ ] **Step 2.8: Create SubscriptionPlanService**
+- [x] **Step 2.8: Create SubscriptionPlanService**
 
 Create `app/Modules/SuperAdmin/Services/SubscriptionPlanService.php`:
 
@@ -450,7 +450,7 @@ readonly class SubscriptionPlanService
 }
 ```
 
-- [ ] **Step 2.9: Create SubscriptionPlan API Controller**
+- [x] **Step 2.9: Create SubscriptionPlan API Controller**
 
 Create `app/Modules/SuperAdmin/Controllers/Api/V1/SubscriptionPlanController.php`:
 
@@ -573,7 +573,7 @@ git commit -m "feat: add SubscriptionPlan CRUD (model, service, action, controll
 - Create: `app/Modules/SuperAdmin/Resources/TenantResource.php`
 - Create: `tests/Feature/SuperAdmin/TenantManagementTest.php`
 
-- [ ] **Step 3.1: Write failing tests**
+- [x] **Step 3.1: Write failing tests**
 
 Create `tests/Feature/SuperAdmin/TenantManagementTest.php`:
 
@@ -643,7 +643,7 @@ it('rejects tenant creation with duplicate domain', function (): void {
 });
 ```
 
-- [ ] **Step 3.2: Run tests to verify they fail**
+- [x] **Step 3.2: Run tests to verify they fail**
 
 ```bash
 php artisan test tests/Feature/SuperAdmin/TenantManagementTest.php
@@ -651,7 +651,7 @@ php artisan test tests/Feature/SuperAdmin/TenantManagementTest.php
 
 Expected: FAIL.
 
-- [ ] **Step 3.3: Create TenantData DTO**
+- [x] **Step 3.3: Create TenantData DTO**
 
 Create `app/Modules/SuperAdmin/Data/TenantData.php`:
 
@@ -678,7 +678,7 @@ class TenantData extends Data
 }
 ```
 
-- [ ] **Step 3.4: Create StoreTenantRequest**
+- [x] **Step 3.4: Create StoreTenantRequest**
 
 Create `app/Modules/SuperAdmin/Requests/StoreTenantRequest.php`:
 
@@ -713,7 +713,7 @@ class StoreTenantRequest extends FormRequest
 }
 ```
 
-- [ ] **Step 3.5: Create TenantResource**
+- [x] **Step 3.5: Create TenantResource**
 
 Create `app/Modules/SuperAdmin/Resources/TenantResource.php`:
 
@@ -751,7 +751,7 @@ class TenantResource extends JsonResource
 }
 ```
 
-- [ ] **Step 3.6: Create tenant Actions**
+- [x] **Step 3.6: Create tenant Actions**
 
 Create `app/Modules/SuperAdmin/Actions/CreateTenantAction.php`:
 
@@ -839,7 +839,7 @@ class ActivateTenantAction
 }
 ```
 
-- [ ] **Step 3.7: Create TenantService**
+- [x] **Step 3.7: Create TenantService**
 
 Create `app/Modules/SuperAdmin/Services/TenantService.php`:
 
@@ -917,7 +917,7 @@ readonly class TenantService
 }
 ```
 
-- [ ] **Step 3.8: Create Tenant API Controller**
+- [x] **Step 3.8: Create Tenant API Controller**
 
 Create `app/Modules/SuperAdmin/Controllers/Api/V1/TenantController.php`:
 
@@ -1047,7 +1047,7 @@ git commit -m "feat: add Tenant management CRUD with suspend/activate actions"
 - Create: `resources/js/Utils/Mappers/tenant.ts`
 - Create: `resources/js/Stores/SuperAdmin/tenantStore.ts`
 
-- [ ] **Step 4.1: Create TypeScript types**
+- [x] **Step 4.1: Create TypeScript types**
 
 Create `resources/js/Types/SuperAdmin/tenant.ts`:
 
@@ -1093,7 +1093,7 @@ export interface CreateTenantDto {
 }
 ```
 
-- [ ] **Step 4.2: Create tenant mapper**
+- [x] **Step 4.2: Create tenant mapper**
 
 Create `resources/js/Utils/Mappers/tenant.ts`:
 
@@ -1141,7 +1141,7 @@ export function mapTenantPaginationApiToPagination(api: Record<string, unknown>)
 }
 ```
 
-- [ ] **Step 4.3: Create tenant Pinia store**
+- [x] **Step 4.3: Create tenant Pinia store**
 
 Create `resources/js/Stores/SuperAdmin/tenantStore.ts`:
 
@@ -1225,7 +1225,7 @@ export const useTenantsStore = defineStore('admin-tenants', {
 })
 ```
 
-- [ ] **Step 4.4: Create SuperAdmin layout**
+- [x] **Step 4.4: Create SuperAdmin layout**
 
 Create `resources/js/Layouts/SuperAdminLayout.vue`:
 
@@ -1276,7 +1276,7 @@ const nav = [
 </template>
 ```
 
-- [ ] **Step 4.5: Create Dashboard Index page**
+- [x] **Step 4.5: Create Dashboard Index page**
 
 Create `resources/js/Pages/SuperAdmin/Dashboard/Index.vue`:
 
@@ -1324,7 +1324,7 @@ const props = defineProps<{
 </template>
 ```
 
-- [ ] **Step 4.6: Create DashboardController (Web)**
+- [x] **Step 4.6: Create DashboardController (Web)**
 
 Create `app/Modules/SuperAdmin/Controllers/Web/DashboardController.php`:
 

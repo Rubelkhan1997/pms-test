@@ -22,6 +22,11 @@ Route::prefix('v1')->group(function (): void {
         Route::get('/user', static fn (Request $request): mixed => $request->user());
 
         Route::prefix('front-desk')->group(function (): void {
+            // Properties (Onboarding)
+            Route::apiResource('properties', \App\Modules\FrontDesk\Controllers\Api\V1\PropertyController::class);
+            Route::apiResource('room-types', \App\Modules\FrontDesk\Controllers\Api\V1\RoomTypeController::class);
+            Route::post('room-types/{id}/generate', [\App\Modules\FrontDesk\Controllers\Api\V1\RoomTypeController::class, 'generateRooms']);
+
             Route::apiResource('hotels', HotelController::class)->only(['index', 'show'])->middleware('permission:view hotels');
             Route::post('hotels', [HotelController::class, 'store'])->name('front-desk.hotels.store')->middleware('permission:create hotels');
             Route::put('hotels/{id}', [HotelController::class, 'update'])->name('front-desk.hotels.update')->middleware('permission:edit hotels');

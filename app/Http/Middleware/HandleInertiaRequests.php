@@ -61,7 +61,7 @@ class HandleInertiaRequests extends Middleware
             // Find user by token using Sanctum
             $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
             
-            if ($accessToken && $accessToken->tokenable instanceof \App\Models\User) {
+            if ($accessToken && ($accessToken->tokenable instanceof \App\Models\User || $accessToken->tokenable instanceof \App\Models\LandlordUser)) {
                 return $this->mapUser($accessToken->tokenable);
             }
         }
@@ -77,7 +77,7 @@ class HandleInertiaRequests extends Middleware
     /**
      * Map user for Inertia shared props.
      */
-    private function mapUser(\App\Models\User $user): array
+    private function mapUser(\App\Models\User|\App\Models\LandlordUser $user): array
     {
         return [
             'id' => $user->id,

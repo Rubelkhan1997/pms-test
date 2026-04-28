@@ -2,14 +2,19 @@
 
 declare(strict_types=1);
 
+use App\Modules\Auth\Controllers\Web\AuthController as LoginController;
 use App\Modules\SuperAdmin\Controllers\Web\DashboardController;
 use App\Modules\SuperAdmin\Controllers\Web\TenantController;
 use App\Modules\SuperAdmin\Controllers\Web\SubscriptionPlanController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/login', [LoginController::class, 'showSuperAdminLogin'])->name('super-admin.login')->middleware('guest:super-admin');
+Route::post('/login', [LoginController::class, 'login'])->name('super-admin.login.submit');
+Route::post('/logout', [LoginController::class, 'logout'])->name('super-admin.logout');
+
 Route::get('/', fn () => redirect()->route('super-admin.dashboard'))->name('super-admin.home');
 
-Route::middleware(['auth:sanctum'])->group(function (): void {
+Route::middleware(['auth:super-admin'])->group(function (): void {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('super-admin.dashboard');
 
     // Tenants
