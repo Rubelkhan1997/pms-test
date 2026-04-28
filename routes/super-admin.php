@@ -21,14 +21,19 @@ Route::middleware(['auth:super-admin'])->group(function (): void {
     Route::prefix('tenants')->name('super-admin.tenants.')->group(function (): void {
         Route::get('/',           [TenantController::class, 'index'])->name('index');
         Route::get('/create',     [TenantController::class, 'create'])->name('create');
+        Route::post('/',          [TenantController::class, 'store'])->name('store');
         Route::get('/{id}',       [TenantController::class, 'show'])->name('show');
         Route::get('/{id}/edit',  [TenantController::class, 'edit'])->name('edit');
+        Route::put('/{id}',       [TenantController::class, 'update'])->name('update');
     });
 
     // Subscription Plans
     Route::prefix('plans')->name('super-admin.plans.')->group(function (): void {
         Route::get('/',          [SubscriptionPlanController::class, 'index'])->name('index');
         Route::get('/create',    [SubscriptionPlanController::class, 'create'])->name('create');
+        Route::post('/',         [SubscriptionPlanController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [SubscriptionPlanController::class, 'edit'])->name('edit');
+        Route::put('/{id}',      [SubscriptionPlanController::class, 'update'])->name('update');
+        Route::delete('/{id}',   [SubscriptionPlanController::class, 'destroy'])->name('destroy');
     });
 });
