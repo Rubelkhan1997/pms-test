@@ -49,18 +49,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth.token'                => \App\Modules\Auth\Middleware\AuthenticateByToken::class,
             'needs.tenant'              => \App\Http\Middleware\NeedsTenant::class,
+            'ensure.valid.tenant.session' => \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
             'super.admin.only'          => \App\Http\Middleware\SuperAdminOnly::class,
             'ensure.subscription.active'=> \App\Http\Middleware\EnsureSubscriptionActive::class,
             'ensure.property.onboarded' => \App\Http\Middleware\EnsurePropertyOnboarded::class,
             'permission'                => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role'                      => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'role_or_permission'        => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
-        ]);
-
-        // Spatie's middleware to automatically resolve tenant on every request
-        $middleware->web(append: [
-            \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
-            \App\Http\Middleware\NeedsTenant::class,
         ]);
 
         // Inertia middleware for sharing props
