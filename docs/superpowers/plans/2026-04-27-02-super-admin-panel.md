@@ -4,11 +4,11 @@
 
 **Goal:** Build the Super Admin panel at `admin.pms.test` for platform operators to manage tenants, subscription plans, billing, and global settings — completely isolated from the tenant PMS.
 
-**Architecture:** A new `SuperAdmin` module under `app/Modules/SuperAdmin/`. All routes live in `routes/super-admin.php` behind the `SuperAdminOnly` middleware. The panel uses its own `SuperAdminLayout.vue`. All data reads from the **landlord** DB connection via the custom Tenant model. Tenant creation triggers the `tenant:create` provisioning command internally.
+**Architecture:** A new `SuperAdmin` module under `app/Modules/SuperAdmin/`. All routes live in `routes/super-admin.php` behind the `SuperAdminOnly` middleware. The panel uses its own `SuperAdminLayout.vue`. All data reads from the **landlord** DB connection via the custom Tenant model. Tenant creation uses Eloquent lifecycle callbacks (not Artisan commands) as per Spatie v4 recommended pattern.
 
 **Tech Stack:** Laravel 13, Inertia.js v2, Vue 3 + TypeScript, Pinia, Tailwind CSS v4, Pest PHP.
 
-**Depends on:** Phase 0 (Tenancy Infrastructure) fully complete.
+**Depends on:** Phase 0 (Tenancy Infrastructure) fully complete — specifically `app/Models/Tenant.php` with `UsesLandlordConnection` trait and `booted()` DB provisioning.
 
 ---
 
@@ -128,17 +128,16 @@ Route::middleware(['auth:sanctum'])->prefix('v1/admin')->group(function (): void
     Route::patch('tenants/{id}/activate', [TenantController::class, 'activate']);
 
     // Subscription Plans
-    Route::get('plans',        [SubscriptionPlanController::class, 'index']);
-    Route::post('plans',       [SubscriptionPlanController::class, 'store']);
-    Route::get('plans/{id}',   [SubscriptionPlanController::class, 'show']);
-    Route::put('plans/{id}',   [SubscriptionPlanController::class, 'update']);
-    Route::delete('plans/{id}',[SubscriptionPlanController::class, 'destroy']);
+    Route::get('plans',         [SubscriptionPlanController::class, 'index']);
+    Route::post('plans',        [SubscriptionPlanController::class, 'store']);
+    Route::get('plans/{id}',    [SubscriptionPlanController::class, 'show']);
+    Route::put('plans/{id}',    [SubscriptionPlanController::class, 'update']);
+    Route::delete('plans/{id}', [SubscriptionPlanController::class, 'destroy']);
 });
 ```
 
 - [x] **Step 1.4: Register the API routes file in bootstrap/app.php**
 
-In the `->withRouting(...)` call, add:
 ```php
 ->withRouting(
     web: __DIR__.'/../routes/web.php',
@@ -165,6 +164,7 @@ git commit -m "feat: scaffold SuperAdmin module directory and route groups"
 ## Task 2: Subscription Plan CRUD
 
 **Files:**
+- Create: `app/Models/SubscriptionPlan.php`
 - Create: `app/Modules/SuperAdmin/Controllers/Api/V1/SubscriptionPlanController.php`
 - Create: `app/Modules/SuperAdmin/Services/SubscriptionPlanService.php`
 - Create: `app/Modules/SuperAdmin/Actions/CreateSubscriptionPlanAction.php`
@@ -182,22 +182,21 @@ Create `tests/Feature/SuperAdmin/SubscriptionPlanTest.php`:
 
 declare(strict_types=1);
 
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Spatie\Multitenancy\Models\SubscriptionPlan; // we'll use landlord DB
+use App\Models\SubscriptionPlan; // ← নিজের model, Spatie namespace নয়
 
-uses(RefreshDatabase::class);
+uses(\Illuminate\Foundation\Testing\RefreshDatabase::class);
 
 it('creates a subscription plan', function (): void {
     $payload = [
-        'name'            => 'Starter',
-        'slug'            => 'starter',
-        'property_limit'  => 1,
-        'room_limit'      => 30,
-        'price_monthly'   => 49.99,
-        'price_annual'    => 499.00,
-        'trial_enabled'   => true,
-        'trial_days'      => 14,
-        'modules_included'=> ['pms', 'housekeeping'],
+        'name'             => 'Starter',
+        'slug'             => 'starter',
+        'property_limit'   => 1,
+        'room_limit'       => 30,
+        'price_monthly'    => 49.99,
+        'price_annual'     => 499.00,
+        'trial_enabled'    => true,
+        'trial_days'       => 14,
+        'modules_included' => ['pms', 'housekeeping'],
     ];
 
     $this->withServerVariables(['HTTP_HOST' => config('app.admin_domain')])
@@ -208,7 +207,7 @@ it('creates a subscription plan', function (): void {
 });
 
 it('lists all active subscription plans', function (): void {
-    \App\Models\SubscriptionPlan::factory()->count(3)->create();
+    SubscriptionPlan::factory()->count(3)->create();
 
     $this->withServerVariables(['HTTP_HOST' => config('app.admin_domain')])
          ->getJson('/api/v1/admin/plans')
@@ -246,12 +245,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Spatie\Multitenancy\Models\Concerns\UsesLandlordConnection; // ← REQUIRED
 
 class SubscriptionPlan extends Model
 {
     use HasFactory;
-
-    protected $connection = 'landlord';
+    use UsesLandlordConnection; // ← Spatie v4 correct approach; $connection manually set করার দরকার নেই
 
     protected $fillable = [
         'name', 'slug', 'property_limit', 'room_limit',
@@ -286,16 +285,16 @@ use Spatie\LaravelData\Data;
 class SubscriptionPlanData extends Data
 {
     public function __construct(
-        public readonly string  $name,
-        public readonly string  $slug,
-        public readonly int     $property_limit,
-        public readonly int     $room_limit,
-        public readonly float   $price_monthly,
-        public readonly float   $price_annual,
-        public readonly bool    $trial_enabled,
-        public readonly int     $trial_days,
-        public readonly ?array  $modules_included,
-        public readonly bool    $is_active = true,
+        public readonly string $name,
+        public readonly string $slug,
+        public readonly int    $property_limit,
+        public readonly int    $room_limit,
+        public readonly float  $price_monthly,
+        public readonly float  $price_annual,
+        public readonly bool   $trial_enabled,
+        public readonly int    $trial_days,
+        public readonly ?array $modules_included,
+        public readonly bool   $is_active = true,
     ) {}
 }
 ```
@@ -323,17 +322,17 @@ class StoreSubscriptionPlanRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name'             => ['required', 'string', 'max:100'],
-            'slug'             => ['required', 'string', 'max:100', 'unique:landlord.subscription_plans,slug'],
-            'property_limit'   => ['required', 'integer', 'min:1'],
-            'room_limit'       => ['required', 'integer', 'min:1'],
-            'price_monthly'    => ['required', 'numeric', 'min:0'],
-            'price_annual'     => ['required', 'numeric', 'min:0'],
-            'trial_enabled'    => ['boolean'],
-            'trial_days'       => ['required_if:trial_enabled,true', 'integer', 'min:1', 'max:365'],
-            'modules_included' => ['nullable', 'array'],
+            'name'               => ['required', 'string', 'max:100'],
+            'slug'               => ['required', 'string', 'max:100', 'unique:landlord.subscription_plans,slug'],
+            'property_limit'     => ['required', 'integer', 'min:1'],
+            'room_limit'         => ['required', 'integer', 'min:1'],
+            'price_monthly'      => ['required', 'numeric', 'min:0'],
+            'price_annual'       => ['required', 'numeric', 'min:0'],
+            'trial_enabled'      => ['boolean'],
+            'trial_days'         => ['required_if:trial_enabled,true', 'integer', 'min:1', 'max:365'],
+            'modules_included'   => ['nullable', 'array'],
             'modules_included.*' => ['string'],
-            'is_active'        => ['boolean'],
+            'is_active'          => ['boolean'],
         ];
     }
 }
@@ -422,14 +421,16 @@ readonly class SubscriptionPlanService
 
     public function paginate(int $perPage = 20): LengthAwarePaginator
     {
-        return SubscriptionPlan::on('landlord')
-            ->orderBy('price_monthly')
-            ->paginate($perPage);
+        /*
+         * UsesLandlordConnection trait থাকায় ::on('landlord') লেখার দরকার নেই।
+         * তবে explicit করা ভালো practice যখন service layer এ কাজ হয়।
+         */
+        return SubscriptionPlan::orderBy('price_monthly')->paginate($perPage);
     }
 
     public function findOrFail(int $id): SubscriptionPlan
     {
-        return SubscriptionPlan::on('landlord')->findOrFail($id);
+        return SubscriptionPlan::findOrFail($id);
     }
 
     public function create(SubscriptionPlanData $data): SubscriptionPlan
@@ -440,6 +441,7 @@ readonly class SubscriptionPlanService
     public function update(SubscriptionPlan $plan, SubscriptionPlanData $data): SubscriptionPlan
     {
         $plan->update($data->toArray());
+
         return $plan->fresh();
     }
 
@@ -607,7 +609,8 @@ it('creates a tenant via API and provisions database', function (): void {
          ->assertJsonPath('status', 1)
          ->assertJsonPath('data.name', 'Ocean View Hotel');
 
-    expect(Tenant::on('landlord')->where('domain', 'ocean.pms.test')->exists())->toBeTrue();
+    expect(Tenant::where('domain', 'ocean.pms.test')->exists())->toBeTrue();
+    // Tenant::on('landlord') লেখার দরকার নেই — UsesLandlordConnection trait আছে
 });
 
 it('suspends a tenant', function (): void {
@@ -622,7 +625,8 @@ it('suspends a tenant', function (): void {
 });
 
 it('activates a suspended tenant', function (): void {
-    $tenant = Tenant::factory()->suspended()->create();
+    // factory state: TenantFactory এ 'suspended' state define করতে হবে
+    $tenant = Tenant::factory()->state(['status' => 'suspended'])->create();
 
     $this->withServerVariables(['HTTP_HOST' => config('app.admin_domain')])
          ->patchJson("/api/v1/admin/tenants/{$tenant->id}/activate")
@@ -642,6 +646,8 @@ it('rejects tenant creation with duplicate domain', function (): void {
          ->assertJsonValidationErrors(['domain']);
 });
 ```
+
+> **Note:** `Tenant::factory()->suspended()->create()` এর বদলে `->state(['status' => 'suspended'])->create()` ব্যবহার করা হয়েছে। `suspended()` named state TenantFactory তে আলাদাভাবে define করতে হবে — না হলে test fail করবে।
 
 - [x] **Step 3.2: Run tests to verify they fail**
 
@@ -738,6 +744,10 @@ class TenantResource extends JsonResource
             'domain'        => $this->domain,
             'database'      => $this->database,
             'status'        => $this->status,
+            /*
+             * isActive() ও isOnTrial() — এই methods app/Models/Tenant.php এ
+             * Phase 00 তে define করা আছে। Spatie এর base Tenant model এ নেই।
+             */
             'is_active'     => $this->isActive(),
             'is_on_trial'   => $this->isOnTrial(),
             'trial_ends_at' => $this->trial_ends_at,
@@ -764,7 +774,6 @@ namespace App\Modules\SuperAdmin\Actions;
 
 use App\Models\Tenant;
 use App\Modules\SuperAdmin\Data\TenantData;
-use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Str;
 
 class CreateTenantAction
@@ -774,7 +783,13 @@ class CreateTenantAction
         $slug   = Str::slug($data->name);
         $dbName = 'pms_' . Str::replace('-', '_', $slug);
 
-        $tenant = Tenant::create([
+        /*
+         * Tenant::create() ই যথেষ্ট।
+         * DB তৈরি ও migration — app/Models/Tenant.php এর booted() > created()
+         * callback এ Spatie v4 recommended pattern অনুযায়ী হবে।
+         * Artisan::call('tenant:create', ...) এখানে call করার দরকার নেই।
+         */
+        return Tenant::create([
             'name'          => $data->name,
             'slug'          => $slug,
             'domain'        => $data->domain,
@@ -785,14 +800,6 @@ class CreateTenantAction
             'contact_phone' => $data->contact_phone,
             'plan_id'       => $data->plan_id,
         ]);
-
-        // Provision in background job in production; direct call for now
-        Artisan::call('tenant:create', [
-            'name'   => $data->name,
-            'domain' => $data->domain,
-        ]);
-
-        return $tenant;
     }
 }
 ```
@@ -813,6 +820,7 @@ class SuspendTenantAction
     public function execute(Tenant $tenant): Tenant
     {
         $tenant->update(['status' => 'suspended']);
+
         return $tenant->fresh();
     }
 }
@@ -834,6 +842,7 @@ class ActivateTenantAction
     public function execute(Tenant $tenant): Tenant
     {
         $tenant->update(['status' => 'active']);
+
         return $tenant->fresh();
     }
 }
@@ -867,7 +876,11 @@ readonly class TenantService
 
     public function paginate(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
-        $query = Tenant::on('landlord')->withTrashed(false)->latest('id');
+        /*
+         * UsesLandlordConnection trait থাকায় ::on('landlord') call ছাড়াই
+         * landlord DB query হবে। তবে explicit করা পড়তে সহজ।
+         */
+        $query = Tenant::latest('id');
 
         if (! empty($filters['status'])) {
             $query->where('status', $filters['status']);
@@ -885,7 +898,7 @@ readonly class TenantService
 
     public function findOrFail(int $id): Tenant
     {
-        return Tenant::on('landlord')->findOrFail($id);
+        return Tenant::findOrFail($id);
     }
 
     public function create(TenantData $data): Tenant
@@ -902,6 +915,7 @@ readonly class TenantService
             'contact_phone' => $data->contact_phone,
             'plan_id'       => $data->plan_id,
         ]);
+
         return $tenant->fresh();
     }
 
@@ -1029,7 +1043,7 @@ Expected: 5 tests PASS.
 - [ ] **Step 3.10: Commit**
 
 ```bash
-git add app/Modules/SuperAdmin/ app/Models/SubscriptionPlan.php \
+git add app/Modules/SuperAdmin/ \
         tests/Feature/SuperAdmin/TenantManagementTest.php
 git commit -m "feat: add Tenant management CRUD with suspend/activate actions"
 ```
@@ -1162,14 +1176,14 @@ const DEFAULT_FILTERS: TenantFilters = { status: '', search: '', perPage: 20 }
 
 export const useTenantsStore = defineStore('admin-tenants', {
   state: () => ({
-    tenants:         [] as Tenant[],
-    selectedTenant:  null as Tenant | null,
-    pagination:      { ...DEFAULT_PAGINATION },
-    filters:         { ...DEFAULT_FILTERS },
-    loading:         false,
-    loadingList:     false,
-    loadingDetail:   false,
-    error:           null as string | null,
+    tenants:       [] as Tenant[],
+    selectedTenant: null as Tenant | null,
+    pagination:    { ...DEFAULT_PAGINATION },
+    filters:       { ...DEFAULT_FILTERS },
+    loading:       false,
+    loadingList:   false,
+    loadingDetail: false,
+    error:         null as string | null,
   }),
 
   actions: {
@@ -1234,12 +1248,12 @@ Create `resources/js/Layouts/SuperAdminLayout.vue`:
 import { Head } from '@inertiajs/vue3'
 
 const nav = [
-  { label: 'Dashboard',  href: '/dashboard' },
-  { label: 'Tenants',    href: '/tenants' },
-  { label: 'Plans',      href: '/plans' },
-  { label: 'Billing',    href: '/billing' },
-  { label: 'Reports',    href: '/reports' },
-  { label: 'Settings',   href: '/settings' },
+  { label: 'Dashboard', href: '/dashboard' },
+  { label: 'Tenants',   href: '/tenants' },
+  { label: 'Plans',     href: '/plans' },
+  { label: 'Billing',   href: '/billing' },
+  { label: 'Reports',   href: '/reports' },
+  { label: 'Settings',  href: '/settings' },
 ]
 </script>
 
@@ -1346,11 +1360,14 @@ class DashboardController extends Controller
     {
         return Inertia::render('SuperAdmin/Dashboard/Index', [
             'stats' => [
-                'totalActiveTenants'     => Tenant::on('landlord')->where('status', 'active')->count(),
-                'totalActiveProperties'  => 0, // expanded in later tasks
-                'pendingInvoices'        => \App\Models\Invoice::on('landlord')->where('status', 'sent')->count(),
-                'trialExpiringSoon'      => Tenant::on('landlord')
-                    ->where('status', 'trial')
+                'totalActiveTenants'    => Tenant::where('status', 'active')->count(),
+                'totalActiveProperties' => 0, // Phase 03 এর পর expand করতে হবে
+                /*
+                 * Invoice model Phase 05 (Cashiering & Folio) এ তৈরি হবে।
+                 * এখন 0 hardcode করা হচ্ছে — Phase 05 complete হলে এই line replace করতে হবে।
+                 */
+                'pendingInvoices'       => 0,
+                'trialExpiringSoon'     => Tenant::where('status', 'trial')
                     ->where('trial_ends_at', '<=', now()->addDays(7))
                     ->count(),
             ],
@@ -1358,6 +1375,8 @@ class DashboardController extends Controller
     }
 }
 ```
+
+> **Note:** `Invoice` model এখনো তৈরি হয়নি (Phase 05 এ হবে)। আগের version এ `\App\Models\Invoice::on('landlord')->...` call ছিল যা runtime error দিত। এখন `0` দিয়ে placeholder রাখা হয়েছে।
 
 - [ ] **Step 4.7: Run entire test suite**
 
@@ -1389,7 +1408,10 @@ Run these checks before starting Phase 2:
 - [ ] `./vendor/bin/pint` → no violations
 - [ ] Visit `admin.pms.test/dashboard` → Super Admin dashboard renders
 - [ ] Visit `admin.pms.test/tenants` → Tenant list renders with pagination
-- [ ] POST `/api/v1/admin/tenants` → creates tenant and provisions DB
+- [ ] POST `/api/v1/admin/tenants` → creates tenant, `booted()` callback provisions DB automatically
 - [ ] PATCH `/api/v1/admin/tenants/{id}/suspend` → status changes to `suspended`
 - [ ] A suspended tenant accessing their PMS domain → returns 403
 - [ ] GET `/api/v1/admin/plans` → lists subscription plans
+- [ ] `SubscriptionPlan` model এ `UsesLandlordConnection` trait আছে ✓
+- [ ] `Tenant` model এ `UsesLandlordConnection` trait আছে ✓
+- [ ] Super Admin routes এ `EnsurePropertyOnboarded` middleware নেই ✓
