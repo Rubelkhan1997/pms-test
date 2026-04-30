@@ -13,6 +13,8 @@ class NeedsTenant
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Spatie's EnsureValidTenantSession middleware should have already resolved the tenant
+        // This just ensures a tenant is current
         if (! Tenant::checkCurrent()) {
             abort(404, 'Tenant not found.');
         }

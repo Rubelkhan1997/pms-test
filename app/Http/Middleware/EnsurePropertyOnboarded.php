@@ -21,7 +21,7 @@ class EnsurePropertyOnboarded
         $propertyCount = DB::table('properties')->count();
 
         if ($propertyCount === 0) {
-            return redirect()->route('onboarding.property.create');
+            return redirect('/onboarding/property/create');
         }
 
         return $next($request);

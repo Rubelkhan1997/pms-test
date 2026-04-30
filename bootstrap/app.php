@@ -27,12 +27,20 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectUsersTo(function (\Illuminate\Http\Request $request): string {
+            $adminDomain = config('app.admin_domain', 'admin.pms.test');
+            if ($request->getHost() === $adminDomain) {
+                return route('super-admin.dashboard');
+            }
+            return '/dashboard';
+        });
+
         $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request): string {
             $adminDomain = config('app.admin_domain', 'admin.pms.test');
             if ($request->getHost() === $adminDomain) {
                 return route('super-admin.login');
             }
-            return route('login');
+            return '/login';
         });
 
         $middleware->encryptCookies(['auth_token']);
@@ -49,16 +57,16 @@ return Application::configure(basePath: dirname(__DIR__))
             'role_or_permission'        => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
         ]);
 
+        // Spatie's middleware to automatically resolve tenant on every request
+        $middleware->web(append: [
+            \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
+            \App\Http\Middleware\NeedsTenant::class,
+        ]);
+
         // Inertia middleware for sharing props
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
         ]);
-
-        // Spatie's middleware to automatically resolve tenant on every request
-        // Only apply to tenant routes, not admin routes
-        // $middleware->web(append: [
-        //     \Spatie\Multitenancy\Http\Middleware\EnsureValidTenantSession::class,
-        // ]);
     })
     ->withCommands([
         \App\Console\Commands\TenantCreate::class,
