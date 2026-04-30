@@ -28,7 +28,10 @@ return [
 
     'env' => env('APP_ENV', 'production'),
 
-    'admin_domain' => env('ADMIN_DOMAIN', 'admin.pms.test'),
+    'admin_domain' => env('ADMIN_DOMAIN', 'admin.pms-test.test'),
+    'tenant_base_domain' => env('TENANT_BASE_DOMAIN', 'pms-test.test'),
+
+     /*
 
     /*
     |--------------------------------------------------------------------------

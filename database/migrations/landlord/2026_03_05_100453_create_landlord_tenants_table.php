@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up()
     {
-        Schema::create('tenants', function (Blueprint $table) {
+        Schema::connection('landlord')->create('tenants', function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('domain')->unique();

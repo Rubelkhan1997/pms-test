@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Support\Facades\Route;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -11,7 +12,19 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         channels: __DIR__.'/../routes/channels.php',
         health: '/up',
+        then: static function (): void {
+            Route::middleware(['web', 'super.admin.only'])
+                ->domain(config('app.admin_domain', 'admin.pms.test'))
+                ->group(base_path('routes/super-admin.php'));
 
+            Route::middleware(['web', 'needs.tenant'])
+                ->domain('{tenant}.'.config('app.tenant_base_domain', 'pms.test'))
+                ->group(base_path('routes/tenant.php'));
+
+            Route::middleware('api')
+                ->domain(config('app.admin_domain', 'admin.pms.test'))
+                ->group(base_path('routes/super-admin-api.php'));
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request): string {
