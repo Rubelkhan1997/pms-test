@@ -2,9 +2,10 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\PropertyEntryController;
 use App\Modules\FrontDesk\Controllers\Web\HotelController;
-use App\Modules\FrontDesk\Controllers\Web\RoomController;
 use App\Modules\FrontDesk\Controllers\Web\ReservationController as FrontDeskController;
+use App\Modules\FrontDesk\Controllers\Web\RoomController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -17,8 +18,12 @@ Route::middleware(['guest'])->group(function (): void {
 
 // Onboarding wizard (must come BEFORE the auth.token + ensure.property.onboarded group)
 Route::middleware(['auth.token', 'ensure.subscription.active'])->prefix('onboarding')->name('onboarding.')->group(function (): void {
-    Route::get('/property/create', fn () => Inertia::render('Partner/Onboarding/Property/Create'))->name('property.create');
+    // Route::get('/property/create', fn () => Inertia::render('Partner/Onboarding/Property/Create'))->name('property.create');
+    
 });
+
+Route::get('/property/create', [PropertyEntryController::class, 'create'])->name('property.create');
+Route::get('/property/rate-plan/create', [PropertyEntryController::class, 'ratePlanCreate'])->name('property.ratePlanCreate');
 
 
 
