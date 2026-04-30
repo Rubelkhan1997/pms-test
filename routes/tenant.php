@@ -17,8 +17,10 @@ Route::middleware(['guest'])->group(function (): void {
 
 // Onboarding wizard (must come BEFORE the auth.token + ensure.property.onboarded group)
 Route::middleware(['auth.token', 'ensure.subscription.active'])->prefix('onboarding')->name('onboarding.')->group(function (): void {
-    Route::get('/property/create', fn () => Inertia::render('Onboarding/Property/Create'))->name('property.create');
+    Route::get('/property/create', fn () => Inertia::render('Partner/Onboarding/Property/Create'))->name('property.create');
 });
+
+
 
 // All protected PMS routes
 Route::middleware(['auth.token', 'ensure.subscription.active', 'ensure.property.onboarded'])->group(function (): void {
