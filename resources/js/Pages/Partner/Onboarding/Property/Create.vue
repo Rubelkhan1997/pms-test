@@ -203,7 +203,10 @@ async function submit() {
 
       <HouseRules v-if="currentStep === 1" v-model="houseRules" />
 
-      <Amenities v-if="currentStep === 2" v-model="amenities" />
+      <Amenities     v-if="currentStep === 2"
+    v-model="amenities"
+    :basic-contact="basicContact"
+     />
 
       <Gallery v-if="currentStep === 3" v-model="gallery" @update:modelValue="onGalleryUpdate" />
 
