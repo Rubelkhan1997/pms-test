@@ -3,7 +3,7 @@
         <label
             v-if="label"
             :for="resolvedId"
-            :class="['text-gray-700 font-medium mb-2', labelClass || 'text-[16px] block']"
+            :class="['text-gray-800 font-medium mb-2', labelClass || 'text-[14px] block']"
         >
             {{ label }}
             <span v-if="required" class="text-red-500">*</span>

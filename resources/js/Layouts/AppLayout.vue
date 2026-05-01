@@ -4,77 +4,49 @@
         <!-- ================================================================
              SIDEBAR
         ================================================================ -->
-        <aside
-            :class="[
-                'relative flex flex-col bg-white  border-slate-200/80',
-                'transition-[width] duration-300 ease-in-out z-40 flex-shrink-0',
-                sidebarOpen ? 'w-[220px]' : 'w-[60px]',
-            ]"
-        >
+        <aside :class="[
+            'relative flex flex-col bg-white  border-slate-200/80',
+            'transition-[width] duration-300 ease-in-out z-40 shrink-0',
+            sidebarOpen ? 'w-55' : 'w-15',
+        ]">
             <!-- Logo -->
-            <div
-                class="flex items-center gap-3 px-3.5 h-[60px] border-slate-100 overflow-hidden flex-shrink-0"
-            >
+            <div class="flex items-center gap-3 px-3.5 h-15 border-slate-100 overflow-hidden flex-shrink-0">
                 <div
-                    class="w-8 h-8 flex-shrink-0 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-sm shadow-cyan-200"
-                >
+                    class="w-8 h-8 shrink-0 rounded-xl bg-linear-to-br from-cyan-500 to-cyan-600 flex items-center justify-center shadow-sm shadow-cyan-200">
                     <Building2 class="w-4 h-4 text-white" />
                 </div>
                 <Transition name="fade-slide">
-                    <span
-                        v-if="sidebarOpen"
-                        class="text-[15px] font-bold text-slate-800 whitespace-nowrap tracking-tight"
-                    >
+                    <span v-if="sidebarOpen"
+                        class="text-[15px] font-bold text-slate-800 whitespace-nowrap tracking-tight">
                         PMS
                     </span>
                 </Transition>
             </div>
 
             <!-- Navigation -->
-            <nav
-                class="flex-1 overflow-y-auto overflow-x-visible py-3 space-y-0.5 px-2"
-            >
+            <nav class="flex-1 overflow-y-auto overflow-x-visible py-3 space-y-0.5 px-2">
                 <template v-for="item in navItems" :key="item.label">
                     <!-- ── Group item (has children) ─────────────────── -->
-                    <NavGroupItem
-                        v-if="item.children"
-                        :item="item"
-                        :is-expanded="sidebarOpen"
-                        :is-open="openGroups.includes(item.label)"
-                        :is-active-fn="isActive"
-                        @toggle="toggleGroup(item.label)"
-                        @flyout-enter="(el) => onFlyoutEnter(item, el)"
-                        @flyout-leave="onFlyoutLeave"
-                    />
+                    <NavGroupItem v-if="item.children" :item="item" :is-expanded="sidebarOpen"
+                        :is-open="openGroups.includes(item.label)" :is-active-fn="isActive"
+                        @toggle="toggleGroup(item.label)" @flyout-enter="(el) => onFlyoutEnter(item, el)"
+                        @flyout-leave="onFlyoutLeave" />
 
                     <!-- ── Single item ────────────────────────────────── -->
-                    <NavSingleItem
-                        v-else
-                        :item="item"
-                        :is-expanded="sidebarOpen"
-                        :is-active-fn="isActive"
-                        @flyout-enter="(el) => onFlyoutEnter(item, el)"
-                        @flyout-leave="onFlyoutLeave"
-                    />
+                    <NavSingleItem v-else :item="item" :is-expanded="sidebarOpen" :is-active-fn="isActive"
+                        @flyout-enter="(el) => onFlyoutEnter(item, el)" @flyout-leave="onFlyoutLeave" />
                 </template>
             </nav>
 
             <!-- Collapse toggle -->
-            <div class="p-2 border-t border-slate-100 flex-shrink-0">
-                <button
-                    @click="sidebarOpen = !sidebarOpen"
+            <div class="p-2 border-t border-slate-100 shrink-0">
+                <button @click="sidebarOpen = !sidebarOpen"
                     class="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all duration-150"
-                    :title="sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'"
-                >
-                    <PanelLeftClose
-                        class="w-4 h-4 transition-transform duration-300 flex-shrink-0"
-                        :class="{ 'rotate-180': !sidebarOpen }"
-                        :stroke-width="1.8"
-                    />
+                    :title="sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'">
+                    <PanelLeftClose class="w-4 h-4 transition-transform duration-300 flex-shrink-0"
+                        :class="{ 'rotate-180': !sidebarOpen }" :stroke-width="1.8" />
                     <Transition name="fade-slide">
-                        <span v-if="sidebarOpen" class="text-[12px] font-medium"
-                            >Collapse</span
-                        >
+                        <span v-if="sidebarOpen" class="text-[12px] font-medium">Collapse</span>
                     </Transition>
                 </button>
             </div>
@@ -85,121 +57,114 @@
         ================================================================ -->
         <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
             <!-- Header -->
-            <header
-                class="flex items-center justify-between px-6 bg-white border-slate-200/80 h-[60px] z-20 flex-shrink-0"
-            >
+            <header class="flex items-center justify-between px-6 bg-white  h-15 z-20 shrink-0">
                 <!-- Mobile: hamburger -->
-                <button
-                    class="md:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-100"
-                    @click="sidebarOpen = !sidebarOpen"
-                    title="Toggle menu"
-                >
+                <button class="md:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-100"
+                    @click="sidebarOpen = !sidebarOpen" title="Toggle menu">
                     <Menu class="w-5 h-5" :stroke-width="1.8" />
                 </button>
 
                 <!-- Page title -->
-                <h1
-                    class="text-[15px] font-semibold text-slate-800 tracking-tight"
-                >
+                <h1 class="text-[15px] font-semibold text-slate-800 tracking-tight">
                     {{ pageTitle }}
                 </h1>
 
                 <!-- Right controls -->
                 <div class="flex items-center gap-1.5">
                     <!-- Search -->
-                    <button
-                        class="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/70 rounded-lg text-slate-400 text-[13px] transition-colors w-44"
-                    >
-                        <Search
-                            class="w-3.5 h-3.5 flex-shrink-0"
-                            :stroke-width="2"
-                        />
-                        <span>Search...</span>
-                        <kbd
-                            class="ml-auto text-[11px] bg-white border border-slate-200 rounded px-1 text-slate-400"
-                            >⌘K</kbd
-                        >
-                    </button>
+                    <Searchbox />
 
                     <!-- Language switcher -->
                     <LanguageSwitcher />
 
                     <!-- Notifications -->
                     <button
-                        class="relative p-2 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
-                        title="Notifications"
-                    >
-                        <Bell class="w-[18px] h-[18px]" :stroke-width="1.8" />
-                        <span
-                            class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-red-500 rounded-full ring-2 ring-white"
-                        />
+                        class="relative p-2.5 text-slate-400 bg-slate-100 hover:bg-slate-200/70 rounded-full hover:text-slate-600 transition-colors"
+                        title="Notifications">
+                        <Bell class="w-4.5 h-4.5" :stroke-width="1.8" />
+                        <span class="absolute top-2 right-2 w-1.5 h-1.5 bg-red-500 rounded-full ring-2 ring-white" />
                     </button>
 
                     <div class="w-px h-6 bg-slate-200 mx-1" />
 
-                    <!-- User menu -->
-                    <div class="flex items-center gap-2.5 pl-1">
-                        <!-- Avatar -->
-                        <div
-                            class="w-8 h-8 rounded-xl bg-gradient-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-bold text-[12px] shadow-sm shadow-cyan-200 flex-shrink-0"
-                        >
-                            {{ userInitials }}
-                        </div>
-                        <!-- Name + role -->
-                        <div class="hidden sm:block">
-                            <p
-                                class="text-[13px] font-semibold text-slate-700 leading-none"
-                            >
-                                {{ userName }}
-                            </p>
-                            <p
-                                class="text-[11px] text-slate-400 capitalize mt-0.5"
-                            >
-                                {{ userRole }}
-                            </p>
-                        </div>
-                        <!-- Logout -->
-                        <button
-                            @click="handleLogout"
-                            :disabled="isLoggingOut"
-                            class="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 ml-1"
-                            title="Logout"
-                        >
-                            <svg
-                                v-if="isLoggingOut"
-                                class="animate-spin h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                            >
-                                <circle
-                                    class="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    stroke-width="4"
-                                />
-                                <path
-                                    class="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                />
-                            </svg>
-                            <LogOut
-                                v-else
-                                class="h-[15px] w-[15px]"
-                                :stroke-width="2"
-                            />
-                        </button>
-                    </div>
+                    <!-- User Dropdown -->
+                    <DropdownMenu>
+                        <DropdownMenuTrigger as-child>
+                            <button
+                                class="flex items-center gap-2.5 pl-1 pr-2 py-1 rounded-xl hover:bg-slate-100 transition-colors outline-none group">
+                                <!-- Avatar -->
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-linear-to-br from-cyan-400 to-cyan-600 flex items-center justify-center text-white font-bold text-[12px] shadow-sm shadow-cyan-200 flex-shrink-0">
+                                    {{ userInitials }}
+                                </div>
+                                <!-- Name + role -->
+                                <div class="hidden sm:block text-left">
+                                    <p class="text-[13px] font-semibold text-slate-700 leading-none">
+                                        {{ userName }}
+                                    </p>
+                                    <p class="text-[11px] text-slate-400 capitalize mt-0.5">
+                                        {{ userRole }}
+                                    </p>
+                                </div>
+                                <!-- Chevron -->
+                                <ChevronDown
+                                    class="w-3.5 h-3.5 text-slate-400 group-data-[state=open]:rotate-180 transition-transform duration-200"
+                                    :stroke-width="2.2" />
+                            </button>
+                        </DropdownMenuTrigger>
+
+                        <DropdownMenuContent
+                            class="w-56 mt-1 rounded-xl border border-slate-200/80 shadow-lg shadow-slate-200/60 p-1.5"
+                            align="end" :side-offset="6">
+                            <!-- User info header -->
+                            <div class="px-2.5 py-2 mb-1 border-b border-slate-100">
+                                <p class="text-[13px] font-semibold text-slate-700 leading-none">
+                                    {{ userName }}
+                                </p>
+                                <p class="text-[11px] text-slate-400 mt-1">{{ userEmail }}</p>
+                            </div>
+
+                            <!-- Menu items -->
+                            <DropdownMenuItem
+                                class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-slate-600 cursor-pointer hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                                <UserCircle class="w-4 h-4 text-slate-400" :stroke-width="1.8" />
+                                My Profile
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                                class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-slate-600 cursor-pointer hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                                <Settings class="w-4 h-4 text-slate-400" :stroke-width="1.8" />
+                                Settings
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                                class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-slate-600 cursor-pointer hover:bg-slate-50 hover:text-slate-900 transition-colors">
+                                <HelpCircle class="w-4 h-4 text-slate-400" :stroke-width="1.8" />
+                                Help & Support
+                            </DropdownMenuItem>
+
+                            <DropdownMenuSeparator class="my-1.5 bg-slate-100" />
+
+                            <!-- Logout -->
+                            <DropdownMenuItem @click="handleLogout" :disabled="isLoggingOut"
+                                class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-red-500 cursor-pointer hover:bg-red-50 hover:text-red-600 transition-colors focus:bg-red-50 focus:text-red-600 disabled:opacity-50">
+                                <svg v-if="isLoggingOut" class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                        stroke-width="4" />
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                </svg>
+                                <LogOut v-else class="h-4 w-4" :stroke-width="1.8" />
+                                {{ isLoggingOut ? 'Logging out...' : 'Logout' }}
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </header>
 
             <!-- Page content -->
             <main class="flex-1 overflow-hidden bg-white">
-                <div
-                    class="h-full overflow-y-auto rounded-tl-xl bg-[#EEF3F9] p-6"
-                >
+                <div class="h-full overflow-y-auto rounded-tl-xl bg-[#EEF3F9] p-6">
                     <slot />
                 </div>
             </main>
@@ -210,39 +175,24 @@
         ================================================================ -->
         <Teleport to="body">
             <Transition name="flyout">
-                <div
-                    v-if="flyout.visible && !sidebarOpen"
-                    :style="flyout.style"
+                <div v-if="flyout.visible && !sidebarOpen" :style="flyout.style"
                     class="fixed z-[9999] bg-white rounded-xl border border-slate-200/80 shadow-xl shadow-slate-200/50 py-2 min-w-[160px]"
-                    @mouseenter="cancelFlyoutClose"
-                    @mouseleave="scheduleFlyoutClose"
-                >
+                    @mouseenter="cancelFlyoutClose" @mouseleave="scheduleFlyoutClose">
                     <!-- Group flyout: title + children -->
                     <template v-if="flyout.item?.children">
-                        <p
-                            class="px-4 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider"
-                        >
+                        <p class="px-4 py-1.5 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                             {{ flyout.item.label }}
                         </p>
-                        <Link
-                            v-for="child in flyout.item.children"
-                            :key="child.href"
-                            :href="child.href"
-                            :class="[
-                                'flex items-center gap-2.5 px-4 py-2 text-[13px] transition-colors duration-150',
-                                isActive(child.href)
-                                    ? 'text-cyan-700 font-medium bg-cyan-50'
-                                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800',
-                            ]"
-                        >
-                            <span
-                                class="w-1 h-1 rounded-full flex-shrink-0"
-                                :class="
-                                    isActive(child.href)
-                                        ? 'bg-cyan-500'
-                                        : 'bg-slate-300'
-                                "
-                            />
+                        <Link v-for="child in flyout.item.children" :key="child.href" :href="child.href" :class="[
+                            'flex items-center gap-2.5 px-4 py-2 text-[13px] transition-colors duration-150',
+                            isActive(child.href)
+                                ? 'text-cyan-700 font-medium bg-cyan-50'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-800',
+                        ]">
+                            <span class="w-1 h-1 rounded-full flex-shrink-0" :class="isActive(child.href)
+                                    ? 'bg-cyan-500'
+                                    : 'bg-slate-300'
+                                " />
                             {{ child.label }}
                         </Link>
                     </template>
@@ -250,15 +200,10 @@
                     <!-- Single item flyout: tooltip only -->
                     <template v-else-if="flyout.item">
                         <div class="flex items-center gap-2 px-4 py-1.5">
-                            <span
-                                class="text-[13px] font-medium text-slate-700"
-                                >{{ flyout.item.label }}</span
-                            >
-                            <span
-                                v-if="flyout.item.badge"
-                                class="bg-cyan-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none"
-                                >{{ flyout.item.badge }}</span
-                            >
+                            <span class="text-[13px] font-medium text-slate-700">{{ flyout.item.label }}</span>
+                            <span v-if="flyout.item.badge"
+                                class="bg-cyan-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 leading-none">{{
+                                flyout.item.badge }}</span>
                         </div>
                     </template>
                 </div>
@@ -267,11 +212,8 @@
 
         <!-- Mobile overlay -->
         <Transition name="overlay">
-            <div
-                v-if="sidebarOpen"
-                class="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-30 md:hidden"
-                @click="sidebarOpen = false"
-            />
+            <div v-if="sidebarOpen" class="fixed inset-0 bg-black/20 backdrop-blur-[2px] z-30 md:hidden"
+                @click="sidebarOpen = false" />
         </Transition>
     </div>
 </template>
@@ -307,6 +249,20 @@ import {
     LogOut,
     type LucideIcon,
 } from "lucide-vue-next";
+import {
+    UserCircle,
+    Settings,
+    HelpCircle,
+} from 'lucide-vue-next'
+
+import {
+    DropdownMenu,
+    DropdownMenuTrigger,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+} from '@/Components/ui/dropdown-menu'
+import Searchbox from "@/Components/header/searchbox.vue";
 
 // ════════════════════════════════════════════════════════════════
 // TYPES
@@ -330,7 +286,11 @@ interface FlyoutState {
     item: NavItem | null;
     style: Record<string, string>;
 }
-
+function handleSearchSelect(item: { route?: string }) {
+    if (item.route) {
+        router.visit(item.route)
+    }
+}
 // ════════════════════════════════════════════════════════════════
 // NAV ITEMS  — edit this array to add/remove menu entries
 // ════════════════════════════════════════════════════════════════
@@ -397,91 +357,91 @@ const NavGroupItem = defineComponent({
                 // ── Expanded: clickable row with chevron ──
                 isExpanded
                     ? h(
-                          "button",
-                          {
-                              class: [
-                                  "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
-                                  groupActive.value
-                                      ? "bg-cyan-50 text-cyan-700"
-                                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
-                              ],
-                              onClick: () => emit("toggle"),
-                          },
-                          [
-                              h(item.icon as any, {
-                                  class: "w-[18px] h-[18px] flex-shrink-0",
-                                  strokeWidth: groupActive.value ? 2.2 : 1.8,
-                              }),
-                              h(
-                                  "span",
-                                  { class: "flex-1 text-left" },
-                                  item.label,
-                              ),
-                              h(ChevronDown, {
-                                  class: [
-                                      "w-3.5 h-3.5 transition-transform duration-200 text-slate-400",
-                                      isOpen ? "rotate-180" : "",
-                                  ],
-                                  strokeWidth: 2,
-                              }),
-                          ],
-                      )
+                        "button",
+                        {
+                            class: [
+                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
+                                groupActive.value
+                                    ? "bg-cyan-50 text-cyan-700"
+                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
+                            ],
+                            onClick: () => emit("toggle"),
+                        },
+                        [
+                            h(item.icon as any, {
+                                class: "w-[18px] h-[18px] flex-shrink-0",
+                                strokeWidth: groupActive.value ? 2.2 : 1.8,
+                            }),
+                            h(
+                                "span",
+                                { class: "flex-1 text-left" },
+                                item.label,
+                            ),
+                            h(ChevronDown, {
+                                class: [
+                                    "w-3.5 h-3.5 transition-transform duration-200 text-slate-400",
+                                    isOpen ? "rotate-180" : "",
+                                ],
+                                strokeWidth: 2,
+                            }),
+                        ],
+                    )
                     : // ── Collapsed: icon only, flyout on hover ──
-                      h(
-                          "button",
-                          {
-                              class: [
-                                  "w-full flex items-center justify-center py-2.5 rounded-xl transition-all duration-150",
-                                  groupActive.value
-                                      ? "bg-cyan-50 text-cyan-600"
-                                      : "text-slate-400 hover:bg-slate-50 hover:text-slate-700",
-                              ],
-                              onMouseenter: (e: MouseEvent) =>
-                                  emit("flyout-enter", e.currentTarget),
-                              onMouseleave: () => emit("flyout-leave"),
-                          },
-                          [
-                              h(item.icon as any, {
-                                  class: "w-[18px] h-[18px]",
-                                  strokeWidth: groupActive.value ? 2.2 : 1.8,
-                              }),
-                          ],
-                      ),
+                    h(
+                        "button",
+                        {
+                            class: [
+                                "w-full flex items-center justify-center py-2.5 rounded-xl transition-all duration-150",
+                                groupActive.value
+                                    ? "bg-cyan-50 text-cyan-600"
+                                    : "text-slate-400 hover:bg-slate-50 hover:text-slate-700",
+                            ],
+                            onMouseenter: (e: MouseEvent) =>
+                                emit("flyout-enter", e.currentTarget),
+                            onMouseleave: () => emit("flyout-leave"),
+                        },
+                        [
+                            h(item.icon as any, {
+                                class: "w-[18px] h-[18px]",
+                                strokeWidth: groupActive.value ? 2.2 : 1.8,
+                            }),
+                        ],
+                    ),
 
                 // ── Accordion children (expanded only) ──
                 isExpanded && isOpen
                     ? h(
-                          "div",
-                          {
-                              class: "mt-0.5 mb-1 ml-3 pl-3.5 border-l-2 border-slate-100 space-y-0.5",
-                          },
-                          item.children!.map((child) =>
-                              h(
-                                  Link,
-                                  {
-                                      key: child.href,
-                                      href: child.href,
-                                      class: [
-                                          "flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] transition-all duration-150",
-                                          isActiveFn(child.href)
-                                              ? "text-cyan-700 font-semibold bg-cyan-50/60"
-                                              : "text-slate-400 hover:text-slate-700 hover:bg-slate-50",
-                                      ],
-                                  },
-                                  () => [
-                                      h("span", {
-                                          class: [
-                                              "w-1 h-1 rounded-full flex-shrink-0",
-                                              isActiveFn(child.href)
-                                                  ? "bg-cyan-500"
-                                                  : "bg-slate-300",
-                                          ],
-                                      }),
-                                      child.label,
-                                  ],
-                              ),
-                          ),
-                      )
+                        "div",
+                        {
+                            class: "mt-0.5 mb-1 ml-3 pl-3.5 border-l-2 border-slate-100 space-y-0.5",
+                        },
+                        item.children!.map((child) =>
+                            h(
+                                Link,
+                                {
+                                    key: child.href,
+                                    href: child.href,
+                                    class: [
+                                        "flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] transition-all duration-150",
+                                        isActiveFn(child.href)
+                                            ? "text-cyan-700 font-semibold bg-cyan-50/60"
+                                            : "text-slate-400 hover:text-slate-700 hover:bg-slate-50",
+                                    ],
+                                },
+                                () => [
+                                    h("span", {
+                                        class: [
+                                            "w-1 h-1 rounded-full flex-shrink-0",
+                                            isActiveFn(child.href)
+                                                ? "bg-cyan-500"
+                                                : "bg-slate-300",
+                                        ],
+                                    }),
+                                    child.label,
+                                ],
+                            ),
+                        ),
+                    )
                     : null,
             ]);
         };
@@ -514,7 +474,7 @@ const NavSingleItem = defineComponent({
                     class: "relative",
                     onMouseenter: !isExpanded
                         ? (e: MouseEvent) =>
-                              emit("flyout-enter", e.currentTarget)
+                            emit("flyout-enter", e.currentTarget)
                         : undefined,
                     onMouseleave: !isExpanded
                         ? () => emit("flyout-leave")
@@ -542,26 +502,26 @@ const NavSingleItem = defineComponent({
                             }),
                             isExpanded
                                 ? h(
-                                      "span",
-                                      { class: "whitespace-nowrap flex-1" },
-                                      item.label,
-                                  )
+                                    "span",
+                                    { class: "whitespace-nowrap flex-1" },
+                                    item.label,
+                                )
                                 : null,
                             // Badge (expanded)
                             item.badge && isExpanded
                                 ? h(
-                                      "span",
-                                      {
-                                          class: "ml-auto bg-cyan-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none",
-                                      },
-                                      String(item.badge),
-                                  )
+                                    "span",
+                                    {
+                                        class: "ml-auto bg-cyan-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none",
+                                    },
+                                    String(item.badge),
+                                )
                                 : null,
                             // Badge dot (collapsed)
                             item.badge && !isExpanded
                                 ? h("span", {
-                                      class: "absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-cyan-500 rounded-full",
-                                  })
+                                    class: "absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-cyan-500 rounded-full",
+                                })
                                 : null,
                         ],
                     ),
@@ -615,15 +575,22 @@ const userInitials = computed(
 );
 
 const pageTitle = computed(() => {
-    const path = page.url;
-    const found = navItems
-        .flatMap((i) =>
-            i.children
-                ? i.children.map((c) => ({ ...c }))
-                : [{ label: i.label, href: i.href ?? "" }],
-        )
-        .find((i) => i.href && path.startsWith(i.href));
-    return found?.label ?? "Dashboard";
+  // 🎯 Priority 1: Custom title from page props
+  if (page.props.headerTitle) {
+    return page.props.headerTitle as string;
+  }
+  
+  // Priority 2: Match from navItems (existing logic)
+  const path = page.url;
+  const found = navItems
+    .flatMap((i) =>
+      i.children
+        ? i.children.map((c) => ({ ...c }))
+        : [{ label: i.label, href: i.href ?? "" }],
+    )
+    .find((i) => i.href && path.startsWith(i.href));
+    
+  return found?.label ?? "Dashboard";
 });
 
 // ════════════════════════════════════════════════════════════════
@@ -698,12 +665,12 @@ function scheduleFlyoutClose(): void {
 
 async function handleLogout(): Promise<void> {
     const confirmed = await confirm.show({
-        title       : 'Logout?',
-        message     : 'Are you sure you want to logout?',
-        confirmText : 'Yes',
-        cancelText  : 'No',
-        variant     : 'danger',
-        icon        : false,
+        title: 'Logout?',
+        message: 'Are you sure you want to logout?',
+        confirmText: 'Yes',
+        cancelText: 'No',
+        variant: 'danger',
+        icon: false,
     });
 
     if (!confirmed) return;
@@ -724,14 +691,17 @@ async function handleLogout(): Promise<void> {
         opacity 0.2s ease,
         transform 0.2s ease;
 }
+
 .fade-slide-leave-active {
     transition: opacity 0.15s ease;
     position: absolute;
 }
+
 .fade-slide-enter-from {
     opacity: 0;
     transform: translateX(-6px);
 }
+
 .fade-slide-leave-to {
     opacity: 0;
 }
@@ -742,15 +712,18 @@ async function handleLogout(): Promise<void> {
         opacity 0.15s ease,
         transform 0.15s ease;
 }
+
 .flyout-leave-active {
     transition:
         opacity 0.1s ease,
         transform 0.1s ease;
 }
+
 .flyout-enter-from {
     opacity: 0;
     transform: translateX(-6px);
 }
+
 .flyout-leave-to {
     opacity: 0;
     transform: translateX(-4px);
@@ -761,6 +734,7 @@ async function handleLogout(): Promise<void> {
 .overlay-leave-active {
     transition: opacity 0.2s ease;
 }
+
 .overlay-enter-from,
 .overlay-leave-to {
     opacity: 0;

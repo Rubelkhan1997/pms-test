@@ -8,7 +8,9 @@ use Inertia\Inertia;
 class PropertyEntryController extends Controller
 {
     public function create(){
-        return Inertia::render('Partner/Onboarding/Property/Create');
+        return Inertia::render('Partner/Onboarding/Property/Create', [
+            'headerTitle' => 'Property Setup',  // ← Appears in AppLayout header
+        ]);
     }
 
     public function ratePlanCreate(){
