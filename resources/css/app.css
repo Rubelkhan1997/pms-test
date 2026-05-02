@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @import 'tailwindcss';
 
@@ -131,5 +131,8 @@
     }
   body {
     @apply bg-background text-foreground;
+    }
+    .table-content thead tr th{
+        @apply px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider
     }
 }

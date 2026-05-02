@@ -24,6 +24,9 @@ Route::middleware(['auth.token', 'ensure.subscription.active'])->prefix('onboard
 
 Route::get('/property/create', [PropertyEntryController::class, 'create'])->name('property.create');
 Route::get('/property/rate-plan/create', [PropertyEntryController::class, 'ratePlanCreate'])->name('property.ratePlanCreate');
+Route::get('/property/policies/create', [PropertyEntryController::class, 'policiesCreate'])->name('property.policiesCreate');
+Route::get('/property/tex/create', [PropertyEntryController::class, 'TaxCreate'])->name('property.TaxCreate');
+Route::get('/property/payment-method', [PropertyEntryController::class, 'PaymentMethodCreate'])->name('property.PaymentMethodCreate');
 
 
 

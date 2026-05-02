@@ -39,7 +39,7 @@
             </nav>
 
             <!-- Collapse toggle -->
-            <div class="p-2 border-t border-slate-100 shrink-0">
+            <!-- <div class="p-2 border-t border-slate-100 shrink-0">
                 <button @click="sidebarOpen = !sidebarOpen"
                     class="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all duration-150"
                     :title="sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'">
@@ -49,7 +49,7 @@
                         <span v-if="sidebarOpen" class="text-[12px] font-medium">Collapse</span>
                     </Transition>
                 </button>
-            </div>
+            </div> -->
         </aside>
 
         <!-- ================================================================
@@ -59,15 +59,15 @@
             <!-- Header -->
             <header class="flex items-center justify-between px-6 bg-white  h-15 z-20 shrink-0">
                 <!-- Mobile: hamburger -->
-                <button class="md:hidden p-2 rounded-lg text-slate-400 hover:bg-slate-100"
+                <button class=" p-2 rounded-lg text-slate-400 hover:bg-slate-100"
                     @click="sidebarOpen = !sidebarOpen" title="Toggle menu">
                     <Menu class="w-5 h-5" :stroke-width="1.8" />
                 </button>
 
                 <!-- Page title -->
-                <h1 class="text-[15px] font-semibold text-slate-800 tracking-tight">
+                <!-- <h1 class="text-[15px] font-semibold text-slate-800 tracking-tight">
                     {{ pageTitle }}
-                </h1>
+                </h1> -->
 
                 <!-- Right controls -->
                 <div class="flex items-center gap-1.5">
