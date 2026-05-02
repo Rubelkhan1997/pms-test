@@ -31,6 +31,12 @@ class PropertyEntryController extends Controller
             'headerTitle' => 'Payment',
         ]);
     }
+    public function marketCreate()
+    {
+        return Inertia::render('Partner/Onboarding/Market/Create', [
+            'headerTitle' => 'Market',
+        ]);
+    }
 
     public function ratePlanCreate()
     {
