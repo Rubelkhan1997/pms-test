@@ -8,16 +8,15 @@ use App\Modules\FrontDesk\Models\Property;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class PricingProfile extends Model
+class MealPlan extends Model
 {
     use HasFactory;
 
-    protected $table = 'pricing_profiles';
+    protected $table = 'meal_plans';
 
     protected $fillable = [
-        'property_id', 'name', 'code', 'target_market', 'is_active',
+        'property_id', 'code', 'name', 'description', 'is_active',
     ];
 
     protected function casts(): array
@@ -30,10 +29,5 @@ class PricingProfile extends Model
     public function property(): BelongsTo
     {
         return $this->belongsTo(Property::class);
-    }
-
-    public function ratePlans(): HasMany
-    {
-        return $this->hasMany(RatePlan::class);
     }
 }

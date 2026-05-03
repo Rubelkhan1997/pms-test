@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace App\Modules\FrontDesk\Models;
 
-use App\Enums\RoomStatus;
-use App\Modules\FrontDesk\Models\Hotel;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,50 +19,39 @@ class Room extends Model
     protected $table = 'rooms';
 
     protected $fillable = [
-        'hotel_id',
-        'number',
-        'floor',
-        'type',
-        'status',
-        'base_rate',
+        'property_id', 'room_type_id', 'number', 'floor',
+        'status', 'cleaning_status', 'sort_order', 'notes',
     ];
 
-    /**
-     * Get cast definitions.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'status' => RoomStatus::class,
-            'base_rate' => 'decimal:2',
+            'sort_order' => 'integer',
         ];
     }
 
-    /**
-     * Get the owning hotel.
-     */
-    public function hotel(): BelongsTo
+    public function property(): BelongsTo
     {
-        return $this->belongsTo(Hotel::class);
+        return $this->belongsTo(Property::class);
     }
 
-    /**
-     * Get reservations for the room.
-     */
-    public function reservations(): HasMany
+    public function roomType(): BelongsTo
     {
-        return $this->hasMany(Reservation::class);
+        return $this->belongsTo(RoomType::class);
     }
 
-    /**
-     * Scope for available rooms.
-     */
+    public function reservationRooms(): HasMany
+    {
+        return $this->hasMany(ReservationRoom::class);
+    }
+
     public function scopeAvailable(Builder $query): Builder
     {
-        return $query->where('status', RoomStatus::Available->value);
+        return $query->where('status', 'available');
+    }
+
+    public function scopeClean(Builder $query): Builder
+    {
+        return $query->where('cleaning_status', 'clean');
     }
 }
-
-

@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "mcp__plugin_laravel-boost_laravel-boost__database-query"
+      "mcp__plugin_laravel-boost_laravel-boost__database-query",
+      "Bash(Get-ChildItem -Path \"d:\\\\herd\\\\pms\\\\app\\\\Modules\" -Recurse -Directory)",
+      "Bash(Select-Object FullName)",
+      "Bash(Format-Table -AutoSize)"
     ]
   }
 }

@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Environment
+
+**PHP binary:** `C:\Users\User\.config\herd\bin\php85\php.exe`
+Always use this path when running `php artisan` or any PHP CLI command (e.g. `& "C:\Users\User\.config\herd\bin\php85\php.exe" artisan migrate`).
+
 ## Commands
 
 ```bash
