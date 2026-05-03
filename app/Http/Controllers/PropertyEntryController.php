@@ -43,6 +43,12 @@ class PropertyEntryController extends Controller
             'headerTitle' => 'Room List',
         ]);
     }
+    public function RoomType()
+    {
+        return Inertia::render('Partner/Onboarding/RateType/RateTypeList', [
+            'headerTitle' => 'Rate Type',
+        ]);
+    }
 
     public function ratePlanCreate()
     {

@@ -13,6 +13,7 @@ import {
 } from '@/Components/ui/drawer'
 import StepperFooter from '../StepperFooter.vue';
 import { propertyOnboardingSteps } from '../steps';
+import { usePropertyOnboarding } from '@/Composables/usePropertyOnboarding';
 
 defineProps<{
     headerTitle: string
@@ -26,7 +27,7 @@ interface CancellationPolicy {
     cancellationFee: string
     noShowFee: string
 }
-
+const { steps, currentStep, loading, handleSubmit } = usePropertyOnboarding()
 // ─── Tabs ─────────────────────────────────────────────────────
 const activeTab = ref<'cancellation' | 'other'>('cancellation')
 
@@ -62,14 +63,14 @@ const noShowOptions = [
     { value: '100_percent', label: '100% of the total price' },
 ]
 
-const steps = propertyOnboardingSteps
-const currentStep = 2
-const loading = ref(false)
+// const steps = propertyOnboardingSteps
+// const currentStep = 2
+// const loading = ref(false)
 
-function handleSubmit() {
-    loading.value = true
-    // submit logic
-}
+// function handleSubmit() {
+//     loading.value = true
+//     // submit logic
+// }
 // ─── Policies list ────────────────────────────────────────────
 const cancellationPolicies = ref<CancellationPolicy[]>([])
 
@@ -226,8 +227,13 @@ function getFeeLabel(value: string): string {
                 </div>
             </div>
         </div>
-        <StepperFooter :steps="steps" :current-step="currentStep" :loading="loading" :skippable="true"
-            @submit="handleSubmit" />
+         <StepperFooter
+        :steps="steps"
+        :current-step="currentStep"
+        :loading="loading"
+        :skippable="true"
+        @submit="handleSubmit"
+    />
     </div>
 
     <!-- ══════════════════════════════════════════

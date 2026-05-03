@@ -4,7 +4,7 @@
         <button
             type="button"
             class="flex items-center gap-1 flex-wrap min-h-8.5 w-full px-2.5 py-1 border border-slate-200 rounded-md bg-white hover:border-slate-300 transition-colors text-left"
-            @click="open = !open">
+            @click="toggleOpen">
 
             <span v-if="modelValue.length === 0" class="text-[12.5px] text-slate-500 flex-1">
                 {{ placeholder }}
@@ -37,7 +37,10 @@
             leave-to-class="opacity-0">
             <div
                 v-if="open"
-                class="absolute top-full left-0 mt-1 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-2 min-w-45">
+                :class="[
+                    'absolute left-0 z-50 bg-white border border-slate-200 rounded-lg shadow-lg py-2 w-full',
+                    dropUp ? 'bottom-full mb-1' : 'top-full mt-1'
+                ]">
 
                 <!-- Search inside dropdown -->
                 <div v-if="searchable" class="px-2.5 pb-1.5 border-b border-slate-100 mb-1">
@@ -88,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { ChevronDown } from 'lucide-vue-next'
 
 // ─── Props ───────────────────────────────────────────────
@@ -105,6 +108,7 @@ const emit = defineEmits<{
 
 // ─── State ───────────────────────────────────────────────
 const open        = ref(false)
+const dropUp      = ref(false)           // ← নতুন
 const innerSearch = ref('')
 const el          = ref<HTMLElement | null>(null)
 
@@ -116,6 +120,31 @@ const filteredOptions = computed(() =>
 )
 
 // ─── Methods ─────────────────────────────────────────────
+
+// dropdown খোলার আগে জায়গা check করে দিক ঠিক করে
+async function toggleOpen() {
+    open.value = !open.value
+
+    if (open.value) {
+        await nextTick()
+        checkDropDirection()
+    }
+}
+
+function checkDropDirection() {
+    if (!el.value) return
+
+    const DROPDOWN_HEIGHT = 240          // max-h-52 ≈ 208px + padding
+    const MARGIN          = 8            // একটু extra গ্যাপ
+
+    const triggerRect = el.value.getBoundingClientRect()
+    const spaceBelow  = window.innerHeight - triggerRect.bottom
+    const spaceAbove  = triggerRect.top
+
+    // নিচে জায়গা কম এবং উপরে বেশি জায়গা থাকলে উপরে খুলবে
+    dropUp.value = spaceBelow < DROPDOWN_HEIGHT + MARGIN && spaceAbove > spaceBelow
+}
+
 function toggle(val: string) {
     const next = props.modelValue.includes(val)
         ? props.modelValue.filter(v => v !== val)
@@ -134,6 +163,20 @@ function onClickOutside(e: MouseEvent) {
     }
 }
 
-onMounted(()  => document.addEventListener('mousedown', onClickOutside))
-onUnmounted(() => document.removeEventListener('mousedown', onClickOutside))
+// scroll বা resize হলে দিক recalculate
+function onScrollOrResize() {
+    if (open.value) checkDropDirection()
+}
+
+onMounted(() => {
+    document.addEventListener('mousedown', onClickOutside)
+    window.addEventListener('scroll', onScrollOrResize, true)
+    window.addEventListener('resize', onScrollOrResize)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('mousedown', onClickOutside)
+    window.removeEventListener('scroll', onScrollOrResize, true)
+    window.removeEventListener('resize', onScrollOrResize)
+})
 </script>

@@ -29,6 +29,7 @@ Route::get('/property/tex/create', [PropertyEntryController::class, 'TaxCreate']
 Route::get('/property/payment-method', [PropertyEntryController::class, 'PaymentMethodCreate'])->name('property.PaymentMethodCreate');
 Route::get('/property/market', [PropertyEntryController::class, 'marketCreate'])->name('property.marketCreate');
 Route::get('/property/rooms', [PropertyEntryController::class, 'roomList'])->name('property.roomList');
+Route::get('/property/rate-type', [PropertyEntryController::class, 'RoomType'])->name('property.RoomType');
 
 
 
