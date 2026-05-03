@@ -14,11 +14,14 @@ return new class extends Migration
             $table->id();
             $table->foreignId('property_id')->constrained()->cascadeOnDelete();
             $table->foreignId('room_type_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('pricing_profile_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->foreignId('cancellation_policy_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->foreignId('pricing_profile_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('cancellation_policy_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('meal_plan_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name');
             $table->string('code', 20);
-            $table->string('description')->nullable();
+            $table->text('description')->nullable();
+            $table->date('valid_from')->nullable();
+            $table->date('valid_to')->nullable();
             $table->decimal('base_rate', 10, 2)->default(0);
             $table->decimal('extra_adult_rate', 10, 2)->default(0);
             $table->decimal('extra_child_rate', 10, 2)->default(0);
@@ -29,6 +32,7 @@ return new class extends Migration
             $table->boolean('is_ota')->default(false);
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
             $table->unique(['property_id', 'room_type_id', 'code']);
             $table->index('property_id');
             $table->index('room_type_id');

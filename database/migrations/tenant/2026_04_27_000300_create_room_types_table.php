@@ -16,9 +16,11 @@ return new class extends Migration
             $table->string('name');
             $table->string('code', 20);
             $table->enum('type', ['room', 'suite', 'cottage', 'villa', 'dormitory'])->default('room');
+            $table->text('description')->nullable();
             $table->string('floor')->nullable();
             $table->unsignedSmallInteger('max_occupancy')->default(2);
             $table->unsignedSmallInteger('adult_occupancy')->default(2);
+            $table->unsignedSmallInteger('child_occupancy')->default(0);
             $table->unsignedSmallInteger('num_bedrooms')->default(1);
             $table->unsignedSmallInteger('num_bathrooms')->default(1);
             $table->decimal('area_sqm', 8, 2)->nullable();
@@ -27,7 +29,9 @@ return new class extends Migration
             $table->json('amenities')->nullable();
             $table->json('gallery_paths')->nullable();
             $table->boolean('is_active')->default(true);
+            $table->softDeletes();
             $table->timestamps();
+
             $table->unique(['property_id', 'code']);
             $table->index('property_id');
         });

@@ -20,7 +20,9 @@ return new class extends Migration
             $table->enum('cleaning_status', ['clean', 'dirty', 'inspecting'])->default('clean');
             $table->unsignedSmallInteger('sort_order')->default(0);
             $table->text('notes')->nullable();
+            $table->softDeletes();
             $table->timestamps();
+
             $table->unique(['property_id', 'number']);
             $table->index('property_id');
             $table->index('room_type_id');

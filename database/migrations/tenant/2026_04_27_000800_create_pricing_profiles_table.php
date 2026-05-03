@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('target_market', ['business', 'leisure', 'corporate', 'groups', 'all'])->default('all');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+
             $table->unique(['property_id', 'code']);
             $table->index('property_id');
         });

@@ -17,10 +17,11 @@ return new class extends Migration
             $table->unsignedInteger('deadline_days')->default(0);
             $table->enum('deadline_type', ['days', 'hours'])->default('days');
             $table->decimal('cancellation_charge_percent', 5, 2)->default(100);
-            $table->boolean('no_show_charge_percent')->default(100);
+            $table->decimal('no_show_charge_percent', 5, 2)->default(100);
             $table->text('description')->nullable();
             $table->boolean('is_default')->default(false);
             $table->timestamps();
+
             $table->index('property_id');
         });
     }

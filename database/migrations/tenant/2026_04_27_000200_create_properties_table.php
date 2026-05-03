@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('slug')->unique();
             $table->enum('type', ['hotel', 'resort', 'apartment', 'villa', 'hostel'])->default('hotel');
+            $table->unsignedTinyInteger('star_rating')->nullable();
             $table->text('description')->nullable();
             $table->string('logo_path')->nullable();
             $table->string('featured_image_path')->nullable();
@@ -30,6 +31,8 @@ return new class extends Migration
             $table->decimal('longitude', 11, 8)->nullable();
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
+            $table->string('website')->nullable();
+            $table->string('tax_id')->nullable();
             $table->string('timezone')->default('UTC');
             $table->char('currency', 3)->default('USD');
             $table->time('check_in_time')->default('14:00:00');
@@ -38,6 +41,7 @@ return new class extends Migration
             $table->json('pet_policy')->nullable();
             $table->enum('status', ['open', 'closed'])->default('open');
             $table->date('business_date')->nullable();
+            $table->softDeletes();
             $table->timestamps();
         });
     }
