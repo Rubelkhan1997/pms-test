@@ -37,6 +37,12 @@ class PropertyEntryController extends Controller
             'headerTitle' => 'Market',
         ]);
     }
+    public function roomList()
+    {
+        return Inertia::render('Partner/Onboarding/Rooms/RoomList', [
+            'headerTitle' => 'Room List',
+        ]);
+    }
 
     public function ratePlanCreate()
     {

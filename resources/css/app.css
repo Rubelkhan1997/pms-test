@@ -133,6 +133,6 @@
     @apply bg-background text-foreground;
     }
     .table-content thead tr th{
-        @apply px-4 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider
+        @apply px-5 py-3 text-left text-[12px] font-semibold text-slate-500 uppercase tracking-wider
     }
 }

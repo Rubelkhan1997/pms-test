@@ -4,6 +4,7 @@ export const propertyOnboardingSteps = [
     { label: 'Tax',    route: '/property/tex/create' },
     { label: 'Payment',    route: '/property/payment-method' },
     { label: 'Market',    route: '/property/market' },
+    { label: 'Room Type',    route: '/property/Rooms' },
     { label: 'Amenities',   route: '/property/amenities/create' },
     { label: 'Gallery',     route: '/property/gallery/create' },
 ]

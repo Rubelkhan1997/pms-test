@@ -25,7 +25,7 @@
                 class="sr-only"
                 @change="onChange"
             />
-            <span class="label-text text-sm text-slate-600">{{ label }}</span>
+            <span class="label-text text-[14.5px] text-slate-600">{{ label }}</span>
         </label>
     </div>
 </template>
