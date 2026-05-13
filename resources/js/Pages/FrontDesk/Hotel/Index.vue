@@ -1,10 +1,10 @@
 <template>
     <!-- Page title shown in browser tab -->
     <Head :title="t('navigation.hotels')" />
-    
+
     <!-- Main container with max width -->
     <div class="max-w-6xl mx-auto">
-        
+
         <!-- Header Section: Title + Create button (shown only if user has create permission) -->
         <div class="flex justify-between items-center">
             <div>
@@ -120,14 +120,14 @@
     const canView = computed(() => permission.check('view hotels'));
     const canEdit = computed(() => permission.check('edit hotels'));
     const canDelete = computed(() => permission.check('delete hotels'));
-    
+
     // ─── Composables ─────────────────────────────────────────
     // useHotels: provides hotel list, loading state, pagination, CRUD operations, filters
     const {
         hotels,           // Reactive array of hotel data
         loading,          // Boolean: true while fetching data
         pagination,       // Object with currentPage, lastPage, total, etc.
-        
+
         fetchAll,         // Function to fetch all hotels with pagination
         deleteHotel,      // Function to delete a hotel
         setFilters,       // Function to set search/filter parameters
@@ -158,7 +158,7 @@
         { key: 'currency', label: t('hotels.currency') },
         { key: 'actions', label: t('reservations.actions'), align: 'right' as const },
     ]));
-    
+
     // tableColumns: defines column styling and fallback text for empty values
     const tableColumns = [
         { key: 'name',     className: 'font-medium text-slate-900' },
@@ -171,15 +171,15 @@
     // ─── Search & Filter State ─────────────────────────────────────────
     // searchQuery: reactive string for the search input field
     const searchQuery = ref('');
-    
+
     // perPage: number of items to show per page (default 15)
     const perPage = ref(15);
-    
+
     // localFilters: reactive object to track current filter values
     const localFilters = reactive({
         search: '',
     });
-    
+
     // ─── Event Handlers ─────────────────────────────────────────
     // searchTimeout: stores the setTimeout ID for debouncing search
     let searchTimeout: ReturnType<typeof setTimeout>;
@@ -215,7 +215,7 @@
     async function handleDelete(item: Hotel) {
         // Check permission before allowing delete
         if (!canDelete.value) return;
-        
+
         // Show confirmation dialog with hotel details
         const confirmed = await confirm.show({
             title: t('hotels.delete_title'),

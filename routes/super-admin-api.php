@@ -4,7 +4,12 @@ declare(strict_types=1);
 
 use App\Modules\SuperAdmin\Controllers\Api\V1\TenantController;
 use App\Modules\SuperAdmin\Controllers\Api\V1\SubscriptionPlanController;
+use App\Modules\Auth\Controllers\Api\V1\AuthController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware(['auth:sanctum'])->prefix('v1/admin/auth')->group(function (): void {
+    Route::post('logout', [AuthController::class, 'logout']);
+});
 
 Route::middleware(['auth:sanctum'])->prefix('v1/admin')->group(function (): void {
     // Tenants

@@ -219,469 +219,469 @@
 </template>
 
 <script setup lang="ts">
-// ─── Vue core ─────────────────────────────────────────────────
-import { ref, reactive, computed, onMounted, defineComponent, h } from "vue";
-import { Link, router, usePage } from "@inertiajs/vue3";
-import { inject } from "vue";
+    // ─── Vue core ─────────────────────────────────────────────────
+    import { ref, reactive, computed, onMounted, defineComponent, h } from "vue";
+    import { Link, router, usePage } from "@inertiajs/vue3";
+    import { inject } from "vue";
 
-// ─── Internal ─────────────────────────────────────────────────
-import { useAuth } from "@/Composables/Auth/useAuth";
-import LanguageSwitcher from "@/Components/LanguageSwitcher.vue";
-import type { confirm as ConfirmType } from "@/Plugins/confirm";
+    // ─── Internal ─────────────────────────────────────────────────
+    import { useAuth } from "@/Composables/Auth/useAuth";
+    import LanguageSwitcher from "@/Components/LanguageSwitcher.vue";
+    import type { confirm as ConfirmType } from "@/Plugins/confirm";
 
-// ─── Lucide icons ─────────────────────────────────────────────
-import {
-    Building2,
-    LayoutDashboard,
-    Inbox,
-    CalendarDays,
-    BedDouble,
-    SprayCan,
-    Package,
-    Banknote,
-    Star,
-    Settings2,
-    ChevronDown,
-    PanelLeftClose,
-    Search,
-    Bell,
-    Menu,
-    LogOut,
-    type LucideIcon,
-} from "lucide-vue-next";
-import {
-    UserCircle,
-    Settings,
-    HelpCircle,
-} from 'lucide-vue-next'
+    // ─── Lucide icons ─────────────────────────────────────────────
+    import {
+        Building2,
+        LayoutDashboard,
+        Inbox,
+        CalendarDays,
+        BedDouble,
+        SprayCan,
+        Package,
+        Banknote,
+        Star,
+        Settings2,
+        ChevronDown,
+        PanelLeftClose,
+        Search,
+        Bell,
+        Menu,
+        LogOut,
+        type LucideIcon,
+    } from "lucide-vue-next";
+    import {
+        UserCircle,
+        Settings,
+        HelpCircle,
+    } from 'lucide-vue-next'
 
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-} from '@/Components/ui/dropdown-menu'
-import Searchbox from "@/Components/header/searchbox.vue";
+    import {
+        DropdownMenu,
+        DropdownMenuTrigger,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuSeparator,
+    } from '@/Components/ui/dropdown-menu'
+    import Searchbox from "@/Components/header/searchbox.vue";
 
-// ════════════════════════════════════════════════════════════════
-// TYPES
-// ════════════════════════════════════════════════════════════════
+    // ════════════════════════════════════════════════════════════════
+    // TYPES
+    // ════════════════════════════════════════════════════════════════
 
-interface NavChild {
-    label: string;
-    href: string;
-}
-
-interface NavItem {
-    label: string;
-    icon: LucideIcon;
-    href?: string; // undefined for group items
-    children?: NavChild[];
-    badge?: number;
-}
-
-interface FlyoutState {
-    visible: boolean;
-    item: NavItem | null;
-    style: Record<string, string>;
-}
-function handleSearchSelect(item: { route?: string }) {
-    if (item.route) {
-        router.visit(item.route)
+    interface NavChild {
+        label: string;
+        href: string;
     }
-}
-// ════════════════════════════════════════════════════════════════
-// NAV ITEMS  — edit this array to add/remove menu entries
-// ════════════════════════════════════════════════════════════════
 
-const navItems: NavItem[] = [
-    { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Inbox", href: "/inbox", icon: Inbox },
-    { label: "Calendar", href: "/calendar", icon: CalendarDays },
-    {
-        label: "Rooms",
-        icon: BedDouble,
-        children: [
-            { label: "All Rooms", href: "/rooms" },
-            { label: "Room Types", href: "/rooms/types" },
-        ],
-    },
-    { label: "Housekeeping", href: "/housekeeping", icon: SprayCan },
-    { label: "Inventory", href: "/inventory", icon: Package },
-    {
-        label: "Finance",
-        icon: Banknote,
-        children: [
-            { label: "Overview", href: "/finance" },
-            { label: "Invoices", href: "/finance/invoices" },
-        ],
-    },
-    { label: "Reviews", href: "/reviews", icon: Star, badge: 5 },
-    { label: "Settings", href: "/settings", icon: Settings2 },
-];
+    interface NavItem {
+        label: string;
+        icon: LucideIcon;
+        href?: string; // undefined for group items
+        children?: NavChild[];
+        badge?: number;
+    }
 
-// ════════════════════════════════════════════════════════════════
-// INLINE SUB-COMPONENTS
-// (kept here so this file is self-contained & easy to find)
-// ════════════════════════════════════════════════════════════════
+    interface FlyoutState {
+        visible: boolean;
+        item: NavItem | null;
+        style: Record<string, string>;
+    }
+    function handleSearchSelect(item: { route?: string }) {
+        if (item.route) {
+            router.visit(item.route)
+        }
+    }
+    // ════════════════════════════════════════════════════════════════
+    // NAV ITEMS  — edit this array to add/remove menu entries
+    // ════════════════════════════════════════════════════════════════
 
-/**
- * NavGroupItem
- * Renders a collapsible accordion (expanded sidebar) or
- * an icon-only button that triggers flyout (collapsed sidebar).
- */
-const NavGroupItem = defineComponent({
-    name: "NavGroupItem",
-    props: {
-        item: { type: Object as () => NavItem, required: true },
-        isExpanded: { type: Boolean, required: true },
-        isOpen: { type: Boolean, required: true },
-        isActiveFn: {
-            type: Function as () => (href: string) => boolean,
-            required: true,
+    const navItems: NavItem[] = [
+        { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+        { label: "Inbox", href: "/inbox", icon: Inbox },
+        { label: "Calendar", href: "/calendar", icon: CalendarDays },
+        {
+            label: "Rooms",
+            icon: BedDouble,
+            children: [
+                { label: "All Rooms", href: "/rooms" },
+                { label: "Room Types", href: "/rooms/types" },
+            ],
         },
-    },
-    emits: ["toggle", "flyout-enter", "flyout-leave"],
-    setup(props, { emit }) {
-        const groupActive = computed(
-            () =>
-                props.item.children?.some((c) => props.isActiveFn(c.href)) ??
-                false,
-        );
-
-        return () => {
-            const { item, isExpanded, isOpen, isActiveFn } = props;
-
-            return h("div", { class: "relative" }, [
-                // ── Expanded: clickable row with chevron ──
-                isExpanded
-                    ? h(
-                        "button",
-                        {
-                            class: [
-                                "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
-                                groupActive.value
-                                    ? "bg-cyan-50 text-cyan-700"
-                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
-                            ],
-                            onClick: () => emit("toggle"),
-                        },
-                        [
-                            h(item.icon as any, {
-                                class: "w-[18px] h-[18px] flex-shrink-0",
-                                strokeWidth: groupActive.value ? 2.2 : 1.8,
-                            }),
-                            h(
-                                "span",
-                                { class: "flex-1 text-left" },
-                                item.label,
-                            ),
-                            h(ChevronDown, {
-                                class: [
-                                    "w-3.5 h-3.5 transition-transform duration-200 text-slate-400",
-                                    isOpen ? "rotate-180" : "",
-                                ],
-                                strokeWidth: 2,
-                            }),
-                        ],
-                    )
-                    : // ── Collapsed: icon only, flyout on hover ──
-                    h(
-                        "button",
-                        {
-                            class: [
-                                "w-full flex items-center justify-center py-2.5 rounded-xl transition-all duration-150",
-                                groupActive.value
-                                    ? "bg-cyan-50 text-cyan-600"
-                                    : "text-slate-400 hover:bg-slate-50 hover:text-slate-700",
-                            ],
-                            onMouseenter: (e: MouseEvent) =>
-                                emit("flyout-enter", e.currentTarget),
-                            onMouseleave: () => emit("flyout-leave"),
-                        },
-                        [
-                            h(item.icon as any, {
-                                class: "w-[18px] h-[18px]",
-                                strokeWidth: groupActive.value ? 2.2 : 1.8,
-                            }),
-                        ],
-                    ),
-
-                // ── Accordion children (expanded only) ──
-                isExpanded && isOpen
-                    ? h(
-                        "div",
-                        {
-                            class: "mt-0.5 mb-1 ml-3 pl-3.5 border-l-2 border-slate-100 space-y-0.5",
-                        },
-                        item.children!.map((child) =>
-                            h(
-                                Link,
-                                {
-                                    key: child.href,
-                                    href: child.href,
-                                    class: [
-                                        "flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] transition-all duration-150",
-                                        isActiveFn(child.href)
-                                            ? "text-cyan-700 font-semibold bg-cyan-50/60"
-                                            : "text-slate-400 hover:text-slate-700 hover:bg-slate-50",
-                                    ],
-                                },
-                                () => [
-                                    h("span", {
-                                        class: [
-                                            "w-1 h-1 rounded-full flex-shrink-0",
-                                            isActiveFn(child.href)
-                                                ? "bg-cyan-500"
-                                                : "bg-slate-300",
-                                        ],
-                                    }),
-                                    child.label,
-                                ],
-                            ),
-                        ),
-                    )
-                    : null,
-            ]);
-        };
-    },
-});
-
-/**
- * NavSingleItem
- * Renders a simple link. Shows tooltip flyout when sidebar is collapsed.
- */
-const NavSingleItem = defineComponent({
-    name: "NavSingleItem",
-    props: {
-        item: { type: Object as () => NavItem, required: true },
-        isExpanded: { type: Boolean, required: true },
-        isActiveFn: {
-            type: Function as () => (href: string) => boolean,
-            required: true,
+        { label: "Housekeeping", href: "/housekeeping", icon: SprayCan },
+        { label: "Inventory", href: "/inventory", icon: Package },
+        {
+            label: "Finance",
+            icon: Banknote,
+            children: [
+                { label: "Overview", href: "/finance" },
+                { label: "Invoices", href: "/finance/invoices" },
+            ],
         },
-    },
-    emits: ["flyout-enter", "flyout-leave"],
-    setup(props, { emit }) {
-        return () => {
-            const { item, isExpanded, isActiveFn } = props;
-            const active = isActiveFn(item.href ?? "");
+        { label: "Reviews", href: "/reviews", icon: Star, badge: 5 },
+        { label: "Settings", href: "/settings", icon: Settings2 },
+    ];
 
-            return h(
-                "div",
-                {
-                    class: "relative",
-                    onMouseenter: !isExpanded
-                        ? (e: MouseEvent) =>
-                            emit("flyout-enter", e.currentTarget)
-                        : undefined,
-                    onMouseleave: !isExpanded
-                        ? () => emit("flyout-leave")
-                        : undefined,
-                },
-                [
-                    h(
-                        Link,
-                        {
-                            href: item.href ?? "",
-                            class: [
-                                "flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-150",
-                                isExpanded
-                                    ? "px-3 py-2.5"
-                                    : "justify-center py-2.5",
-                                active
-                                    ? "bg-cyan-50 text-cyan-700"
-                                    : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
-                            ],
-                        },
-                        () => [
-                            h(item.icon as any, {
-                                class: "w-[18px] h-[18px] flex-shrink-0",
-                                strokeWidth: active ? 2.2 : 1.8,
-                            }),
-                            isExpanded
-                                ? h(
-                                    "span",
-                                    { class: "whitespace-nowrap flex-1" },
-                                    item.label,
-                                )
-                                : null,
-                            // Badge (expanded)
-                            item.badge && isExpanded
-                                ? h(
-                                    "span",
-                                    {
-                                        class: "ml-auto bg-cyan-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none",
-                                    },
-                                    String(item.badge),
-                                )
-                                : null,
-                            // Badge dot (collapsed)
-                            item.badge && !isExpanded
-                                ? h("span", {
-                                    class: "absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-cyan-500 rounded-full",
-                                })
-                                : null,
-                        ],
-                    ),
-                ],
+    // ════════════════════════════════════════════════════════════════
+    // INLINE SUB-COMPONENTS
+    // (kept here so this file is self-contained & easy to find)
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * NavGroupItem
+     * Renders a collapsible accordion (expanded sidebar) or
+     * an icon-only button that triggers flyout (collapsed sidebar).
+     */
+    const NavGroupItem = defineComponent({
+        name: "NavGroupItem",
+        props: {
+            item: { type: Object as () => NavItem, required: true },
+            isExpanded: { type: Boolean, required: true },
+            isOpen: { type: Boolean, required: true },
+            isActiveFn: {
+                type: Function as () => (href: string) => boolean,
+                required: true,
+            },
+        },
+        emits: ["toggle", "flyout-enter", "flyout-leave"],
+        setup(props, { emit }) {
+            const groupActive = computed(
+                () =>
+                    props.item.children?.some((c) => props.isActiveFn(c.href)) ??
+                    false,
             );
-        };
-    },
-});
 
-// ════════════════════════════════════════════════════════════════
-// LAYOUT STATE
-// ════════════════════════════════════════════════════════════════
+            return () => {
+                const { item, isExpanded, isOpen, isActiveFn } = props;
 
-const sidebarOpen = ref(true);
-const openGroups = ref<string[]>([]);
+                return h("div", { class: "relative" }, [
+                    // ── Expanded: clickable row with chevron ──
+                    isExpanded
+                        ? h(
+                            "button",
+                            {
+                                class: [
+                                    "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] font-medium transition-all duration-150",
+                                    groupActive.value
+                                        ? "bg-cyan-50 text-cyan-700"
+                                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
+                                ],
+                                onClick: () => emit("toggle"),
+                            },
+                            [
+                                h(item.icon as any, {
+                                    class: "w-[18px] h-[18px] flex-shrink-0",
+                                    strokeWidth: groupActive.value ? 2.2 : 1.8,
+                                }),
+                                h(
+                                    "span",
+                                    { class: "flex-1 text-left" },
+                                    item.label,
+                                ),
+                                h(ChevronDown, {
+                                    class: [
+                                        "w-3.5 h-3.5 transition-transform duration-200 text-slate-400",
+                                        isOpen ? "rotate-180" : "",
+                                    ],
+                                    strokeWidth: 2,
+                                }),
+                            ],
+                        )
+                        : // ── Collapsed: icon only, flyout on hover ──
+                        h(
+                            "button",
+                            {
+                                class: [
+                                    "w-full flex items-center justify-center py-2.5 rounded-xl transition-all duration-150",
+                                    groupActive.value
+                                        ? "bg-cyan-50 text-cyan-600"
+                                        : "text-slate-400 hover:bg-slate-50 hover:text-slate-700",
+                                ],
+                                onMouseenter: (e: MouseEvent) =>
+                                    emit("flyout-enter", e.currentTarget),
+                                onMouseleave: () => emit("flyout-leave"),
+                            },
+                            [
+                                h(item.icon as any, {
+                                    class: "w-[18px] h-[18px]",
+                                    strokeWidth: groupActive.value ? 2.2 : 1.8,
+                                }),
+                            ],
+                        ),
 
-// Flyout state — position is calculated via getBoundingClientRect()
-const flyout = reactive<FlyoutState>({
-    visible: false,
-    item: null,
-    style: {},
-});
-
-let flyoutCloseTimer: ReturnType<typeof setTimeout> | null = null;
-const FLYOUT_CLOSE_DELAY_MS = 80;
-
-// ════════════════════════════════════════════════════════════════
-// AUTH / PAGE
-// ════════════════════════════════════════════════════════════════
-
-const confirm = inject("confirm") as typeof ConfirmType;
-const { logout, userName, userRole, loading, initializeFromInertia } =
-    useAuth();
-const page = usePage();
-
-onMounted(() => {
-    const authUser = (page.props as any).auth?.user ?? null;
-    if (authUser) initializeFromInertia(authUser);
-});
-
-const isLoggingOut = computed(() => loading.value);
-
-const userInitials = computed(
-    () =>
-        userName.value
-            ?.split(" ")
-            .map((n: string) => n[0])
-            .slice(0, 2)
-            .join("")
-            .toUpperCase() ?? "U",
-);
-
-const pageTitle = computed(() => {
-  // 🎯 Priority 1: Custom title from page props
-  if (page.props.headerTitle) {
-    return page.props.headerTitle as string;
-  }
-  
-  // Priority 2: Match from navItems (existing logic)
-  const path = page.url;
-  const found = navItems
-    .flatMap((i) =>
-      i.children
-        ? i.children.map((c) => ({ ...c }))
-        : [{ label: i.label, href: i.href ?? "" }],
-    )
-    .find((i) => i.href && path.startsWith(i.href));
-    
-  return found?.label ?? "Dashboard";
-});
-
-// ════════════════════════════════════════════════════════════════
-// HELPERS
-// ════════════════════════════════════════════════════════════════
-
-/** Returns true when the current URL starts with href */
-function isActive(href: string): boolean {
-    return page.url.startsWith(href);
-}
-
-/** Toggle accordion group open/closed */
-function toggleGroup(label: string): void {
-    const idx = openGroups.value.indexOf(label);
-    if (idx >= 0) openGroups.value.splice(idx, 1);
-    else openGroups.value.push(label);
-}
-
-// ════════════════════════════════════════════════════════════════
-// FLYOUT LOGIC
-// Teleport renders the popup at <body> level to avoid any
-// overflow clipping from the sidebar.  Position is calculated
-// from the trigger element's bounding rect.
-// ════════════════════════════════════════════════════════════════
-
-/**
- * Called when the mouse enters a collapsed nav item.
- * @param item    - The NavItem to show in the flyout
- * @param trigger - The DOM element that triggered the hover
- */
-function onFlyoutEnter(item: NavItem, trigger: EventTarget | null): void {
-    if (flyoutCloseTimer) {
-        clearTimeout(flyoutCloseTimer);
-        flyoutCloseTimer = null;
-    }
-
-    const el = trigger as HTMLElement | null;
-    const rect = el?.getBoundingClientRect();
-
-    flyout.item = item;
-    flyout.visible = true;
-    flyout.style = {
-        top: rect ? `${rect.top}px` : "0px",
-        left: rect ? `${rect.right + 8}px` : "0px", // 8px gap from sidebar edge
-    };
-}
-
-/** Called when the mouse leaves a nav item */
-function onFlyoutLeave(): void {
-    scheduleFlyoutClose();
-}
-
-/** Keep flyout open while mouse is inside the popup panel */
-function cancelFlyoutClose(): void {
-    if (flyoutCloseTimer) {
-        clearTimeout(flyoutCloseTimer);
-        flyoutCloseTimer = null;
-    }
-}
-
-/** Hide the flyout after a short delay (allows mouse to travel into panel) */
-function scheduleFlyoutClose(): void {
-    flyoutCloseTimer = setTimeout(() => {
-        flyout.visible = false;
-        flyout.item = null;
-    }, FLYOUT_CLOSE_DELAY_MS);
-}
-
-// ════════════════════════════════════════════════════════════════
-// LOGOUT
-// ════════════════════════════════════════════════════════════════
-
-async function handleLogout(): Promise<void> {
-    const confirmed = await confirm.show({
-        title: 'Logout?',
-        message: 'Are you sure you want to logout?',
-        confirmText: 'Yes',
-        cancelText: 'No',
-        variant: 'danger',
-        icon: false,
+                    // ── Accordion children (expanded only) ──
+                    isExpanded && isOpen
+                        ? h(
+                            "div",
+                            {
+                                class: "mt-0.5 mb-1 ml-3 pl-3.5 border-l-2 border-slate-100 space-y-0.5",
+                            },
+                            item.children!.map((child) =>
+                                h(
+                                    Link,
+                                    {
+                                        key: child.href,
+                                        href: child.href,
+                                        class: [
+                                            "flex items-center gap-2 px-3 py-2 rounded-lg text-[12.5px] transition-all duration-150",
+                                            isActiveFn(child.href)
+                                                ? "text-cyan-700 font-semibold bg-cyan-50/60"
+                                                : "text-slate-400 hover:text-slate-700 hover:bg-slate-50",
+                                        ],
+                                    },
+                                    () => [
+                                        h("span", {
+                                            class: [
+                                                "w-1 h-1 rounded-full flex-shrink-0",
+                                                isActiveFn(child.href)
+                                                    ? "bg-cyan-500"
+                                                    : "bg-slate-300",
+                                            ],
+                                        }),
+                                        child.label,
+                                    ],
+                                ),
+                            ),
+                        )
+                        : null,
+                ]);
+            };
+        },
     });
 
-    if (!confirmed) return;
+    /**
+     * NavSingleItem
+     * Renders a simple link. Shows tooltip flyout when sidebar is collapsed.
+     */
+    const NavSingleItem = defineComponent({
+        name: "NavSingleItem",
+        props: {
+            item: { type: Object as () => NavItem, required: true },
+            isExpanded: { type: Boolean, required: true },
+            isActiveFn: {
+                type: Function as () => (href: string) => boolean,
+                required: true,
+            },
+        },
+        emits: ["flyout-enter", "flyout-leave"],
+        setup(props, { emit }) {
+            return () => {
+                const { item, isExpanded, isActiveFn } = props;
+                const active = isActiveFn(item.href ?? "");
 
-    try {
-        await store.logout()        // ← store directly, toast skip করুন
-        router.visit('/login')      // ← আগে navigate
-    } catch {
-        router.visit('/login')
+                return h(
+                    "div",
+                    {
+                        class: "relative",
+                        onMouseenter: !isExpanded
+                            ? (e: MouseEvent) =>
+                                emit("flyout-enter", e.currentTarget)
+                            : undefined,
+                        onMouseleave: !isExpanded
+                            ? () => emit("flyout-leave")
+                            : undefined,
+                    },
+                    [
+                        h(
+                            Link,
+                            {
+                                href: item.href ?? "",
+                                class: [
+                                    "flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-150",
+                                    isExpanded
+                                        ? "px-3 py-2.5"
+                                        : "justify-center py-2.5",
+                                    active
+                                        ? "bg-cyan-50 text-cyan-700"
+                                        : "text-slate-500 hover:bg-slate-50 hover:text-slate-700",
+                                ],
+                            },
+                            () => [
+                                h(item.icon as any, {
+                                    class: "w-[18px] h-[18px] flex-shrink-0",
+                                    strokeWidth: active ? 2.2 : 1.8,
+                                }),
+                                isExpanded
+                                    ? h(
+                                        "span",
+                                        { class: "whitespace-nowrap flex-1" },
+                                        item.label,
+                                    )
+                                    : null,
+                                // Badge (expanded)
+                                item.badge && isExpanded
+                                    ? h(
+                                        "span",
+                                        {
+                                            class: "ml-auto bg-cyan-500 text-white text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none",
+                                        },
+                                        String(item.badge),
+                                    )
+                                    : null,
+                                // Badge dot (collapsed)
+                                item.badge && !isExpanded
+                                    ? h("span", {
+                                        class: "absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-cyan-500 rounded-full",
+                                    })
+                                    : null,
+                            ],
+                        ),
+                    ],
+                );
+            };
+        },
+    });
+
+    // ════════════════════════════════════════════════════════════════
+    // LAYOUT STATE
+    // ════════════════════════════════════════════════════════════════
+
+    const sidebarOpen = ref(true);
+    const openGroups = ref<string[]>([]);
+
+    // Flyout state — position is calculated via getBoundingClientRect()
+    const flyout = reactive<FlyoutState>({
+        visible: false,
+        item: null,
+        style: {},
+    });
+
+    let flyoutCloseTimer: ReturnType<typeof setTimeout> | null = null;
+    const FLYOUT_CLOSE_DELAY_MS = 80;
+
+    // ════════════════════════════════════════════════════════════════
+    // AUTH / PAGE
+    // ════════════════════════════════════════════════════════════════
+
+    const confirm = inject("confirm") as typeof ConfirmType;
+    const { logout, userName, userRole, loading, initializeFromInertia } =
+        useAuth();
+    const page = usePage();
+
+    onMounted(() => {
+        const authUser = (page.props as any).auth?.user ?? null;
+        if (authUser) initializeFromInertia(authUser);
+    });
+
+    const isLoggingOut = computed(() => loading.value);
+
+    const userInitials = computed(
+        () =>
+            userName.value
+                ?.split(" ")
+                .map((n: string) => n[0])
+                .slice(0, 2)
+                .join("")
+                .toUpperCase() ?? "U",
+    );
+
+    const pageTitle = computed(() => {
+    // 🎯 Priority 1: Custom title from page props
+    if (page.props.headerTitle) {
+        return page.props.headerTitle as string;
     }
-}
+
+    // Priority 2: Match from navItems (existing logic)
+    const path = page.url;
+    const found = navItems
+        .flatMap((i) =>
+        i.children
+            ? i.children.map((c) => ({ ...c }))
+            : [{ label: i.label, href: i.href ?? "" }],
+        )
+        .find((i) => i.href && path.startsWith(i.href));
+
+    return found?.label ?? "Dashboard";
+    });
+
+    // ════════════════════════════════════════════════════════════════
+    // HELPERS
+    // ════════════════════════════════════════════════════════════════
+
+    /** Returns true when the current URL starts with href */
+    function isActive(href: string): boolean {
+        return page.url.startsWith(href);
+    }
+
+    /** Toggle accordion group open/closed */
+    function toggleGroup(label: string): void {
+        const idx = openGroups.value.indexOf(label);
+        if (idx >= 0) openGroups.value.splice(idx, 1);
+        else openGroups.value.push(label);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // FLYOUT LOGIC
+    // Teleport renders the popup at <body> level to avoid any
+    // overflow clipping from the sidebar.  Position is calculated
+    // from the trigger element's bounding rect.
+    // ════════════════════════════════════════════════════════════════
+
+    /**
+     * Called when the mouse enters a collapsed nav item.
+     * @param item    - The NavItem to show in the flyout
+     * @param trigger - The DOM element that triggered the hover
+     */
+    function onFlyoutEnter(item: NavItem, trigger: EventTarget | null): void {
+        if (flyoutCloseTimer) {
+            clearTimeout(flyoutCloseTimer);
+            flyoutCloseTimer = null;
+        }
+
+        const el = trigger as HTMLElement | null;
+        const rect = el?.getBoundingClientRect();
+
+        flyout.item = item;
+        flyout.visible = true;
+        flyout.style = {
+            top: rect ? `${rect.top}px` : "0px",
+            left: rect ? `${rect.right + 8}px` : "0px", // 8px gap from sidebar edge
+        };
+    }
+
+    /** Called when the mouse leaves a nav item */
+    function onFlyoutLeave(): void {
+        scheduleFlyoutClose();
+    }
+
+    /** Keep flyout open while mouse is inside the popup panel */
+    function cancelFlyoutClose(): void {
+        if (flyoutCloseTimer) {
+            clearTimeout(flyoutCloseTimer);
+            flyoutCloseTimer = null;
+        }
+    }
+
+    /** Hide the flyout after a short delay (allows mouse to travel into panel) */
+    function scheduleFlyoutClose(): void {
+        flyoutCloseTimer = setTimeout(() => {
+            flyout.visible = false;
+            flyout.item = null;
+        }, FLYOUT_CLOSE_DELAY_MS);
+    }
+
+    // ════════════════════════════════════════════════════════════════
+    // LOGOUT
+    // ════════════════════════════════════════════════════════════════
+
+    async function handleLogout(): Promise<void> {
+        const confirmed = await confirm.show({
+            title: 'Logout?',
+            message: 'Are you sure you want to logout?',
+            confirmText: 'Yes',
+            cancelText: 'No',
+            variant: 'danger',
+            icon: false,
+        });
+
+        if (!confirmed) return;
+
+        try {
+            await store.logout()        // ← store directly, toast skip করুন
+            router.visit('/login')      // ← আগে navigate
+        } catch {
+            router.visit('/login')
+        }
+    }
 </script>
 
 <style scoped>

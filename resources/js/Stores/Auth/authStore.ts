@@ -160,7 +160,7 @@ export const useAuthStore = defineStore('auth', {
             this.loading = true;
             this.error = null;
             try {
-                const { data } = await apiClient.v1.post('/auth/logout');
+                const { data } = await apiClient.v1.post('/admin/auth/logout');
                 const response = data as LogoutResponse;
 
                 if (response.status === 1) {

@@ -88,80 +88,94 @@
 </template>
 
 <script setup lang="ts">
-import { computed, inject, onMounted, ref } from 'vue';
-import { Link, usePage, router } from '@inertiajs/vue3';
-import type { PageProps } from '@/Types';
-import type { confirm as ConfirmType } from '@/Plugins/confirm';
+    import { computed, inject, ref } from 'vue';
+    import { Link, usePage, router } from '@inertiajs/vue3';
+    import { useAuth } from '@/Composables/Auth/useAuth';
+    import type { PageProps } from '@/Types';
+    import type { confirm as ConfirmType } from '@/Plugins/confirm';
 
-const confirm = inject('confirm') as typeof ConfirmType;
+    const confirm = inject('confirm') as typeof ConfirmType;
+    const { logout } = useAuth();
 
-// Navigation Icons as components
-const DashboardIcon = {
-    template: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-    </svg>`
-};
+    // Navigation Icons as components
+    const DashboardIcon = {
+        template: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>`
+    };
 
-const TenantsIcon = {
-    template: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-    </svg>`
-};
+    const TenantsIcon = {
+        template: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>`
+    };
 
-const PlansIcon = {
-    template: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-    </svg>`
-};
+    const PlansIcon = {
+        template: `<svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>`
+    };
 
-const navigation = [
-    { label: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
-    { label: 'Tenants', href: '/tenants', icon: TenantsIcon },
-    { label: 'Subscription Plans', href: '/plans', icon: PlansIcon },
-];
+    const navigation = [
+        { label: 'Dashboard', href: '/dashboard', icon: DashboardIcon },
+        { label: 'Tenants', href: '/tenants', icon: TenantsIcon },
+        { label: 'Subscription Plans', href: '/plans', icon: PlansIcon },
+    ];
 
-const page = usePage<PageProps>();
+    const page = usePage<PageProps>();
 
-const userName = computed(() => page.props.auth?.user?.name ?? 'Admin');
-const userInitials = computed(() => {
-    const name = userName.value;
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-});
-
-const pageTitle = computed(() => {
-    const path = page.url;
-    if (path.includes('/tenants')) return 'Tenants';
-    if (path.includes('/plans')) return 'Subscription Plans';
-    return 'Dashboard';
-});
-
-const pageDescription = computed(() => {
-    const path = page.url;
-    if (path.includes('/tenants')) return 'Manage all tenant accounts';
-    if (path.includes('/plans')) return 'Manage subscription plans';
-    return 'Platform overview and statistics';
-});
-
-function isActive(href: string): boolean {
-    return page.url.startsWith(href);
-}
-
-const isLoggingOut = ref(false);
-
-async function handleLogout() {
-    const confirmed = await confirm.show({
-        title: 'Sign Out?',
-        message: 'Are you sure you want to sign out?',
-        confirmText: 'Yes, Sign Out',
-        cancelText: 'Cancel',
-        variant: 'danger',
+    const userName = computed(() => page.props.auth?.user?.name ?? 'Admin');
+    const userInitials = computed(() => {
+        const name = userName.value;
+        return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
     });
 
-    if (!confirmed) return;
-
-    isLoggingOut.value = true;
-    router.post('/logout', {}, {
-        onFinish: () => isLoggingOut.value = false,
+    const pageTitle = computed(() => {
+        const path = page.url;
+        if (path.includes('/tenants')) return 'Tenants';
+        if (path.includes('/plans')) return 'Subscription Plans';
+        return 'Dashboard';
     });
-}
+
+    const pageDescription = computed(() => {
+        const path = page.url;
+        if (path.includes('/tenants')) return 'Manage all tenant accounts';
+        if (path.includes('/plans')) return 'Manage subscription plans';
+        return 'Platform overview and statistics';
+    });
+
+    function isActive(href: string): boolean {
+        return page.url.startsWith(href);
+    }
+
+    const isLoggingOut = ref(false);
+
+    // ════════════════════════════════════════════════════════════════
+    // LOGOUT
+    // ════════════════════════════════════════════════════════════════
+    async function handleLogout(): Promise<void> {
+        const confirmed = await confirm.show({
+            title: 'Logout?',
+            message: 'Are you sure you want to logout?',
+            confirmText: 'Yes',
+            cancelText: 'No',
+            variant: 'danger',
+            icon: false,
+        });
+
+        if (!confirmed) return;
+
+        isLoggingOut.value = true;
+
+        try {
+            await logout();
+            router.visit('/login');
+        } catch {
+            router.visit('/login');
+        } finally {
+            isLoggingOut.value = false;
+        }
+    }
 </script>
+
+
