@@ -34,7 +34,7 @@ const steps = [
 const isFirst = computed(() => currentStep.value === 0)
 const isLast = computed(() => currentStep.value === steps.length - 1)
 
-function next() { if (!isLast.value) currentStep.value++ }
+// function next() { if (!isLast.value) currentStep.value++ }
 function back() { if (!isFirst.value) currentStep.value-- }
 
 // ── Form state per step ───────────────────────────────────────────────
@@ -129,14 +129,20 @@ async function submit() {
     }
 
     const property = await store.create(payload as any)
-    router.visit('/onboarding/room-type/create', {
-      data: { propertyId: property.id },
-    })
+     router.visit('/property/tex/create')
+
   } catch {
     error.value = 'Failed to save property. Please try again.'
   } finally {
     loading.value = false
   }
+}
+function next() {
+  if (isLast.value) {
+    router.visit('/property/policies/create')
+    return
+  }
+  currentStep.value++
 }
 </script>
 
@@ -223,7 +229,7 @@ async function submit() {
 
         <!-- <span class="text-xs text-gray-400">Step {{ currentStep + 1 }} of {{ steps.length }}</span> -->
 
-        <button v-if="!isLast" type="button"
+        <!-- <button v-if="!isLast" type="button"
           class="px-5 py-2 flex cursor-pointer items-center gap-1 group bg-primary text-white rounded-[7px] text-sm font-medium hover:bg-secondary transition-colors"
           @click="next">
           Continue
@@ -234,7 +240,13 @@ async function submit() {
           class="px-5 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-700 disabled:opacity-50 transition-colors"
           @click="submit">
           {{ loading ? 'Saving…' : 'Finish Setup' }}
-        </button>
+        </button> -->
+        <button type="button"
+  class="px-5 py-2 flex cursor-pointer items-center gap-1 group bg-primary text-white rounded-[7px] text-sm font-medium hover:bg-secondary transition-colors"
+  @click="next">
+  {{ isLast ? 'Finish Setup' : 'Continue' }}
+  <ArrowRight class="w-4 group-hover:translate-x-0.5 transition-all h-4" />
+</button>
       </div>
 
     </div>

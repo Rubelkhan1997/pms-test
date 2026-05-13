@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 namespace App\Modules\Reports\Models;
 
-use App\Enums\ReportStatus;
-use App\Enums\ReportType;
 use App\Models\User;
-use App\Modules\FrontDesk\Models\Hotel;
+use App\Modules\FrontDesk\Models\Property;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -22,73 +20,35 @@ class ReportSnapshot extends Model
     protected $table = 'report_snapshots';
 
     protected $fillable = [
-        'hotel_id',
-        'created_by',
-        'reference',
-        'status',
-        'report_type',
-        'report_date',
-        'scheduled_at',
-        'meta',
+        'property_id', 'created_by', 'reference',
+        'report_type', 'report_date', 'status', 'data',
     ];
 
-    /**
-     * Get cast definitions.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
-            'status' => ReportStatus::class,
-            'report_type' => ReportType::class,
-            'report_date' => 'date:Y-m-d',
-            'scheduled_at' => 'datetime',
-            'meta' => 'array',
+            'report_date' => 'date',
+            'data'        => 'array',
         ];
     }
 
-    /**
-     * Get the hotel.
-     */
-    public function hotel(): BelongsTo
+    public function property(): BelongsTo
     {
-        return $this->belongsTo(Hotel::class);
+        return $this->belongsTo(Property::class);
     }
 
-    /**
-     * Get the creator.
-     */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * Scope by hotel.
-     */
-    public function scopeForHotel(Builder $query, int $hotelId): Builder
+    public function scopeOfType(Builder $query, string $type): Builder
     {
-        return $query->where('hotel_id', $hotelId);
+        return $query->where('report_type', $type);
     }
 
-    /**
-     * Scope by report type.
-     */
-    public function scopeOfType(Builder $query, ReportType|string $type): Builder
+    public function scopeStatus(Builder $query, string $status): Builder
     {
-        $value = $type instanceof ReportType ? $type->value : $type;
-
-        return $query->where('report_type', $value);
-    }
-
-    /**
-     * Scope by status.
-     */
-    public function scopeWithStatus(Builder $query, ReportStatus|string $status): Builder
-    {
-        $value = $status instanceof ReportStatus ? $status->value : $status;
-
-        return $query->where('status', $value);
+        return $query->where('status', $status);
     }
 }
